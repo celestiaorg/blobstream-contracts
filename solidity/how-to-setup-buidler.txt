@@ -1,0 +1,10 @@
+# Note: this has already been done for this repo. See readme.md if you are using this repo
+yarn init
+yarn add ts-node typescript
+yarn add chai @types/node @types/mocha @types/chai
+yarn add @nomiclabs/buidler-waffle ethereum-waffle chai @nomiclabs/buidler-ethers ethers
+yarn add @nomiclabs/buidler
+yarn buidler
+yarn buidler test # Just to check if it works
+# Follow buidler typescript guide, modifying files etc
+# add gas reporter and typechain modules
