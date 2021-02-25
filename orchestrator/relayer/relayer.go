@@ -1,26 +1,33 @@
 package relayer
 
 import (
+	"context"
+
+	"github.com/InjectiveLabs/peggo/modules/peggy/types"
+	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/provider"
 	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
-	"github.com/InjectiveLabs/peggo/orchestrator/sidechain"
 )
 
 type PeggyRelayer interface {
-	RunLoop()
+	Start(ctx context.Context) error
+
+	FindLatestValset(ctx context.Context) (*types.Valset, error)
+	RelayBatches(ctx context.Context) error
+	RelayValsets(ctx context.Context) error
 }
 
 type peggyRelayer struct {
 	svcTags metrics.Tags
 
-	cosmosQueryClient sidechain.PeggyQueryClient
+	cosmosQueryClient cosmos.PeggyQueryClient
 	peggyContract     peggy.PeggyContract
 	ethProvider       provider.EVMProvider
 }
 
 func NewPeggyRelayer(
-	cosmosQueryClient sidechain.PeggyQueryClient,
+	cosmosQueryClient cosmos.PeggyQueryClient,
 	peggyContract peggy.PeggyContract,
 ) PeggyRelayer {
 	return &peggyRelayer{

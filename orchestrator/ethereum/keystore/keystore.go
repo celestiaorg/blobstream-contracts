@@ -11,76 +11,58 @@ import (
 	"sort"
 	"sync"
 
-	log "github.com/xlab/suplog"
-
-	eth "github.com/InjectiveLabs/peggo/orchestrator/ethereum/util"
+	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	log "github.com/xlab/suplog"
 )
 
+type PersonalSignFn func(account common.Address, data []byte) (sig []byte, err error)
+
+type SignerFn = bind.SignerFn
+
 type EthKeyStore interface {
-	PrivateKey(account common.Address, password string) (key *ecdsa.PrivateKey, ok bool)
-	SignerFn(account common.Address, password string) bind.SignerFn
+	PrivateKey(account common.Address, password string) (*ecdsa.PrivateKey, error)
+	SignerFn(chainID uint64, account common.Address, password string) (SignerFn, error)
+	PersonalSignFn(account common.Address, password string) (PersonalSignFn, error)
 	UnsetKey(account common.Address, password string)
 	Accounts() []common.Address
-	AddPath(keybase string) error
-	RemovePath(keybase string)
+	AddPath(keystorePath string) error
+	RemovePath(keystorePath string)
 	Paths() []string
 }
 
 func New(paths ...string) (EthKeyStore, error) {
 	ks := &keyStore{
-		cache:                      eth.NewKeyCache(),
-		notifyWalletSubscribersMux: new(sync.RWMutex),
-		paths:                      make(map[string]struct{}),
-		pathsMux:                   new(sync.RWMutex),
+		cache:    NewKeyCache(),
+		paths:    make(map[string]struct{}),
+		pathsMux: new(sync.RWMutex),
 	}
+
 	for _, path := range paths {
 		ks.paths[path] = struct{}{}
 	}
-	ks.checkPaths()
+
 	return ks, nil
 }
 
 type keyStore struct {
-	cache                      eth.KeyCache
-	notifyWalletSubscribers    []chan<- *WalletSpec
-	notifyWalletSubscribersMux *sync.RWMutex
-
+	cache    KeyCache
 	paths    map[string]struct{}
 	pathsMux *sync.RWMutex
 }
 
-func (ks *keyStore) checkPaths() {
-	paths := ks.Paths()
-	for _, keybasePath := range paths {
-		err := ks.forEachWallet(keybasePath, func(spec *WalletSpec) error {
-			if isNew := ks.cache.SetPath(spec.HexToAddress(), spec.Path); isNew {
-				subs := ks.getNotifyWalletSubscribers()
-				for _, notifyC := range subs {
-					select {
-					case notifyC <- spec:
-					default:
-					}
-				}
-			}
-			return nil
-		})
-		if err != nil {
-			log.WithFields(log.Fields{
-				"keybasePath": keybasePath,
-				"fn":          "checkPaths",
-			}).WithError(err).Warningln("failed to lookup")
-		}
-	}
-}
-
-func (ks *keyStore) PrivateKey(account common.Address, password string) (key *ecdsa.PrivateKey, ok bool) {
+func (ks *keyStore) PrivateKey(account common.Address, password string) (*ecdsa.PrivateKey, error) {
 	return ks.cache.PrivateKey(account, password)
 }
 
-func (ks *keyStore) SignerFn(account common.Address, password string) bind.SignerFn {
-	return ks.cache.SignerFn(account, password)
+func (ks *keyStore) SignerFn(chainID uint64, account common.Address, password string) (SignerFn, error) {
+	return ks.cache.SignerFn(chainID, account, password)
+}
+
+func (ks *keyStore) PersonalSignFn(account common.Address, password string) (PersonalSignFn, error) {
+	return ks.cache.PersonalSignFn(account, password)
 }
 
 func (ks *keyStore) UnsetKey(account common.Address, password string) {
@@ -89,28 +71,27 @@ func (ks *keyStore) UnsetKey(account common.Address, password string) {
 
 func (ks *keyStore) Accounts() []common.Address {
 	paths := ks.Paths()
+
 	var accounts []common.Address
-	for _, keybasePath := range paths {
-		if err := ks.forEachWallet(keybasePath, func(spec *WalletSpec) error {
-			accounts = append(accounts, spec.HexToAddress())
+	for _, keystorePath := range paths {
+		if err := ks.forEachWallet(keystorePath, func(spec *WalletSpec) error {
+			accounts = append(accounts, spec.AddressFromHex())
 			return nil
 		}); err != nil {
-			log.WithFields(log.Fields{
-				"keybasePath": keybasePath,
-				"fn":          "Accounts",
-			}).WithError(err).Warningln("failed to lookup")
+			log.WithField("keystore", keystorePath).WithError(err).Warningln("failed to read keystore files")
 		}
 	}
+
 	return accounts
 }
 
 var errRangeStop = errors.New("stop")
 
-func (ks *keyStore) forEachWallet(keybasePath string, fn func(spec *WalletSpec) error) error {
-	return filepath.Walk(keybasePath, func(path string, info os.FileInfo, err error) error {
+func (ks *keyStore) forEachWallet(keystorePath string, fn func(spec *WalletSpec) error) error {
+	return filepath.Walk(keystorePath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
-		} else if path == keybasePath {
+		} else if path == keystorePath {
 			return nil
 		} else if info.IsDir() {
 			return filepath.SkipDir
@@ -131,22 +112,39 @@ func (ks *keyStore) forEachWallet(keybasePath string, fn func(spec *WalletSpec) 
 	})
 }
 
-func (ks *keyStore) AddPath(keybase string) error {
-	f, err := os.Stat(keybase)
+func (ks *keyStore) AddPath(keystorePath string) error {
+	f, err := os.Stat(keystorePath)
 	if err != nil {
 		return err
 	} else if !f.IsDir() {
-		return fmt.Errorf("%s is not a directory", keybase)
+		return fmt.Errorf("%s is not a directory", keystorePath)
 	}
+
 	ks.pathsMux.Lock()
-	ks.paths[keybase] = struct{}{}
+	ks.paths[keystorePath] = struct{}{}
 	ks.pathsMux.Unlock()
+
+	ks.reloadPathsCache()
+
 	return nil
 }
 
-func (ks *keyStore) RemovePath(keybase string) {
+func (ks *keyStore) reloadPathsCache() {
+	paths := ks.Paths()
+	for _, keystorePath := range paths {
+		err := ks.forEachWallet(keystorePath, func(spec *WalletSpec) error {
+			_ = ks.cache.SetPath(spec.AddressFromHex(), spec.Path)
+			return nil
+		})
+		if err != nil {
+			log.WithField("keystore", keystorePath).WithError(err).Warningln("failed to read keystore files")
+		}
+	}
+}
+
+func (ks *keyStore) RemovePath(keystorePath string) {
 	ks.pathsMux.Lock()
-	delete(ks.paths, keybase)
+	delete(ks.paths, keystorePath)
 	ks.pathsMux.Unlock()
 }
 
@@ -161,19 +159,6 @@ func (ks *keyStore) Paths() []string {
 	return paths
 }
 
-func (ks *keyStore) NewWalletSubscribeNotify(notifyC chan<- *WalletSpec) {
-	ks.notifyWalletSubscribersMux.Lock()
-	ks.notifyWalletSubscribers = append(ks.notifyWalletSubscribers, notifyC)
-	ks.notifyWalletSubscribersMux.Unlock()
-}
-
-func (ks *keyStore) getNotifyWalletSubscribers() []chan<- *WalletSpec {
-	ks.notifyWalletSubscribersMux.RLock()
-	subs := ks.notifyWalletSubscribers
-	ks.notifyWalletSubscribersMux.RUnlock()
-	return subs
-}
-
 type WalletSpec struct {
 	Address string `json:"address"`
 	ID      string `json:"id"`
@@ -181,6 +166,21 @@ type WalletSpec struct {
 	Path    string `json:"-"`
 }
 
-func (spec *WalletSpec) HexToAddress() common.Address {
+func (spec *WalletSpec) AddressFromHex() common.Address {
 	return common.HexToAddress(spec.Address)
+}
+
+func PrivateKeyPersonalSignFn(privKey *ecdsa.PrivateKey) (PersonalSignFn, error) {
+	keyAddress := crypto.PubkeyToAddress(privKey.PublicKey)
+
+	signFn := func(from common.Address, data []byte) (sig []byte, err error) {
+		if from != keyAddress {
+			return nil, errors.New("from address mismatch")
+		}
+
+		protectedHash := accounts.TextHash(data)
+		return crypto.Sign(protectedHash, privKey)
+	}
+
+	return signFn, nil
 }

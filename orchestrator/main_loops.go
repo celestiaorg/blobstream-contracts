@@ -4,44 +4,51 @@ import (
 	"context"
 	"math"
 	"math/big"
-	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	log "github.com/xlab/suplog"
+	"golang.org/x/sync/errgroup"
 
+	"github.com/InjectiveLabs/peggo/modules/peggy/types"
+	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
 	"github.com/InjectiveLabs/peggo/orchestrator/relayer"
-	"github.com/InjectiveLabs/peggo/orchestrator/sidechain"
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 )
 
 const defaultLoopDur = 10 * time.Second
 
-// RunLoop combines the four major roles required to make
-// up the 'Orchestrator', all four of these are async loops.
-func (s *peggyOrchestrator) RunLoop(ctx context.Context) {
-	wg := new(sync.WaitGroup)
-	defer wg.Wait()
-	wg.Add(5)
-	go s.ethOracleMainLoop(wg)
-	go s.batchRequesterLoop(wg)
-	go s.ethSignerMainLoop(wg)
-	go s.relayerMainLoop(wg)
-	go s.valsetRequesterLoop(wg)
+// Start combines the all major roles required to make
+// up the Orchestrator, all of these are async loops.
+func (s *peggyOrchestrator) Start(ctx context.Context) error {
+	eg, ctx := errgroup.WithContext(ctx)
+
+	eg.Go(func() error {
+		return s.EthOracleMainLoop(ctx)
+	})
+	eg.Go(func() error {
+		return s.BatchRequesterLoop(ctx)
+	})
+	eg.Go(func() error {
+		return s.EthSignerMainLoop(ctx)
+	})
+	eg.Go(func() error {
+		return s.RelayerMainLoop(ctx)
+	})
+	eg.Go(func() error {
+		return s.ValsetRequesterLoop(ctx)
+	})
+
+	return eg.Wait()
 }
 
-// ethOracleMainLoop is responsible for making sure that Ethereum events are retrieved from the Ethereum blockchain
+// EthOracleMainLoop is responsible for making sure that Ethereum events are retrieved from the Ethereum blockchain
 // and ferried over to Cosmos where they will be used to issue tokens or process batches.
 //
 // TODO this loop requires a method to bootstrap back to the correct event nonce when restarted
-func (s *peggyOrchestrator) ethOracleMainLoop(wg *sync.WaitGroup) {
-	defer wg.Done()
-	ctx := context.Background()
-
-	var err error
+func (s *peggyOrchestrator) EthOracleMainLoop(ctx context.Context) (err error) {
 	var lastCheckedBlock uint64
 	for {
-		lastCheckedBlock, err = s.getLastCheckedBlock(ctx)
+		lastCheckedBlock, err = s.GetLastCheckedBlock(ctx)
 		if err != nil {
 			log.WithError(err).Errorln("failed to get last checked block, retry in", defaultRetryDur)
 			time.Sleep(defaultRetryDur)
@@ -74,7 +81,7 @@ func (s *peggyOrchestrator) ethOracleMainLoop(wg *sync.WaitGroup) {
 		)
 
 		// Relays events from Ethereum -> Cosmos
-		currentBlock, err := s.checkForEvents(ctx, lastCheckedBlock)
+		currentBlock, err := s.CheckForEvents(ctx, lastCheckedBlock)
 		if err != nil {
 			log.WithError(err).Errorln("error during eht event checking, retry in", defaultRetryDur)
 			t.Reset(defaultRetryDur)
@@ -86,17 +93,13 @@ func (s *peggyOrchestrator) ethOracleMainLoop(wg *sync.WaitGroup) {
 		t.Reset(defaultLoopDur)
 	}
 
+	return nil
 }
 
-// The eth_signer simply signs off on any batches or validator sets provided by the validator
+// EthSignerMainLoop simply signs off on any batches or validator sets provided by the validator
 // since these are provided directly by a trusted Cosmsos node they can simply be assumed to be
 // valid and signed off on.
-func (s *peggyOrchestrator) ethSignerMainLoop(wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	ctx := context.Background()
-
-	var err error
+func (s *peggyOrchestrator) EthSignerMainLoop(ctx context.Context) (err error) {
 	var peggyID common.Hash
 	for {
 		peggyID, err = s.peggyContract.GetPeggyID(ctx, s.peggyContract.FromAddress())
@@ -131,8 +134,8 @@ func (s *peggyOrchestrator) ethSignerMainLoop(wg *sync.WaitGroup) {
 			latestEthBlock, latestCosmosBlock,
 		)
 
-		valset, err := s.cosmosQueryClient.OldestUnsignedValset(ctx, s.peggyBroadcastClient.FromAddress())
-		if err == sidechain.ErrNotFound {
+		valset, err := s.cosmosQueryClient.OldestUnsignedValset(ctx, s.peggyBroadcastClient.ValFromAddress())
+		if err == cosmos.ErrNotFound {
 			log.Debugln("no Valset waiting to be signed")
 		} else if err != nil {
 			log.WithError(err).Errorln("failed to get unsigned Valset for signing, retry in", defaultRetryDur)
@@ -144,7 +147,7 @@ func (s *peggyOrchestrator) ethSignerMainLoop(wg *sync.WaitGroup) {
 		} else {
 			log.Infoln("sending Valset confirm for %d", valset.Nonce)
 
-			if err := s.peggyBroadcastClient.SendValsetConfirm(ctx, s.ethPrivateKey, peggyID, valset); err != nil {
+			if err := s.peggyBroadcastClient.SendValsetConfirm(ctx, s.ethFrom, peggyID, valset); err != nil {
 				log.WithError(err).Errorln("failed to sign and send Valset confirmation to Cosmos, retry in", defaultRetryDur)
 				t.Reset(defaultRetryDur)
 				continue
@@ -152,8 +155,8 @@ func (s *peggyOrchestrator) ethSignerMainLoop(wg *sync.WaitGroup) {
 		}
 
 		// sign the last unsigned batch, TODO check if we already have signed this
-		txBatch, err := s.cosmosQueryClient.OldestUnsignedTransactionBatch(ctx, s.peggyBroadcastClient.FromAddress())
-		if err == sidechain.ErrNotFound {
+		txBatch, err := s.cosmosQueryClient.OldestUnsignedTransactionBatch(ctx, s.peggyBroadcastClient.ValFromAddress())
+		if err == cosmos.ErrNotFound {
 			log.Debugln("no TransactionBatch waiting to be signed")
 		} else if err != nil {
 			log.WithError(err).Errorln("failed to get unsigned TransactionBatch for signing, retry in", defaultRetryDur)
@@ -165,7 +168,7 @@ func (s *peggyOrchestrator) ethSignerMainLoop(wg *sync.WaitGroup) {
 		} else {
 			log.Infoln("sending TransactionBatch confirm for %d", txBatch.BatchNonce)
 
-			if err := s.peggyBroadcastClient.SendBatchConfirm(ctx, s.ethPrivateKey, peggyID, txBatch); err != nil {
+			if err := s.peggyBroadcastClient.SendBatchConfirm(ctx, s.ethFrom, peggyID, txBatch); err != nil {
 				log.WithError(err).Errorln("failed to sign and send TransactionBatch confirmation to Cosmos, retry in", defaultRetryDur)
 				t.Reset(defaultRetryDur)
 				continue
@@ -174,6 +177,8 @@ func (s *peggyOrchestrator) ethSignerMainLoop(wg *sync.WaitGroup) {
 
 		t.Reset(defaultLoopDur)
 	}
+
+	return nil
 }
 
 // This loop doesn't have a formal role per say, anyone can request a valset
@@ -186,11 +191,7 @@ func (s *peggyOrchestrator) ethSignerMainLoop(wg *sync.WaitGroup) {
 // just to simplify the test environment. But in production that's somewhat wasteful. What this
 // routine does it check the current valset versus the last requested valset, if power has changed
 // significantly we send in a request.
-func (s *peggyOrchestrator) valsetRequesterLoop(wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	ctx := context.Background()
-
+func (s *peggyOrchestrator) ValsetRequesterLoop(ctx context.Context) (err error) {
 	t := time.NewTimer(0)
 	for range t.C {
 
@@ -215,7 +216,7 @@ func (s *peggyOrchestrator) valsetRequesterLoop(wg *sync.WaitGroup) {
 			}
 		} else {
 			// if the power difference is more than 1% different than the last valset
-			if PowerDiff(latestValsets[0], currentValset) > 0.01 {
+			if valPowerDiff(latestValsets[0], currentValset) > 0.01 {
 				log.Debugln("power difference is more than 1% different than the last valset. Sending valset request")
 				if err := s.peggyBroadcastClient.SendValsetRequest(ctx); err != nil {
 					log.WithError(err).Warningln("valset request failed")
@@ -225,11 +226,46 @@ func (s *peggyOrchestrator) valsetRequesterLoop(wg *sync.WaitGroup) {
 
 		t.Reset(defaultLoopDur)
 	}
+
+	return nil
 }
 
-// PowerDiff returns the difference in power between two bridge validator sets
+func (s *peggyOrchestrator) BatchRequesterLoop(ctx context.Context) (err error) {
+	t := time.NewTimer(0)
+	for range t.C {
+		// get All the denominations
+		// check if threshold is met
+		// broadcast Request batch
+
+		for coinDenom, tokenAddr := range s.erc20ContractMapping {
+			unbatchTxs, err := s.cosmosQueryClient.LatestUnbatchOutgoingTx(ctx, tokenAddr)
+			if err == nil && unbatchTxs != nil && len(unbatchTxs) != 0 {
+				log.WithFields(log.Fields{
+					"coinDenom": coinDenom,
+				}).Debugln("Sending unbatchTxs:", unbatchTxs)
+
+				if err := s.peggyBroadcastClient.SendRequestBatch(ctx, coinDenom); err != nil {
+					log.WithError(err).Warningln("valset request failed")
+				}
+			} else if err != nil {
+				log.WithError(err).Errorln("failed to get LatestUnbatchOutgoingTx")
+			}
+		}
+
+		t.Reset(defaultLoopDur)
+	}
+
+	return nil
+}
+
+func (s *peggyOrchestrator) RelayerMainLoop(ctx context.Context) (err error) {
+	r := relayer.NewPeggyRelayer(s.cosmosQueryClient, s.peggyContract)
+	return r.Start(ctx)
+}
+
+// valPowerDiff returns the difference in power between two bridge validator sets
 // TODO: this needs to be potentially refactored
-func PowerDiff(old *types.Valset, new *types.Valset) float64 {
+func valPowerDiff(old *types.Valset, new *types.Valset) float64 {
 	powers := map[string]int64{}
 	var totalB int64
 	// loop over b and initialize the map with their powers
@@ -255,42 +291,6 @@ func PowerDiff(old *types.Valset, new *types.Valset) float64 {
 	}
 
 	return math.Abs(delta / float64(totalB))
-}
-
-func (s *peggyOrchestrator) batchRequesterLoop(wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	ctx := context.Background()
-
-	t := time.NewTimer(0)
-	for range t.C {
-
-		// batchReqMsg := peggyTypes.MsgRequestBatch{Requester: senderAccAddr.String(), Denom: "inj"}
-		// _, err = c.CosmosClient.SyncBroadcastMsg(&batchReqMsg)
-		// assert.Nil(t, err, "Error broadcasting batchReqMsg to sidechain")
-
-		// get All the denominations
-		// check if threshold is met
-		// broadcast Request batch
-		unbatchTxs, err := s.cosmosQueryClient.LatestUnbatchOutgoingTx(ctx, s.injContractAddress)
-		if err == nil && unbatchTxs != nil && len(unbatchTxs) != 0 {
-			log.Debugln("unbatchTxs:", unbatchTxs)
-			if err := s.peggyBroadcastClient.SendRequestBatch(ctx, "inj"); err != nil {
-				log.WithError(err).Warningln("valset request failed")
-			}
-		} else {
-			log.Debugln("latest unbatch tx", "unbatchTxs:", unbatchTxs, "error", err)
-		}
-
-		t.Reset(defaultLoopDur)
-	}
-}
-
-func (s *peggyOrchestrator) relayerMainLoop(wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	r := relayer.NewPeggyRelayer(s.cosmosQueryClient, s.peggyContract)
-	r.RunLoop()
 }
 
 func calculateTotalValsetPower(valset *types.Valset) *big.Int {

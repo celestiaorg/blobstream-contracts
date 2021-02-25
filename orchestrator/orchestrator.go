@@ -2,17 +2,28 @@ package orchestrator
 
 import (
 	"context"
-	"crypto/ecdsa"
 
+	ethcmn "github.com/ethereum/go-ethereum/common"
+
+	sidechain "github.com/InjectiveLabs/peggo/orchestrator/cosmos"
+	"github.com/InjectiveLabs/peggo/orchestrator/cosmos/tmclient"
+	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/keystore"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/provider"
 	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
-	"github.com/InjectiveLabs/peggo/orchestrator/sidechain"
-	"github.com/InjectiveLabs/peggo/orchestrator/sidechain/tmclient"
 )
 
 type PeggyOrchestrator interface {
-	RunLoop(ctx context.Context)
+	Start(ctx context.Context) error
+
+	CheckForEvents(ctx context.Context, startingBlock uint64) (currentBlock uint64, err error)
+	GetLastCheckedBlock(ctx context.Context) (uint64, error)
+
+	EthOracleMainLoop(ctx context.Context) error
+	EthSignerMainLoop(ctx context.Context) error
+	ValsetRequesterLoop(ctx context.Context) error
+	BatchRequesterLoop(ctx context.Context) error
+	RelayerMainLoop(ctx context.Context) error
 }
 
 type peggyOrchestrator struct {
@@ -23,8 +34,10 @@ type peggyOrchestrator struct {
 	peggyBroadcastClient sidechain.PeggyBroadcastClient
 	peggyContract        peggy.PeggyContract
 	ethProvider          provider.EVMProvider
-	ethPrivateKey        *ecdsa.PrivateKey
-	injContractAddress   string
+	ethFrom              ethcmn.Address
+	ethSignerFn          keystore.SignerFn
+	ethPersonalSignFn    keystore.PersonalSignFn
+	erc20ContractMapping map[string]ethcmn.Address
 }
 
 func NewPeggyOrchestrator(
@@ -32,8 +45,10 @@ func NewPeggyOrchestrator(
 	peggyBroadcastClient sidechain.PeggyBroadcastClient,
 	tmClient tmclient.TendermintClient,
 	peggyContract peggy.PeggyContract,
-	ethPrivateKey *ecdsa.PrivateKey,
-	injContractAddress string,
+	ethFrom ethcmn.Address,
+	ethSignerFn keystore.SignerFn,
+	ethPersonalSignFn keystore.PersonalSignFn,
+	erc20ContractMapping map[string]ethcmn.Address,
 ) PeggyOrchestrator {
 	return &peggyOrchestrator{
 		tmClient:             tmClient,
@@ -41,8 +56,10 @@ func NewPeggyOrchestrator(
 		peggyBroadcastClient: peggyBroadcastClient,
 		peggyContract:        peggyContract,
 		ethProvider:          peggyContract.Provider(),
-		ethPrivateKey:        ethPrivateKey,
-		injContractAddress:   injContractAddress,
+		ethFrom:              ethFrom,
+		ethSignerFn:          ethSignerFn,
+		ethPersonalSignFn:    ethPersonalSignFn,
+		erc20ContractMapping: erc20ContractMapping,
 
 		svcTags: metrics.Tags{
 			"svc": "peggy_orchestrator",

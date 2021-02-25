@@ -1,4 +1,4 @@
-package sidechain
+package client
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func DialerFunc(ctx context.Context, addr string) (net.Conn, error) {
+func dialerFunc(ctx context.Context, addr string) (net.Conn, error) {
 	return Connect(addr)
 }
 

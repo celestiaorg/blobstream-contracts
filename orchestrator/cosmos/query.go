@@ -1,27 +1,27 @@
-package sidechain
+package cosmos
 
 import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
+	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 
+	"github.com/InjectiveLabs/peggo/modules/peggy/types"
 	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 )
 
 type PeggyQueryClient interface {
 	ValsetAt(ctx context.Context, nonce uint64) (*types.Valset, error)
 	CurrentValset(ctx context.Context) (*types.Valset, error)
-	OldestUnsignedValset(ctx context.Context, address sdk.AccAddress) (*types.Valset, error)
+	OldestUnsignedValset(ctx context.Context, valAddress sdk.ValAddress) (*types.Valset, error)
 	LatestValsets(ctx context.Context) ([]*types.Valset, error)
 	AllValsetConfirms(ctx context.Context, nonce uint64) ([]*types.MsgValsetConfirm, error)
-	OldestUnsignedTransactionBatch(ctx context.Context, address sdk.AccAddress) (*types.OutgoingTxBatch, error)
+	OldestUnsignedTransactionBatch(ctx context.Context, valAddress sdk.ValAddress) (*types.OutgoingTxBatch, error)
 	LatestTransactionBatches(ctx context.Context) ([]*types.OutgoingTxBatch, error)
-	LatestUnbatchOutgoingTx(ctx context.Context, contractAddr string) ([]*types.OutgoingTx, error)
-	TransactionBatchSignatures(ctx context.Context, nonce uint64, tokenContract common.Address) ([]*types.MsgConfirmBatch, error)
-	LastEventNonce(ctx context.Context, address sdk.AccAddress) (uint64, error)
+	LatestUnbatchOutgoingTx(ctx context.Context, tokenContract ethcmn.Address) ([]*types.OutgoingTx, error)
+	TransactionBatchSignatures(ctx context.Context, nonce uint64, tokenContract ethcmn.Address) ([]*types.MsgConfirmBatch, error)
+	LastEventNonce(ctx context.Context, valAddress sdk.ValAddress) (uint64, error)
 }
 
 func NewPeggyQueryClient(client types.QueryClient) PeggyQueryClient {
@@ -78,13 +78,13 @@ func (s *peggyQueryClient) CurrentValset(ctx context.Context) (*types.Valset, er
 	return daemonResp.Valset, nil
 }
 
-func (s *peggyQueryClient) OldestUnsignedValset(ctx context.Context, address sdk.AccAddress) (*types.Valset, error) {
+func (s *peggyQueryClient) OldestUnsignedValset(ctx context.Context, valAddress sdk.ValAddress) (*types.Valset, error) {
 	metrics.ReportFuncCall(s.svcTags)
 	doneFn := metrics.ReportFuncTiming(s.svcTags)
 	defer doneFn()
 
 	daemonResp, err := s.daemonQueryClient.LastPendingValsetRequestByAddr(ctx, &types.QueryLastPendingValsetRequestByAddrRequest{
-		Address: address.String(),
+		Address: valAddress.String(),
 	})
 	if err != nil {
 		metrics.ReportFuncError(s.svcTags)
@@ -133,13 +133,13 @@ func (s *peggyQueryClient) AllValsetConfirms(ctx context.Context, nonce uint64) 
 	return daemonResp.Confirms, nil
 }
 
-func (s *peggyQueryClient) OldestUnsignedTransactionBatch(ctx context.Context, address sdk.AccAddress) (*types.OutgoingTxBatch, error) {
+func (s *peggyQueryClient) OldestUnsignedTransactionBatch(ctx context.Context, valAddress sdk.ValAddress) (*types.OutgoingTxBatch, error) {
 	metrics.ReportFuncCall(s.svcTags)
 	doneFn := metrics.ReportFuncTiming(s.svcTags)
 	defer doneFn()
 
 	daemonResp, err := s.daemonQueryClient.LastPendingBatchRequestByAddr(ctx, &types.QueryLastPendingBatchRequestByAddrRequest{
-		Address: address.String(),
+		Address: valAddress.String(),
 	})
 	if err != nil {
 		metrics.ReportFuncError(s.svcTags)
@@ -169,12 +169,14 @@ func (s *peggyQueryClient) LatestTransactionBatches(ctx context.Context) ([]*typ
 	return daemonResp.Batches, nil
 }
 
-func (s *peggyQueryClient) LatestUnbatchOutgoingTx(ctx context.Context, contractAddr string) ([]*types.OutgoingTx, error) {
+func (s *peggyQueryClient) LatestUnbatchOutgoingTx(ctx context.Context, tokenContract ethcmn.Address) ([]*types.OutgoingTx, error) {
 	metrics.ReportFuncCall(s.svcTags)
 	doneFn := metrics.ReportFuncTiming(s.svcTags)
 	defer doneFn()
 
-	daemonResp, err := s.daemonQueryClient.UnbatchedTxPool(ctx, &types.QueryUnbatchedTxPoolByAddrRequest{Address: contractAddr})
+	daemonResp, err := s.daemonQueryClient.UnbatchedTxPool(ctx, &types.QueryUnbatchedTxPoolByAddrRequest{
+		Address: tokenContract.String(),
+	})
 	if err != nil {
 		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to query UnbatchedTxPool from daemon")
@@ -186,12 +188,15 @@ func (s *peggyQueryClient) LatestUnbatchOutgoingTx(ctx context.Context, contract
 	return daemonResp.OutgoingTxs, nil
 }
 
-func (s *peggyQueryClient) TransactionBatchSignatures(ctx context.Context, nonce uint64, tokenContract common.Address) ([]*types.MsgConfirmBatch, error) {
+func (s *peggyQueryClient) TransactionBatchSignatures(ctx context.Context, nonce uint64, tokenContract ethcmn.Address) ([]*types.MsgConfirmBatch, error) {
 	metrics.ReportFuncCall(s.svcTags)
 	doneFn := metrics.ReportFuncTiming(s.svcTags)
 	defer doneFn()
 
-	daemonResp, err := s.daemonQueryClient.BatchConfirms(ctx, &types.QueryBatchConfirmsRequest{Nonce: nonce, ContractAddress: tokenContract.Hex()})
+	daemonResp, err := s.daemonQueryClient.BatchConfirms(ctx, &types.QueryBatchConfirmsRequest{
+		Nonce:           nonce,
+		ContractAddress: tokenContract.String(),
+	})
 	if err != nil {
 		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to query BatchConfirms from daemon")
@@ -203,13 +208,13 @@ func (s *peggyQueryClient) TransactionBatchSignatures(ctx context.Context, nonce
 	return daemonResp.Confirms, nil
 }
 
-func (s *peggyQueryClient) LastEventNonce(ctx context.Context, address sdk.AccAddress) (uint64, error) {
+func (s *peggyQueryClient) LastEventNonce(ctx context.Context, valAddress sdk.ValAddress) (uint64, error) {
 	metrics.ReportFuncCall(s.svcTags)
 	doneFn := metrics.ReportFuncTiming(s.svcTags)
 	defer doneFn()
 
 	daemonResp, err := s.daemonQueryClient.LastEventNonceByAddr(ctx, &types.QueryLastEventNonceByAddrRequest{
-		Address: address.String(),
+		Address: valAddress.String(),
 	})
 	if err != nil {
 		metrics.ReportFuncError(s.svcTags)

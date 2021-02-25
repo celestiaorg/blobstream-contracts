@@ -73,6 +73,7 @@ func TransactFn(p EVMProviderWithRet, contractAddress common.Address, txHashOut 
 		if value == nil {
 			value = new(big.Int)
 		}
+
 		var nonce uint64
 		if opts.Nonce == nil {
 			nonce, err = p.PendingNonceAt(opts.Context, opts.From)
@@ -82,6 +83,7 @@ func TransactFn(p EVMProviderWithRet, contractAddress common.Address, txHashOut 
 		} else {
 			nonce = opts.Nonce.Uint64()
 		}
+
 		// Figure out the gas allowance and gas price values
 		gasPrice := opts.GasPrice
 		if gasPrice == nil {
@@ -90,6 +92,7 @@ func TransactFn(p EVMProviderWithRet, contractAddress common.Address, txHashOut 
 				return nil, errors.Errorf("failed to suggest gas price: %v", err)
 			}
 		}
+
 		gasLimit := opts.GasLimit
 		if gasLimit == 0 {
 			// Gas estimation cannot succeed without code for method invocations
@@ -117,6 +120,7 @@ func TransactFn(p EVMProviderWithRet, contractAddress common.Address, txHashOut 
 		if opts.Signer == nil {
 			return nil, errors.New("no signer to authorize the transaction with")
 		}
+
 		signedTx, err := opts.Signer(opts.From, rawTx)
 		if err != nil {
 			return nil, err

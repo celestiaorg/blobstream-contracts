@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
+	"github.com/InjectiveLabs/peggo/modules/peggy/types"
 )
 
 func (s *peggyContract) SendEthValsetUpdate(
@@ -69,11 +69,11 @@ func (s *peggyContract) SendEthValsetUpdate(
 		sigS,
 	)
 	if err != nil {
-		log.WithError(err).Errorln("ABI Pack Peggy [updateValset] method")
+		log.WithError(err).Errorln("ABI Pack (Peggy updateValset) method")
 		return nil, err
 	}
 
-	txHash, err := s.EVMCommitter.SendTx(s.peggyAddress, txData)
+	txHash, err := s.SendTx(ctx, s.peggyAddress, txData)
 	if err != nil {
 		log.WithError(err).WithField("tx_hash", txHash.Hex()).Errorln("Failed to sign and submit (Peggy updateValset) to EVM")
 		return nil, err

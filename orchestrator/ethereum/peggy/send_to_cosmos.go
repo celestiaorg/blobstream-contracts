@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/sdk-go/wrappers"
+	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/wrappers"
 )
 
 func (s *peggyContract) SendToCosmos(
@@ -36,11 +36,11 @@ func (s *peggyContract) SendToCosmos(
 		// allowance not set or not max (a.k.a. unlocked token)
 		txData, err := erc20ABI.Pack("approve", s.peggyAddress, maxUintAllowance)
 		if err != nil {
-			log.WithError(err).Errorln("ABI Pack ERC20 [approve] method")
+			log.WithError(err).Errorln("ABI Pack (ERC20 approve) method")
 			return nil, err
 		}
 
-		txHash, err := s.EVMCommitter.SendTx(erc20, txData)
+		txHash, err := s.SendTx(ctx, erc20, txData)
 		if err != nil {
 			log.WithError(err).WithField("tx_hash", txHash.Hex()).Errorln("Failed to sign and submit (ERC20 approve) to EVM")
 			return nil, err
@@ -60,11 +60,11 @@ func (s *peggyContract) SendToCosmos(
 
 	txData, err := peggyABI.Pack("sendToCosmos", erc20, cosmosDestAddressBytes, amount)
 	if err != nil {
-		log.WithError(err).Errorln("ABI Pack Peggy [sendToCosmos] method")
+		log.WithError(err).Errorln("ABI Pack (Peggy sendToCosmos) method")
 		return nil, err
 	}
 
-	txHash, err := s.EVMCommitter.SendTx(s.peggyAddress, txData)
+	txHash, err := s.SendTx(ctx, s.peggyAddress, txData)
 	if err != nil {
 		log.WithError(err).WithField("tx_hash", txHash.Hex()).Errorln("Failed to sign and submit (Peggy sendToCosmos) to EVM")
 		return nil, err

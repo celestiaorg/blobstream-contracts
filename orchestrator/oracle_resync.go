@@ -4,20 +4,21 @@ import (
 	"context"
 	"time"
 
-	"github.com/InjectiveLabs/sdk-go/wrappers"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
+
+	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/wrappers"
 )
 
 const defaultBlocksToSearch = 2000
 
-// getLastCheckedBlock retrieves the last event nonce this oracle has relayed to Cosmos
+// GetLastCheckedBlock retrieves the last event nonce this oracle has relayed to Cosmos
 // it then uses the Ethereum indexes to determine what block the last entry
 //
 // TODO this should simply be stored in the deposit or withdraw claim and we
 // ask the Cosmos chain, this searching is a total waste of work
-func (s *peggyOrchestrator) getLastCheckedBlock(ctx context.Context) (uint64, error) {
+func (s *peggyOrchestrator) GetLastCheckedBlock(ctx context.Context) (uint64, error) {
 	latestHeader, err := s.ethProvider.HeaderByNumber(ctx, nil)
 	if err != nil {
 		err = errors.Wrap(err, "failed to get latest header")
@@ -25,7 +26,7 @@ func (s *peggyOrchestrator) getLastCheckedBlock(ctx context.Context) (uint64, er
 	}
 	currentBlock := latestHeader.Number.Uint64()
 
-	lastEventNonce, err := s.cosmosQueryClient.LastEventNonce(ctx, s.peggyBroadcastClient.FromAddress())
+	lastEventNonce, err := s.cosmosQueryClient.LastEventNonce(ctx, s.peggyBroadcastClient.ValFromAddress())
 	if err != nil {
 		return 0, err
 	} else if lastEventNonce == 0 {
@@ -100,7 +101,7 @@ func (s *peggyOrchestrator) getLastCheckedBlock(ctx context.Context) (uint64, er
 	}
 
 	log.Warningf("Could not find the last event relayed by %s, Last Event nonce is %d but no event matching that could be found",
-		s.peggyBroadcastClient.FromAddress(), lastEventNonce)
+		s.peggyBroadcastClient.ValFromAddress(), lastEventNonce)
 
 	return 0, ErrNotFound
 }

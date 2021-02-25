@@ -1,8 +1,8 @@
 APP_VERSION = $(shell git describe --abbrev=0 --tags)
 GIT_COMMIT = $(shell git rev-parse --short HEAD)
 BUILD_DATE = $(shell date -u "+%Y%m%d-%H%M")
-VERSION_PKG = github.com/InjectiveLabs/peggo/orchestrator
-IMAGE_NAME := gcr.io/injective-core/peggo-orchestrator
+VERSION_PKG = github.com/InjectiveLabs/peggo/cmd/peggo
+IMAGE_NAME := gcr.io/injective-core/peggo
 
 all:
 
@@ -23,4 +23,3 @@ install:
 		./cmd/...
 
 .PHONY: install image push
-

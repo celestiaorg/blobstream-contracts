@@ -4,12 +4,11 @@ RUN apk add --no-cache git gcc make perl jq libc-dev linux-headers
 
 #build binary
 WORKDIR /src
-ENV GO111MODULE=on
 COPY . .
-RUN cd orchestrator && go mod download
+RUN go mod download
 
 #install binary
-RUN cd orchestrator && make install
+RUN make install
 
 #build main container
 FROM alpine:latest
@@ -22,4 +21,4 @@ VOLUME /apps/data
 WORKDIR /apps/data
 
 #default command
-CMD cd /root/.injectived/peggo/ && peggo_orchestrator
+CMD cd /root/.injectived/peggo/ && peggo orchestrator

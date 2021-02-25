@@ -2,15 +2,12 @@ package committer
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"math/big"
 	"strings"
-	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
@@ -22,19 +19,25 @@ import (
 // NewEthCommitter returns an instance of EVMCommitter, which
 // can be used to submit txns into Ethereum, Matic, and other EVM-compatible networks.
 func NewEthCommitter(
-	fromPrivateKey *ecdsa.PrivateKey,
+	fromAddress common.Address,
+	fromSigner bind.SignerFn,
 	evmProvider provider.EVMProviderWithRet,
+	committerOpts ...EVMCommitterOption,
 ) (EVMCommitter, error) {
-	fromAddress := crypto.PubkeyToAddress(fromPrivateKey.PublicKey)
 	committer := &ethCommitter{
+		committerOpts: defaultOptions(),
 		svcTags: metrics.Tags{
 			"module": "eth_committer",
 		},
 
 		fromAddress: fromAddress,
-		fromKey:     fromPrivateKey,
+		fromSigner:  fromSigner,
 		evmProvider: evmProvider,
 		nonceCache:  util.NewNonceCache(),
+	}
+
+	if err := applyOptions(committer.committerOpts, committerOpts...); err != nil {
+		return nil, err
 	}
 
 	committer.nonceCache.Sync(fromAddress, func() (uint64, error) {
@@ -46,8 +49,10 @@ func NewEthCommitter(
 }
 
 type ethCommitter struct {
+	committerOpts *options
+
 	fromAddress common.Address
-	fromKey     *ecdsa.PrivateKey
+	fromSigner  bind.SignerFn
 
 	evmProvider provider.EVMProviderWithRet
 	nonceCache  util.NonceCache
@@ -64,6 +69,7 @@ func (e *ethCommitter) Provider() provider.EVMProvider {
 }
 
 func (e *ethCommitter) SendTx(
+	ctx context.Context,
 	recipient common.Address,
 	txData []byte,
 ) (txHash common.Hash, err error) {
@@ -72,10 +78,12 @@ func (e *ethCommitter) SendTx(
 	defer doneFn()
 
 	opts := &bind.TransactOpts{
-		From:     e.fromAddress,
-		Signer:   util.SignerFnForPk(e.fromKey),
-		GasPrice: util.Gwei(20).ToInt(), // todo: no hardcoding
-		GasLimit: 1000000,               // todo: no hardcoding
+		From:   e.fromAddress,
+		Signer: e.fromSigner,
+
+		GasPrice: e.committerOpts.GasPrice.BigInt(),
+		GasLimit: e.committerOpts.GasLimit,
+		Context:  ctx, // with RPC timeout
 	}
 
 	resyncNonces := func(from common.Address) {
@@ -95,7 +103,7 @@ func (e *ethCommitter) SendTx(
 
 		for {
 			opts.Nonce = big.NewInt(nonce)
-			opts.Context, _ = context.WithTimeout(context.Background(), 20*time.Second)
+			opts.Context, _ = context.WithTimeout(ctx, e.committerOpts.RPCTimeout)
 
 			tx := types.NewTransaction(opts.Nonce.Uint64(), recipient, nil, opts.GasLimit, opts.GasPrice, txData)
 			signedTx, err := opts.Signer(opts.From, tx)

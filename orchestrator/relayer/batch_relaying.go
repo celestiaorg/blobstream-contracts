@@ -7,12 +7,12 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
+	"github.com/InjectiveLabs/peggo/modules/peggy/types"
 )
 
-// relayBatches checks the last validator set on Ethereum, if it's lower than our latest valida
+// RelayBatches checks the last validator set on Ethereum, if it's lower than our latest valida
 // set then we should package and submit the update as an Ethereum transaction
-func (s *peggyRelayer) relayBatches(ctx context.Context) error {
+func (s *peggyRelayer) RelayBatches(ctx context.Context) error {
 	latestBatches, err := s.cosmosQueryClient.LatestTransactionBatches(ctx)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func (s *peggyRelayer) relayBatches(ctx context.Context) error {
 		return err
 	}
 
-	currentValset, err := s.findLatestValset(ctx)
+	currentValset, err := s.FindLatestValset(ctx)
 	if err != nil {
 		return errors.New("failed to find latest valset")
 	} else if currentValset == nil {

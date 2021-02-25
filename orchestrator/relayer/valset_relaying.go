@@ -6,12 +6,12 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
+	"github.com/InjectiveLabs/peggo/modules/peggy/types"
 )
 
-// relayValsets checks the last validator set on Ethereum, if it's lower than our latest validator
+// RelayValsets checks the last validator set on Ethereum, if it's lower than our latest validator
 // set then we should package and submit the update as an Ethereum transaction
-func (s *peggyRelayer) relayValsets(ctx context.Context) error {
+func (s *peggyRelayer) RelayValsets(ctx context.Context) error {
 	// we should determine if we need to relay one
 	// to Ethereum for that we will find the latest confirmed valset and compare it to the ethereum chain
 	latestValsets, err := s.cosmosQueryClient.LatestValsets(ctx)
@@ -41,7 +41,7 @@ func (s *peggyRelayer) relayValsets(ctx context.Context) error {
 		return nil
 	}
 
-	currentEthValset, err := s.findLatestValset(ctx)
+	currentEthValset, err := s.FindLatestValset(ctx)
 	if err != nil {
 		err = errors.Wrap(err, "couldn't find latest confirmed valset on Ethereum")
 		return err

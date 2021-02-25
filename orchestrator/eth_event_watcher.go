@@ -8,12 +8,12 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/sdk-go/wrappers"
+	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/wrappers"
 )
 
-// checkForEvents checks for events such as a deposit to the Peggy Ethereum contract or a validator set update
+// CheckForEvents checks for events such as a deposit to the Peggy Ethereum contract or a validator set update
 // or a transaction batch update. It then responds to these events by performing actions on the Cosmos chain if required
-func (s *peggyOrchestrator) checkForEvents(
+func (s *peggyOrchestrator) CheckForEvents(
 	ctx context.Context,
 	startingBlock uint64,
 ) (currentBlock uint64, err error) {
@@ -79,7 +79,7 @@ func (s *peggyOrchestrator) checkForEvents(
 	// block, so we also need this routine so make sure we don't send in the first event in this hypothetical
 	// multi event block again. In theory we only send all events for every block and that will pass of fail
 	// atomicly but lets not take that risk.
-	lastEventNonce, err := s.cosmosQueryClient.LastEventNonce(ctx, s.peggyBroadcastClient.FromAddress())
+	lastEventNonce, err := s.cosmosQueryClient.LastEventNonce(ctx, s.peggyBroadcastClient.ValFromAddress())
 	if err != nil {
 		err = errors.New("failed to query last event nonce from backend")
 		return 0, err

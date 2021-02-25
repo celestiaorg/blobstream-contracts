@@ -1,10 +1,10 @@
-package util
+package types
 
 import (
 	"crypto/ecdsa"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -14,7 +14,7 @@ const (
 // NewEthereumSignature creates a new signuature over a given byte array
 func NewEthereumSignature(hash []byte, privateKey *ecdsa.PrivateKey) ([]byte, error) {
 	if privateKey == nil {
-		return nil, errors.New("empty private key")
+		return nil, sdkerrors.Wrap(ErrEmpty, "private key")
 	}
 	protectedHash := crypto.Keccak256Hash(append([]uint8(signaturePrefix), hash...))
 	return crypto.Sign(protectedHash.Bytes(), privateKey)
@@ -24,7 +24,7 @@ func NewEthereumSignature(hash []byte, privateKey *ecdsa.PrivateKey) ([]byte, er
 // returns an error if the signature isn't valid
 func ValidateEthereumSignature(hash []byte, signature []byte, ethAddress string) error {
 	if len(signature) < 65 {
-		return errors.New("signature too short")
+		return sdkerrors.Wrap(ErrInvalid, "signature too short")
 	}
 	// To verify signature
 	// - use crypto.SigToPub to get the public key
@@ -48,13 +48,13 @@ func ValidateEthereumSignature(hash []byte, signature []byte, ethAddress string)
 
 	pubkey, err := crypto.SigToPub(protectedHash.Bytes(), signature)
 	if err != nil {
-		return errors.Wrap(err, "signature to public key")
+		return sdkerrors.Wrap(err, "signature to public key")
 	}
 
 	addr := crypto.PubkeyToAddress(*pubkey)
 
 	if addr.Hex() != ethAddress {
-		return errors.New("signature mismatch")
+		return sdkerrors.Wrap(ErrInvalid, "signature not matching")
 	}
 
 	return nil

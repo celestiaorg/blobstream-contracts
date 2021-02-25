@@ -4,22 +4,23 @@ import (
 	"context"
 	"sort"
 
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/util"
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
-	"github.com/InjectiveLabs/sdk-go/wrappers"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
+
+	"github.com/InjectiveLabs/peggo/modules/peggy/types"
+	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/util"
+	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/wrappers"
 )
 
 const defaultBlocksToSearch = 2000
 
-// This function finds the latest valset on the Peggy contract by looking back through the event
+// FindLatestValset finds the latest valset on the Peggy contract by looking back through the event
 // history and finding the most recent ValsetUpdatedEvent. Most of the time this will be very fast
 // as the latest update will be in recent blockchain history and the search moves from the present
 // backwards in time. In the case that the validator set has not been updated for a very long time
 // this will take longer.
-func (s *peggyRelayer) findLatestValset(ctx context.Context) (*types.Valset, error) {
+func (s *peggyRelayer) FindLatestValset(ctx context.Context) (*types.Valset, error) {
 	latestHeader, err := s.ethProvider.HeaderByNumber(ctx, nil)
 	if err != nil {
 		err = errors.Wrap(err, "failed to get latest header")

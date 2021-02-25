@@ -2,41 +2,34 @@ package relayer
 
 import (
 	"context"
-	"sync"
 	"time"
 
-	log "github.com/xlab/suplog"
+	"golang.org/x/sync/errgroup"
 )
 
 const defaultLoopDur = 10 * time.Second
 
-func (s *peggyRelayer) RunLoop() {
+func (s *peggyRelayer) Start(ctx context.Context) error {
 	t := time.NewTimer(0)
 	for range t.C {
 		ctx, cancelFn := context.WithTimeout(context.Background(), defaultLoopDur)
 
-		wg := new(sync.WaitGroup)
+		eg, ctx := errgroup.WithContext(ctx)
 
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		eg.Go(func() error {
+			return s.RelayValsets(ctx)
+		})
+		eg.Go(func() error {
+			return s.RelayBatches(ctx)
+		})
 
-			if err := s.relayValsets(ctx); err != nil {
-				log.Errorln(err)
-			}
-		}()
+		if err := eg.Wait(); err != nil {
+			return err
+		}
 
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
-			if err := s.relayBatches(ctx); err != nil {
-				log.Errorln(err)
-			}
-		}()
-
-		wg.Wait()
 		cancelFn()
 		t.Reset(defaultLoopDur)
 	}
+
+	return nil
 }
