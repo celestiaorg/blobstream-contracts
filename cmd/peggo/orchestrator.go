@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"os"
 	"time"
 
 	ethcmn "github.com/ethereum/go-ethereum/common"
@@ -229,7 +230,12 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		go func() {
 			if err := svc.Start(ctx); err != nil {
 				log.Errorln(err)
+
+				// signal there that the app failed
+				os.Exit(1)
 			}
 		}()
+
+		closer.Hold()
 	}
 }

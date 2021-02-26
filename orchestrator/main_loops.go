@@ -6,12 +6,13 @@ import (
 	"math/big"
 	"time"
 
+	retry "github.com/avast/retry-go"
 	"github.com/ethereum/go-ethereum/common"
 	log "github.com/xlab/suplog"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/InjectiveLabs/peggo/modules/peggy/types"
 	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
+	"github.com/InjectiveLabs/peggo/orchestrator/loops"
 	"github.com/InjectiveLabs/peggo/orchestrator/relayer"
 )
 
@@ -20,25 +21,25 @@ const defaultLoopDur = 10 * time.Second
 // Start combines the all major roles required to make
 // up the Orchestrator, all of these are async loops.
 func (s *peggyOrchestrator) Start(ctx context.Context) error {
-	eg, ctx := errgroup.WithContext(ctx)
+	var pg loops.ParanoidGroup
 
-	eg.Go(func() error {
+	pg.Go(func() error {
 		return s.EthOracleMainLoop(ctx)
 	})
-	eg.Go(func() error {
+	pg.Go(func() error {
 		return s.BatchRequesterLoop(ctx)
 	})
-	eg.Go(func() error {
+	pg.Go(func() error {
 		return s.EthSignerMainLoop(ctx)
 	})
-	eg.Go(func() error {
+	pg.Go(func() error {
 		return s.RelayerMainLoop(ctx)
 	})
-	eg.Go(func() error {
+	pg.Go(func() error {
 		return s.ValsetRequesterLoop(ctx)
 	})
 
-	return eg.Wait()
+	return pg.Wait()
 }
 
 // EthOracleMainLoop is responsible for making sure that Ethereum events are retrieved from the Ethereum blockchain
@@ -46,139 +47,205 @@ func (s *peggyOrchestrator) Start(ctx context.Context) error {
 //
 // TODO this loop requires a method to bootstrap back to the correct event nonce when restarted
 func (s *peggyOrchestrator) EthOracleMainLoop(ctx context.Context) (err error) {
-	var lastCheckedBlock uint64
-	for {
-		lastCheckedBlock, err = s.GetLastCheckedBlock(ctx)
-		if err != nil {
-			log.WithError(err).Errorln("failed to get last checked block, retry in", defaultRetryDur)
-			time.Sleep(defaultRetryDur)
-			continue
-		}
+	logger := log.WithField("loop", "EthOracleMainLoop")
 
-		log.Infoln("Oracle resync complete, Oracle now operational")
-		break
+	var lastCheckedBlock uint64
+
+	if err := retry.Do(func() (err error) {
+		lastCheckedBlock, err = s.GetLastCheckedBlock(ctx)
+		return
+	}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+		logger.WithError(err).Warningf("failed to get last checked block, will retry (%d)", n)
+	})); err != nil {
+		logger.WithError(err).Errorln("got error, loop exits")
+		return err
 	}
 
-	t := time.NewTimer(0)
-	for range t.C {
-		latestHeader, err := s.ethProvider.HeaderByNumber(ctx, nil)
-		if err != nil {
-			log.WithError(err).Errorln("failed to get latest header, retry in", defaultRetryDur)
-			t.Reset(defaultRetryDur)
-			continue
+	logger.Infoln("initial height sync complete")
+
+	return loops.RunLoop(ctx, defaultLoopDur, func() error {
+		var latestCosmosBlock int64
+		var latestEthBlock uint64
+
+		var pg loops.ParanoidGroup
+
+		pg.Go(func() error {
+			return retry.Do(func() error {
+				latestHeader, err := s.ethProvider.HeaderByNumber(ctx, nil)
+				if err != nil {
+					return err
+				}
+
+				latestEthBlock = latestHeader.Number.Uint64()
+				return nil
+			}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+				logger.WithError(err).Warningf("failed to get latest header, will retry (%d)", n)
+			}))
+		})
+
+		pg.Go(func() error {
+			return retry.Do(func() (err error) {
+				latestCosmosBlock, err = s.tmClient.GetLatestBlockHeight(ctx)
+				return
+			}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+				logger.WithError(err).Warningf("failed to get latest header, will retry (%d)", n)
+			}))
+		})
+
+		if err := pg.Wait(); err != nil {
+			logger.WithError(err).Errorln("got error, loop exits")
+			return err
 		}
 
-		latestEthBlock := latestHeader.Number.Uint64()
-		latestCosmosBlock, err := s.tmClient.GetLatestBlockHeight()
-		if err != nil {
-			log.WithError(err).Errorln("failed to get latest cosmos block height, retry in", defaultRetryDur)
-			t.Reset(defaultRetryDur)
-			continue
-		}
-
-		log.Debugf("[ethOracleMainLoop] Latest Eth block %d, latest Cosmos block %d",
+		logger.Debugf("latest Eth block %d, latest Cosmos block %d",
 			latestEthBlock, latestCosmosBlock,
 		)
 
 		// Relays events from Ethereum -> Cosmos
-		currentBlock, err := s.CheckForEvents(ctx, lastCheckedBlock)
-		if err != nil {
-			log.WithError(err).Errorln("error during eht event checking, retry in", defaultRetryDur)
-			t.Reset(defaultRetryDur)
-			continue
-		} else {
-			lastCheckedBlock = currentBlock
+		var currentBlock uint64
+		if err := retry.Do(func() (err error) {
+			currentBlock, err = s.CheckForEvents(ctx, lastCheckedBlock)
+			return
+		}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+			logger.WithError(err).Warningf("error during Eth event checking, will retry (%d)", n)
+		})); err != nil {
+			logger.WithError(err).Errorln("got error, loop exits")
+			return err
 		}
 
-		t.Reset(defaultLoopDur)
-	}
-
-	return nil
+		lastCheckedBlock = currentBlock
+		return nil
+	})
 }
 
 // EthSignerMainLoop simply signs off on any batches or validator sets provided by the validator
 // since these are provided directly by a trusted Cosmsos node they can simply be assumed to be
 // valid and signed off on.
 func (s *peggyOrchestrator) EthSignerMainLoop(ctx context.Context) (err error) {
-	var peggyID common.Hash
-	for {
-		peggyID, err = s.peggyContract.GetPeggyID(ctx, s.peggyContract.FromAddress())
-		if err != nil {
+	logger := log.WithField("loop", "EthSignerMainLoop")
 
-			log.WithError(err).Errorln("failed to get PeggyID from Ethereum contract, retry in", defaultRetryDur)
-			time.Sleep(defaultRetryDur)
-			continue
-		}
-		log.Debugf("[ethSignerMainLoop] peggyID %s", peggyID.Hex())
-		break
+	var peggyID common.Hash
+
+	if err := retry.Do(func() (err error) {
+		peggyID, err = s.peggyContract.GetPeggyID(ctx, s.peggyContract.FromAddress())
+		return
+	}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+		logger.WithError(err).Warningf("failed to get PeggyID from Ethereum contract, will retry (%d)", n)
+	})); err != nil {
+		logger.WithError(err).Errorln("got error, loop exits")
+		return err
 	}
 
-	t := time.NewTimer(0)
-	for range t.C {
-		latestHeader, err := s.ethProvider.HeaderByNumber(ctx, nil)
-		if err != nil {
-			log.WithError(err).Errorln("failed to get latest header, retry in", defaultRetryDur)
-			t.Reset(defaultRetryDur)
-			continue
+	logger.Debugf("received peggyID %s", peggyID.Hex())
+
+	return loops.RunLoop(ctx, defaultLoopDur, func() error {
+		var latestCosmosBlock int64
+		var latestEthBlock uint64
+
+		var pg loops.ParanoidGroup
+
+		pg.Go(func() error {
+			return retry.Do(func() error {
+				latestHeader, err := s.ethProvider.HeaderByNumber(ctx, nil)
+				if err != nil {
+					return err
+				}
+
+				latestEthBlock = latestHeader.Number.Uint64()
+				return nil
+			}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+				logger.WithError(err).Warningf("failed to get latest header, will retry (%d)", n)
+			}))
+		})
+
+		pg.Go(func() error {
+			return retry.Do(func() (err error) {
+				latestCosmosBlock, err = s.tmClient.GetLatestBlockHeight(ctx)
+				return
+			}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+				logger.WithError(err).Warningf("failed to get latest header, will retry (%d)", n)
+			}))
+		})
+
+		if err := pg.Wait(); err != nil {
+			logger.WithError(err).Errorln("got error, loop exits")
+			return err
 		}
 
-		latestEthBlock := latestHeader.Number.Uint64()
-		latestCosmosBlock, err := s.tmClient.GetLatestBlockHeight()
-		if err != nil {
-			log.WithError(err).Errorln("failed to get latest cosmos block height, retry in", defaultRetryDur)
-			t.Reset(defaultRetryDur)
-			continue
-		}
-
-		log.Debugf("[ethSignerMainLoop] Latest Eth block %d, latest Cosmos block %d",
+		logger.Debugf("latest Eth block %d, latest Cosmos block %d",
 			latestEthBlock, latestCosmosBlock,
 		)
 
-		valset, err := s.cosmosQueryClient.OldestUnsignedValset(ctx, s.peggyBroadcastClient.ValFromAddress())
-		if err == cosmos.ErrNotFound {
-			log.Debugln("no Valset waiting to be signed")
-		} else if err != nil {
-			log.WithError(err).Errorln("failed to get unsigned Valset for signing, retry in", defaultRetryDur)
-			t.Reset(defaultRetryDur)
-			continue
-		} else if valset == nil {
-			log.Debugf("no valset")
-			t.Reset(defaultRetryDur)
-		} else {
-			log.Infoln("sending Valset confirm for %d", valset.Nonce)
+		var oldestUnsignedValset *types.Valset
 
-			if err := s.peggyBroadcastClient.SendValsetConfirm(ctx, s.ethFrom, peggyID, valset); err != nil {
-				log.WithError(err).Errorln("failed to sign and send Valset confirmation to Cosmos, retry in", defaultRetryDur)
-				t.Reset(defaultRetryDur)
-				continue
+		if err := retry.Do(func() error {
+			valset, err := s.cosmosQueryClient.OldestUnsignedValset(ctx, s.peggyBroadcastClient.ValFromAddress())
+			if err != nil {
+				if err == cosmos.ErrNotFound || valset == nil {
+					logger.Debugln("no Valset waiting to be signed")
+					return nil
+				}
+
+				return err
 			}
+
+			oldestUnsignedValset = valset
+			return nil
+		}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+			logger.WithError(err).Warningf("failed to get unsigned Valset for signing, will retry (%d)", n)
+		})); err != nil {
+			logger.WithError(err).Errorln("got error, loop exits")
+			return err
 		}
 
-		// sign the last unsigned batch, TODO check if we already have signed this
-		txBatch, err := s.cosmosQueryClient.OldestUnsignedTransactionBatch(ctx, s.peggyBroadcastClient.ValFromAddress())
-		if err == cosmos.ErrNotFound {
-			log.Debugln("no TransactionBatch waiting to be signed")
-		} else if err != nil {
-			log.WithError(err).Errorln("failed to get unsigned TransactionBatch for signing, retry in", defaultRetryDur)
-			t.Reset(defaultRetryDur)
-			continue
-		} else if txBatch == nil {
-			log.Debugln("no TransactionBatch")
-			t.Reset(defaultRetryDur)
-		} else {
-			log.Infoln("sending TransactionBatch confirm for %d", txBatch.BatchNonce)
+		logger.Infoln("Sending Valset confirm for %d", oldestUnsignedValset.Nonce)
 
-			if err := s.peggyBroadcastClient.SendBatchConfirm(ctx, s.ethFrom, peggyID, txBatch); err != nil {
-				log.WithError(err).Errorln("failed to sign and send TransactionBatch confirmation to Cosmos, retry in", defaultRetryDur)
-				t.Reset(defaultRetryDur)
-				continue
-			}
+		if err := retry.Do(func() error {
+			return s.peggyBroadcastClient.SendValsetConfirm(ctx, s.ethFrom, peggyID, oldestUnsignedValset)
+		}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+			logger.WithError(err).Warningf("failed to sign and send Valset confirmation to Cosmos, will retry (%d)", n)
+		})); err != nil {
+			logger.WithError(err).Errorln("got error, loop exits")
+			return err
 		}
 
-		t.Reset(defaultLoopDur)
-	}
+		var oldestUnsignedTransactionBatch *types.OutgoingTxBatch
 
-	return nil
+		if err := retry.Do(func() error {
+			// sign the last unsigned batch, TODO check if we already have signed this
+
+			txBatch, err := s.cosmosQueryClient.OldestUnsignedTransactionBatch(ctx, s.peggyBroadcastClient.ValFromAddress())
+			if err != nil {
+				if err == cosmos.ErrNotFound || txBatch == nil {
+					logger.Debugln("no TransactionBatch waiting to be signed")
+					return nil
+				}
+
+				return err
+			}
+
+			oldestUnsignedTransactionBatch = txBatch
+			return nil
+		}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+			logger.WithError(err).Warningf("failed to get unsigned TransactionBatch for signing, will retry (%d)", n)
+		})); err != nil {
+			logger.WithError(err).Errorln("got error, loop exits")
+			return err
+		}
+
+		logger.Infoln("Sending TransactionBatch confirm for %d", oldestUnsignedTransactionBatch.BatchNonce)
+
+		if err := retry.Do(func() error {
+			return s.peggyBroadcastClient.SendBatchConfirm(ctx, s.ethFrom, peggyID, oldestUnsignedTransactionBatch)
+		}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+			logger.WithError(err).Warningf("failed to sign and send TransactionBatch confirmation to Cosmos, will retry (%d)", n)
+		})); err != nil {
+			logger.WithError(err).Errorln("got error, loop exits")
+			return err
+		}
+
+		return nil
+	})
 }
 
 // This loop doesn't have a formal role per say, anyone can request a valset
@@ -192,70 +259,104 @@ func (s *peggyOrchestrator) EthSignerMainLoop(ctx context.Context) (err error) {
 // routine does it check the current valset versus the last requested valset, if power has changed
 // significantly we send in a request.
 func (s *peggyOrchestrator) ValsetRequesterLoop(ctx context.Context) (err error) {
-	t := time.NewTimer(0)
-	for range t.C {
+	logger := log.WithField("loop", "ValsetRequesterLoop")
 
-		latestValsets, err := s.cosmosQueryClient.LatestValsets(ctx)
-		if err != nil {
-			log.WithError(err).Errorln("unable to get latest valsets from Cosmos chain, retry in", defaultRetryDur)
-			t.Reset(defaultRetryDur)
-			continue
-		}
+	return loops.RunLoop(ctx, defaultLoopDur, func() error {
+		var latestValsets []*types.Valset
+		var currentValset *types.Valset
 
-		// This request gives normalized powers. so calculation wont work
-		currentValset, err := s.cosmosQueryClient.CurrentValset(ctx)
-		if err != nil {
-			log.WithError(err).Errorln("unable to get current valset from Cosmos chain, retry in", defaultRetryDur)
-			t.Reset(defaultRetryDur)
-			continue
+		var pg loops.ParanoidGroup
+
+		pg.Go(func() error {
+			return retry.Do(func() (err error) {
+				latestValsets, err = s.cosmosQueryClient.LatestValsets(ctx)
+				return
+			}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+				logger.WithError(err).Warningf("failed to get latest valsets, will retry (%d)", n)
+			}))
+		})
+
+		pg.Go(func() error {
+			return retry.Do(func() (err error) {
+				currentValset, err = s.cosmosQueryClient.CurrentValset(ctx)
+				return
+			}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+				logger.WithError(err).Warningf("failed to get current valset, will retry (%d)", n)
+			}))
+		})
+
+		if err := pg.Wait(); err != nil {
+			logger.WithError(err).Errorln("got error, loop exits")
+			return err
 		}
 
 		if len(latestValsets) == 0 {
-			if err := s.peggyBroadcastClient.SendValsetRequest(ctx); err != nil {
-				log.WithError(err).Warningln("valset request failed")
-			}
+			retry.Do(func() error {
+				return s.peggyBroadcastClient.SendValsetRequest(ctx)
+			}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+				logger.WithError(err).Warningf("failed to request Valset to be formed, will retry (%d)", n)
+			}))
 		} else {
 			// if the power difference is more than 1% different than the last valset
 			if valPowerDiff(latestValsets[0], currentValset) > 0.01 {
-				log.Debugln("power difference is more than 1% different than the last valset. Sending valset request")
-				if err := s.peggyBroadcastClient.SendValsetRequest(ctx); err != nil {
-					log.WithError(err).Warningln("valset request failed")
-				}
+				log.Debugln("power difference is more than 1%% different than the last valset. Sending valset request")
+
+				retry.Do(func() error {
+					return s.peggyBroadcastClient.SendValsetRequest(ctx)
+				}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+					logger.WithError(err).Warningf("failed to request Valset to be formed, will retry (%d)", n)
+				}))
 			}
 		}
 
-		t.Reset(defaultLoopDur)
-	}
-
-	return nil
+		return nil
+	})
 }
 
 func (s *peggyOrchestrator) BatchRequesterLoop(ctx context.Context) (err error) {
-	t := time.NewTimer(0)
-	for range t.C {
+	logger := log.WithField("loop", "BatchRequesterLoop")
+
+	return loops.RunLoop(ctx, defaultLoopDur, func() error {
 		// get All the denominations
 		// check if threshold is met
 		// broadcast Request batch
 
-		for coinDenom, tokenAddr := range s.erc20ContractMapping {
-			unbatchTxs, err := s.cosmosQueryClient.LatestUnbatchOutgoingTx(ctx, tokenAddr)
-			if err == nil && unbatchTxs != nil && len(unbatchTxs) != 0 {
-				log.WithFields(log.Fields{
-					"coinDenom": coinDenom,
-				}).Debugln("Sending unbatchTxs:", unbatchTxs)
+		var pg loops.ParanoidGroup
 
-				if err := s.peggyBroadcastClient.SendRequestBatch(ctx, coinDenom); err != nil {
-					log.WithError(err).Warningln("valset request failed")
+		for coinDenom, tokenAddr := range s.erc20ContractMapping {
+			pg.Go(func() error {
+				coinLogger := logger.WithField("coinDenom", coinDenom)
+
+				var latestUnbatchOutgoingTx []*types.OutgoingTx
+
+				if err := retry.Do(func() (err error) {
+					latestUnbatchOutgoingTx, err = s.cosmosQueryClient.LatestUnbatchOutgoingTx(ctx, tokenAddr)
+					return
+				}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+					coinLogger.WithError(err).Errorf("failed to get LatestUnbatchOutgoingTx, will retry (%d)", n)
+				})); err != nil {
+					// non-fatal, just alert
+					coinLogger.Warningln("unable to get LatestUnbatchOutgoingTx for the token")
+					return nil
 				}
-			} else if err != nil {
-				log.WithError(err).Errorln("failed to get LatestUnbatchOutgoingTx")
-			}
+
+				if len(latestUnbatchOutgoingTx) != 0 {
+					coinLogger.Debugln("Sending unbatchTxs:", latestUnbatchOutgoingTx)
+
+					return retry.Do(func() (err error) {
+						latestUnbatchOutgoingTx, err = s.cosmosQueryClient.LatestUnbatchOutgoingTx(ctx, tokenAddr)
+						return
+					}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+						coinLogger.WithError(err).Errorf("failed to get LatestUnbatchOutgoingTx, will retry (%d)", n)
+					}))
+				}
+
+				return nil
+			})
 		}
 
-		t.Reset(defaultLoopDur)
-	}
-
-	return nil
+		return pg.Wait()
+	})
 }
 
 func (s *peggyOrchestrator) RelayerMainLoop(ctx context.Context) (err error) {
@@ -299,5 +400,6 @@ func calculateTotalValsetPower(valset *types.Valset) *big.Int {
 		mPower := big.NewInt(0).SetUint64(m.Power)
 		totalValsetPower.Add(totalValsetPower, mPower)
 	}
+
 	return totalValsetPower
 }

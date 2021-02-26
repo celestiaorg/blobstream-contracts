@@ -4,32 +4,41 @@ import (
 	"context"
 	"time"
 
-	"golang.org/x/sync/errgroup"
+	retry "github.com/avast/retry-go"
+	log "github.com/xlab/suplog"
+
+	"github.com/InjectiveLabs/peggo/orchestrator/loops"
 )
 
 const defaultLoopDur = 10 * time.Second
 
 func (s *peggyRelayer) Start(ctx context.Context) error {
-	t := time.NewTimer(0)
-	for range t.C {
-		ctx, cancelFn := context.WithTimeout(context.Background(), defaultLoopDur)
+	logger := log.WithField("loop", "RelayerMainLoop")
 
-		eg, ctx := errgroup.WithContext(ctx)
+	return loops.RunLoop(ctx, defaultLoopDur, func() error {
+		var pg loops.ParanoidGroup
 
-		eg.Go(func() error {
-			return s.RelayValsets(ctx)
+		pg.Go(func() error {
+			return retry.Do(func() error {
+				return s.RelayValsets(ctx)
+			}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+				logger.WithError(err).Warningf("failed to relay Valsets, will retry (%d)", n)
+			}))
 		})
-		eg.Go(func() error {
-			return s.RelayBatches(ctx)
+
+		pg.Go(func() error {
+			return retry.Do(func() error {
+				return s.RelayBatches(ctx)
+			}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+				logger.WithError(err).Warningf("failed to relay TxBatches, will retry (%d)", n)
+			}))
 		})
 
-		if err := eg.Wait(); err != nil {
+		if err := pg.Wait(); err != nil {
+			logger.WithError(err).Errorln("got error, loop exits")
 			return err
 		}
 
-		cancelFn()
-		t.Reset(defaultLoopDur)
-	}
-
-	return nil
+		return nil
+	})
 }
