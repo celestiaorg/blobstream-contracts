@@ -71,7 +71,7 @@ func initCosmosOptions(
 		Value:  "http://localhost:26657",
 	})
 
-	*cosmosFeeDenom = app.String(cli.StringOpt{
+	*cosmosFeeDenom = cmd.String(cli.StringOpt{
 		Name:   "cosmos-fee-denom",
 		Desc:   "The Cosmos Denom in which to pay Cosmos chain fees",
 		EnvVar: "PEGGO_COSMOS_FEE_DENOM",
@@ -150,14 +150,14 @@ func initEthereumOptions(
 		Value:  42,
 	})
 
-	*ethNodeRPC = app.String(cli.StringOpt{
+	*ethNodeRPC = cmd.String(cli.StringOpt{
 		Name:   "eth-node-http",
 		Desc:   "Specify HTTP endpoint for an Ethereum node.",
 		EnvVar: "PEGGO_ETH_RPC",
 		Value:  "http://localhost:1317",
 	})
 
-	*ethPeggyContract = app.String(cli.StringOpt{
+	*ethPeggyContract = cmd.String(cli.StringOpt{
 		Name:   "A contract-address",
 		Desc:   "Peggy root contract deployment address on Ethereum network.",
 		EnvVar: "PEGGO_ETH_CONTRACT_ADDRESS",

@@ -26,7 +26,8 @@ func readEnv() {
 			if len(parts) != 2 {
 				continue
 			}
-			if err := os.Setenv(parts[0], parts[1]); err != nil {
+			strValue := strings.Trim(parts[1], `"`)
+			if err := os.Setenv(parts[0], strValue); err != nil {
 				log.WithField("name", parts[0]).WithError(err).Warningln("failed to override ENV variable")
 			}
 		}

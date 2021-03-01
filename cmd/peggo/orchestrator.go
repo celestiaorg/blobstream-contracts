@@ -133,7 +133,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 
 		peggyAddress := ethcmn.HexToAddress(*ethPeggyContract)
 		if bytes.Equal(peggyAddress.Bytes(), ethcmn.Address{}.Bytes()) {
-			log.Fatalln("no Peggy contract address specified, use --contract-address or PEGGY_CONTRACT_ADDRESS env")
+			log.Fatalln("no Peggy contract address specified, use --contract-address or PEGGO_ETH_CONTRACT_ADDRESS env")
 		}
 
 		evmRPC, err := rpc.Dial(*ethNodeRPC)
