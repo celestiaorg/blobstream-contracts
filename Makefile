@@ -22,4 +22,7 @@ install:
 		-ldflags $(VERSION_FLAGS) \
 		./cmd/...
 
-.PHONY: install image push
+.PHONY: install image push test
+
+test:
+	go test ./test/...

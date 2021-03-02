@@ -1,16 +1,39 @@
 pragma solidity ^0.6.6;
 
-import "./math/SafeMath.sol";
-import "./IERC20.sol";
-import "./SafeERC20.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./CosmosToken.sol";
 
-contract Peggy {
+pragma experimental ABIEncoderV2;
+
+// This is being used purely to avoid stack too deep errors
+struct LogicCallArgs {
+	// Transfers out to the logic contract
+	uint256[] transferAmounts;
+	address[] transferTokenContracts;
+	// The fees (transferred to msg.sender)
+	uint256[] feeAmounts;
+	address[] feeTokenContracts;
+	// The arbitrary logic call
+	address logicContractAddress;
+	bytes payload;
+	// Invalidation metadata
+	uint256 timeOut;
+	bytes32 invalidationId;
+	uint256 invalidationNonce;
+}
+
+contract Peggy is ReentrancyGuard {
 	using SafeMath for uint256;
 	using SafeERC20 for IERC20;
 
 	// These are updated often
 	bytes32 public state_lastValsetCheckpoint;
 	mapping(address => uint256) public state_lastBatchNonces;
+	mapping(bytes32 => uint256) public state_invalidationMapping;
 	uint256 public state_lastValsetNonce = 0;
 	uint256 public state_lastEventNonce = 0;
 
@@ -32,17 +55,29 @@ contract Peggy {
 	event SendToCosmosEvent(
 		address indexed _tokenContract,
 		address indexed _sender,
-		address indexed _destination,
+		bytes32 indexed _destination,
 		uint256 _amount,
-		uint256 _eventNonce,
+		uint256 _eventNonce
+	);
+	event ERC20DeployedEvent(
+		// FYI: Can't index on a string without doing a bunch of weird stuff
+		string _cosmosDenom,
+		address indexed _tokenContract,
 		string _name,
 		string _symbol,
-		uint8 _decimals
+		uint8 _decimals,
+		uint256 _eventNonce
 	);
 	event ValsetUpdatedEvent(
 		uint256 indexed _newValsetNonce,
 		address[] _validators,
 		uint256[] _powers
+	);
+	event LogicCallEvent(
+		bytes32 _invalidationId,
+		uint256 _invalidationNonce,
+		bytes _returnData,
+		uint256 _eventNonce
 	);
 
 	// TEST FIXTURES
@@ -81,6 +116,9 @@ contract Peggy {
 	function lastBatchNonce(address _erc20Address) public view returns (uint256) {
 		return state_lastBatchNonces[_erc20Address];
 	}
+	function lastLogicCallNonce(bytes32 _invalidation_id) public view returns (uint256) {
+		return state_invalidationMapping[_invalidation_id];
+	}
 
 	// Utility function to verify geth style signatures
 	function verifySig(
@@ -90,9 +128,8 @@ contract Peggy {
 		bytes32 _r,
 		bytes32 _s
 	) private pure returns (bool) {
-		bytes32 messageDigest = keccak256(
-			abi.encodePacked("\x19Ethereum Signed Message:\n32", _theHash)
-		);
+		bytes32 messageDigest =
+			keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _theHash));
 		return _signer == ecrecover(messageDigest, _v, _r, _s);
 	}
 
@@ -113,9 +150,8 @@ contract Peggy {
 		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-		bytes32 checkpoint = keccak256(
-			abi.encode(_peggyId, methodName, _valsetNonce, _validators, _powers)
-		);
+		bytes32 checkpoint =
+			keccak256(abi.encode(_peggyId, methodName, _valsetNonce, _validators, _powers));
 
 		return checkpoint;
 	}
@@ -213,12 +249,8 @@ contract Peggy {
 		);
 
 		// Check that enough current validators have signed off on the new validator set
-		bytes32 newCheckpoint = makeCheckpoint(
-			_newValidators,
-			_newPowers,
-			_newValsetNonce,
-			state_peggyId
-		);
+		bytes32 newCheckpoint =
+			makeCheckpoint(_newValidators, _newPowers, _newValsetNonce, state_peggyId);
 
 		checkValidatorSignatures(
 			_currentValidators,
@@ -262,14 +294,23 @@ contract Peggy {
 		address[] memory _destinations,
 		uint256[] memory _fees,
 		uint256 _batchNonce,
-		address _tokenContract
-	) public {
+		address _tokenContract,
+		// a block height beyond which this batch is not valid
+		// used to provide a fee-free timeout
+		uint256 _batchTimeout
+	) nonReentrant public {
 		// CHECKS scoped to reduce stack depth
 		{
 			// Check that the batch nonce is higher than the last nonce for this token
 			require(
 				state_lastBatchNonces[_tokenContract] < _batchNonce,
 				"New batch nonce must be greater than the current nonce"
+			);
+
+			// Check that the block height is less than the timeout height
+			require(
+				block.number < _batchTimeout,
+				"Batch timeout must be greater than the current block height"
 			);
 
 			// Check that current validators, powers, and signatures (v,r,s) set is well-formed
@@ -315,7 +356,8 @@ contract Peggy {
 						_destinations,
 						_fees,
 						_batchNonce,
-						_tokenContract
+						_tokenContract,
+						_batchTimeout
 					)
 				),
 				state_powerThreshold
@@ -346,37 +388,169 @@ contract Peggy {
 		}
 	}
 
+	// This makes calls to contracts that execute arbitrary logic
+	// First, it gives the logic contract some tokens
+	// Then, it gives msg.senders tokens for fees
+	// Then, it calls an arbitrary function on the logic contract
+	// invalidationId and invalidationNonce are used for replay prevention.
+	// They can be used to implement a per-token nonce by setting the token
+	// address as the invalidationId and incrementing the nonce each call.
+	// They can be used for nonce-free replay prevention by using a different invalidationId
+	// for each call.
+	function submitLogicCall(
+		// The validators that approve the call
+		address[] memory _currentValidators,
+		uint256[] memory _currentPowers,
+		uint256 _currentValsetNonce,
+		// These are arrays of the parts of the validators signatures
+		uint8[] memory _v,
+		bytes32[] memory _r,
+		bytes32[] memory _s,
+		LogicCallArgs memory _args
+	) public nonReentrant{
+		// CHECKS scoped to reduce stack depth
+		{
+			// Check that the call has not timed out
+			require(block.number < _args.timeOut, "Timed out");
 
-	mapping(address => bool) public seenTokens;
-	mapping(address => string) public tokenSymbols;
-	mapping(address => string) public tokenNames;
-	mapping(address => uint8) public tokenDecimals;
+			// Check that the invalidation nonce is higher than the last nonce for this invalidation Id
+			require(
+				state_invalidationMapping[_args.invalidationId] < _args.invalidationNonce,
+				"New invalidation nonce must be greater than the current nonce"
+			);
+
+			// Check that current validators, powers, and signatures (v,r,s) set is well-formed
+			require(
+				_currentValidators.length == _currentPowers.length &&
+					_currentValidators.length == _v.length &&
+					_currentValidators.length == _r.length &&
+					_currentValidators.length == _s.length,
+				"Malformed current validator set"
+			);
+
+			// Check that the supplied current validator set matches the saved checkpoint
+			require(
+				makeCheckpoint(
+					_currentValidators,
+					_currentPowers,
+					_currentValsetNonce,
+					state_peggyId
+				) == state_lastValsetCheckpoint,
+				"Supplied current validators and powers do not match checkpoint."
+			);
+
+			// Check that the token transfer list is well-formed
+			require(
+				_args.transferAmounts.length == _args.transferTokenContracts.length,
+				"Malformed list of token transfers"
+			);
+
+			// Check that the fee list is well-formed
+			require(
+				_args.feeAmounts.length == _args.feeTokenContracts.length,
+				"Malformed list of fees"
+			);
+		}
+
+		bytes32 argsHash =
+			keccak256(
+				abi.encode(
+					state_peggyId,
+					// bytes32 encoding of "logicCall"
+					0x6c6f67696343616c6c0000000000000000000000000000000000000000000000,
+					_args.transferAmounts,
+					_args.transferTokenContracts,
+					_args.feeAmounts,
+					_args.feeTokenContracts,
+					_args.logicContractAddress,
+					_args.payload,
+					_args.timeOut,
+					_args.invalidationId,
+					_args.invalidationNonce
+				)
+			);
+
+		{
+			// Check that enough current validators have signed off on the transaction batch and valset
+			checkValidatorSignatures(
+				_currentValidators,
+				_currentPowers,
+				_v,
+				_r,
+				_s,
+				// Get hash of the transaction batch and checkpoint
+				argsHash,
+				state_powerThreshold
+			);
+		}
+
+		// ACTIONS
+
+		// Update invaldiation nonce
+		state_invalidationMapping[_args.invalidationId] = _args.invalidationNonce;
+
+		// Send tokens to the logic contract
+		for (uint256 i = 0; i < _args.transferAmounts.length; i++) {
+			IERC20(_args.transferTokenContracts[i]).safeTransfer(
+				_args.logicContractAddress,
+				_args.transferAmounts[i]
+			);
+		}
+
+		// Make call to logic contract
+		bytes memory returnData = Address.functionCall(_args.logicContractAddress, _args.payload);
+
+		// Send fees to msg.sender
+		for (uint256 i = 0; i < _args.feeAmounts.length; i++) {
+			IERC20(_args.feeTokenContracts[i]).safeTransfer(msg.sender, _args.feeAmounts[i]);
+		}
+
+		// LOGS scoped to reduce stack depth
+		{
+			state_lastEventNonce = state_lastEventNonce.add(1);
+			emit LogicCallEvent(
+				_args.invalidationId,
+				_args.invalidationNonce,
+				returnData,
+				state_lastEventNonce
+			);
+		}
+	}
 
 	function sendToCosmos(
 		address _tokenContract,
-		address _destination,
+		bytes32 _destination,
 		uint256 _amount
-	) public {
+	) public nonReentrant {
 		IERC20(_tokenContract).safeTransferFrom(msg.sender, address(this), _amount);
-
-        // store values if first time
-        if (!seenTokens[_tokenContract]) {
-            seenTokens[_tokenContract] = true;
-            tokenNames[_tokenContract] = IERC20(_tokenContract).name();
-            tokenSymbols[_tokenContract] = IERC20(_tokenContract).symbol();
-            tokenDecimals[_tokenContract] = IERC20(_tokenContract).decimals();
-        }
-
 		state_lastEventNonce = state_lastEventNonce.add(1);
 		emit SendToCosmosEvent(
 			_tokenContract,
 			msg.sender,
 			_destination,
 			_amount,
-			state_lastEventNonce,
-			tokenNames[_tokenContract],
-            tokenSymbols[_tokenContract],
-            tokenDecimals[_tokenContract]
+			state_lastEventNonce
+		);
+	}
+
+	function deployERC20(
+		string memory _cosmosDenom,
+		string memory _name,
+		string memory _symbol,
+		uint8 _decimals
+	) public {
+		// Deploy an ERC20 with entire supply granted to Peggy.sol
+		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
+
+		// Fire an event to let the Cosmos module know
+		state_lastEventNonce = state_lastEventNonce.add(1);
+		emit ERC20DeployedEvent(
+			_cosmosDenom,
+			address(erc20),
+			_name,
+			_symbol,
+			_decimals,
+			state_lastEventNonce
 		);
 	}
 

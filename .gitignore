@@ -39,3 +39,6 @@ solidity/typechain/
 solidity/cache/
 solidity/0x_ganache_snapshot/
 
+# dir with temp data
+data/
+test/solidity/build

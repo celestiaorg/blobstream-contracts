@@ -1,6 +1,5 @@
 pragma solidity ^0.6.6;
 
-import "hardhat/console.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract HashingTest {
