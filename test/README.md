@@ -6,6 +6,7 @@ By using the same lang for module, orchestrator and test we can achieve the full
 This is a special place where we don't care about things like:
 * Node version
 * Myriads of JS packages complaining about versions and API inconsistencies
+* Different locations of ERC20 contract artifacts
 * Stuff being deployed slowly
 * Forking the Eth mainnet
 

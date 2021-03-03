@@ -8,8 +8,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/InjectiveLabs/evm-deploy-contract/deployer"
+	cosmtypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/pkg/errors"
 )
 
 func init() {
@@ -21,6 +24,15 @@ func init() {
 		a.Parse()
 		EthAccounts[idx] = a
 	}
+
+	d, err := deployer.New(
+		deployer.OptionEVMRPCEndpoint(os.Getenv("SOLIDITY_TEST_EVM_RPC")),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	ContractDeployer = d
 }
 
 // readEnv is a special utility that reads `.env` file into actual environment variables
@@ -39,6 +51,8 @@ func readEnv() {
 	}
 }
 
+var ContractDeployer deployer.Deployer
+
 // Ganache snapshot
 // Mnemonic:      concert load couple harbor equip island argue ramp clarify fence smart topic
 // Base HD Path:  m/44'/60'/0'/0/{account_index}
@@ -55,18 +69,55 @@ var EthAccounts = []Account{
 	{Address: "0x91c987bf62D25945dB517BDAa840A6c661374402", Key: "0x23cb7121166b9a2f93ae0b7c05bde02eae50d64449b2cbb42bc84e9d38d6cc89"},
 }
 
+var CosmosAccounts = []Account{
+	// validator 1
+	{Address: "inj1cml96vmptgw99syqrrz8az79xer2pcgp0a885r", Key: "0x88cbead91aee890d27bf06e003ade3d4e952427e88f88d31d61d3ef5e5d54305"},
+	// validator 2
+	{Address: "inj1jcltmuhplrdcwp7stlr4hlhlhgd4htqhe4c0cs", Key: "0x741de4f8988ea941d3ff0287911ca4074e62b7d45c991a51186455366f10b544"},
+	// validator 3
+	{Address: "inj1dzqd00lfd4y4qy2pxa0dsdwzfnmsu27hgttswz", Key: "0x39a4c898dda351d54875d5ebb3e1c451189116faa556c3c04adc860dd1000608"},
+	// user
+	{Address: "inj1wfawuv6fslzjlfa4v7exv27mk6rpfeyvhvxchc", Key: "0x6c212553111b370a8ffdc682954495b7b90a73cedab7106323646a4f2c4e668f"},
+}
+
+func getEthAddresses(accounts ...Account) []common.Address {
+	addresses := make([]common.Address, 0, len(accounts))
+	for _, a := range accounts {
+		addresses = append(addresses, a.EthAddress)
+	}
+
+	return addresses
+}
+
 type Account struct {
 	Address string
 	Key     string
 
 	EthAddress common.Address
 	EthPrivKey *ecdsa.PrivateKey
+
+	CosmosAccAddress cosmtypes.AccAddress
+	CosmosValAddress cosmtypes.ValAddress
 }
 
 func (a *Account) Parse() {
 	pk, err := crypto.HexToECDSA(a.Key[2:])
 	orFail(err)
-
-	a.EthAddress = common.HexToAddress(a.Address)
 	a.EthPrivKey = pk
+
+	if ethAddress := common.HexToAddress(a.Address); ethAddress != zeroAddress {
+		// provided an Eth address
+
+		a.EthAddress = common.HexToAddress(a.Address)
+		a.CosmosAccAddress = cosmtypes.AccAddress(a.EthAddress.Bytes())
+		a.CosmosValAddress = cosmtypes.ValAddress(a.EthAddress.Bytes())
+	} else if accAddress, err := cosmtypes.AccAddressFromBech32(a.Address); err == nil {
+		// provided a Bech32 address
+
+		a.EthAddress = common.BytesToAddress(accAddress.Bytes())
+		a.CosmosAccAddress = accAddress
+		a.CosmosValAddress = cosmtypes.ValAddress(accAddress.Bytes())
+	} else {
+		orFail(errors.Errorf("failed to parse address: %s", a.Address))
+	}
 }

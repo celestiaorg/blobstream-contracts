@@ -39,6 +39,12 @@ github.com/InjectiveLabs/evm-deploy-contract v1.1.0 h1:X8eA/hFJevKA6Pmp27LJWbow0
 github.com/InjectiveLabs/evm-deploy-contract v1.1.0/go.mod h1:CVz2NzV5VTuGNq8Juo7BkYAX8abqRHUxjP0+ACIRvko=
 github.com/InjectiveLabs/evm-deploy-contract v1.1.1 h1:MuWKsbjJbn8k1Vb6Df9g/wAHRqT8oo1geKVo0njr7tE=
 github.com/InjectiveLabs/evm-deploy-contract v1.1.1/go.mod h1:CVz2NzV5VTuGNq8Juo7BkYAX8abqRHUxjP0+ACIRvko=
+github.com/InjectiveLabs/evm-deploy-contract v1.1.2 h1:qIMUxJN86ZHt+bgg0J02kiMM4DBV7sICzmzM3SOMNUo=
+github.com/InjectiveLabs/evm-deploy-contract v1.1.2/go.mod h1:CVz2NzV5VTuGNq8Juo7BkYAX8abqRHUxjP0+ACIRvko=
+github.com/InjectiveLabs/evm-deploy-contract v1.2.0 h1:U37YvjlwDKcVt0h04QIybZTPvUj/Ol/RwT3VzG+cGfE=
+github.com/InjectiveLabs/evm-deploy-contract v1.2.0/go.mod h1:CVz2NzV5VTuGNq8Juo7BkYAX8abqRHUxjP0+ACIRvko=
+github.com/InjectiveLabs/evm-deploy-contract v1.2.1 h1:J9jm/OOka9pGIXuEYxkk5yDxPgt+TzUCIryxbLjYaLA=
+github.com/InjectiveLabs/evm-deploy-contract v1.2.1/go.mod h1:CVz2NzV5VTuGNq8Juo7BkYAX8abqRHUxjP0+ACIRvko=
 github.com/InjectiveLabs/sdk-go v1.15.1 h1:UpkomZRp+N8Nq0MqBRKOmKbNPgch2Vxzb/uJHFNpgvE=
 github.com/InjectiveLabs/sdk-go v1.15.1/go.mod h1:yDSZZhIvuXPLKc/aB0hOIiZchfeMaFOPFHaz+lCj+Xw=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=

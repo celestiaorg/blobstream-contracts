@@ -22,7 +22,19 @@ install:
 		-ldflags $(VERSION_FLAGS) \
 		./cmd/...
 
-.PHONY: install image push test
+.PHONY: install image push test gen
 
 test:
+	# go clean -testcache
 	go test ./test/...
+
+gen: solidity-wrappers
+
+SOLIDITY_DIR = solidity
+solidity-wrappers: $(SOLIDITY_DIR)/contracts/*.sol
+	cd $(SOLIDITY_DIR)/contracts/ ; \
+	for file in $(^F) ; do \
+			mkdir -p ../wrappers/$${file} ; \
+			echo abigen --type=peggy --pkg wrappers --out=../wrappers/$${file}/wrapper.go --sol $${file} ; \
+			abigen --type=peggy --pkg wrappers --out=../wrappers/$${file}/wrapper.go --sol $${file} ; \
+	done
