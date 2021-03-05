@@ -9,17 +9,23 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/InjectiveLabs/evm-deploy-contract/deployer"
+	"github.com/InjectiveLabs/evm-deploy-contract/sol"
 )
 
 var _ = Describe("Contract Tests", func() {
-	_ = Context("Hashing Test", func() {
+	_ = Describe("Hashing Test", func() {
 		var (
 			hashingTestTxOpts   deployer.ContractTxOpts
 			hashingTestCallOpts deployer.ContractCallOpts
-			hashingTestContract common.Address
+			hashingTestContract *sol.Contract
+			deployErr           error
 		)
 
-		_ = It("Deploys HashingTest.sol", func() {
+		JustBeforeEach(func() {
+			if hashingTestContract != nil {
+				return
+			}
+
 			hashingTestDeployOpts := deployer.ContractDeployOpts{
 				From:         EthAccounts[0].EthAddress,
 				FromPk:       EthAccounts[0].EthPrivKey,
@@ -28,38 +34,42 @@ var _ = Describe("Contract Tests", func() {
 				Await:        true,
 			}
 
-			_, contract, err := ContractDeployer.Deploy(context.Background(), hashingTestDeployOpts, noArgs)
-			Ω(err).Should(BeNil())
-			Ω(contract.Address).ShouldNot(Equal(zeroAddress))
-
-			hashingTestContract = contract.Address
+			_, hashingTestContract, deployErr = ContractDeployer.Deploy(context.Background(), hashingTestDeployOpts, noArgs)
 		})
 
-		BeforeEach(func() {
-			hashingTestTxOpts = deployer.ContractTxOpts{
-				From:         EthAccounts[0].EthAddress,
-				FromPk:       EthAccounts[0].EthPrivKey,
-				SolSource:    "../../solidity/contracts/HashingTest.sol",
-				ContractName: "HashingTest",
-				Contract:     hashingTestContract,
-				Await:        true,
-			}
-
-			hashingTestCallOpts = deployer.ContractCallOpts{
-				From:         EthAccounts[0].EthAddress,
-				SolSource:    "../../solidity/contracts/HashingTest.sol",
-				ContractName: "HashingTest",
-				Contract:     hashingTestContract,
-			}
+		_ = It("Deploys HashingTest.sol", func() {
+			Ω(deployErr).Should(BeNil())
+			Ω(hashingTestContract).ShouldNot(BeNil())
+			Ω(hashingTestContract.Address).ShouldNot(Equal(zeroAddress))
 		})
 
-		_ = When("HashingTest contract deployment done", func() {
+		_ = Context("HashingTest contract deployment done", func() {
 			var (
 				peggyID     common.Hash
 				validators  []common.Address
 				powers      []*big.Int
 				valsetNonce *big.Int
 			)
+
+			BeforeEach(func() {
+				orFail(deployErr)
+
+				hashingTestTxOpts = deployer.ContractTxOpts{
+					From:         EthAccounts[0].EthAddress,
+					FromPk:       EthAccounts[0].EthPrivKey,
+					SolSource:    "../../solidity/contracts/HashingTest.sol",
+					ContractName: "HashingTest",
+					Contract:     hashingTestContract.Address,
+					Await:        true,
+				}
+
+				hashingTestCallOpts = deployer.ContractCallOpts{
+					From:         EthAccounts[0].EthAddress,
+					SolSource:    "../../solidity/contracts/HashingTest.sol",
+					ContractName: "HashingTest",
+					Contract:     hashingTestContract.Address,
+				}
+			})
 
 			BeforeEach(func() {
 				peggyID = formatBytes32String("foo")

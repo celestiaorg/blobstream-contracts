@@ -65,6 +65,12 @@ func orFail(err error) {
 	}
 }
 
+func orPanic(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 var noArgs = func(args abi.Arguments) []interface{} {
 	return nil
 }

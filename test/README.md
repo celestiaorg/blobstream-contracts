@@ -8,61 +8,77 @@ This is a special place where we don't care about things like:
 * Myriads of JS packages complaining about versions and API inconsistencies
 * Different locations of ERC20 contract artifacts
 * Stuff being deployed slowly
-* Forking the Eth mainnet
+* Debugging ganache bugs
 
 We care about:
 * Speed of the full run
-* Code coverage reports
+* Go code coverage reports
 * Zero issues coming from tooling or dev env
 * Cross-platformity (macOS youKnow)
 * Supporting any target EVM that implements Ethereum JSON-RPC
+* 100% compatibility with real network
 
 ## Prerequisites
 
-You can specify any remote EVM endpoint to run the test against, but the best and most stable way to trest the stuff is to run a Ganache instance. Or hardhat, if you prefer, but it's harder to setup and gives no benefits in this case.
-
-To setup Ganache with UI just go to:
-* https://www.trufflesuite.com/ganache
-
-Or, if you prefer CLI approach:
-```
-$ yarn global add ganache-cli
-
-[1/4] 🔍  Resolving packages...
-[2/4] 🚚  Fetching packages...
-[3/4] 🔗  Linking dependencies...
-[4/4] 🔨  Building fresh packages...
-success Installed "ganache-cli@6.12.2" with binaries:
-      - ganache-cli
-```
+You can specify any remote EVM endpoint to run the test against, but the best and most stable way to test the stuff is to run a Ganache or Hardhat instance. Hardhat is used solely as a JSON-RPC node provider.
 
 Preferred Solc compiler toolkit:
 * https://github.com/crytic/solc-select
 
-Run `solc select 0.6.6` before starting any tests.
+Run `solc select 0.8.2` before starting any tests.
 
-### Running Ethereum
+### Running with Hardhat
 
-When having Ganache CLI installed, run the following command to download a snapshot and init the data dir:
+Hardhat is a newer alternative to Ganache that has convenient initialization via the config file.
+
+Running the init script will install node_modules inside `./test/ethereum` dir.
 
 ```
-$ ./test/ethereum/ganache-init.sh
+$ ./test/ethereum/hardhat-init.sh
 ```
 
-Options can be set via ENV variables:
+After init is done, the following command can be used to launch a Hardhat server instance:
 
-* `GANACHE_NETWORK_ID` - specify Ethereum Network ID, defaults to `50`.
+```
+$ ./test/ethereum/hardhat.sh
+```
+
+The only option that can be set via ENV variable:
+
+* `HARDHAT_PORT` - specify the port for server to listen on. Defaults to `8545`.
+
+The rest of the options can be tweaked via `./test/ethereum/hardhat.config.js`
+
+### Pre-prod testing with Geth
+
+In order to get maximum compatibility with the real blockchain environment and avoid any bugs in the EVM runtime of Hardhat/Ganache,
+also check different blocktime conditions, one might want to run Geth itself.
+
+Running this script will init a persistent data storage for the private network.
+
+```
+$ ./test/ethereum/geth-init.sh
+```
+
+Init options can be set via ENV variables:
+
+* `GETH_NETWORK_ID` - specify Ethereum Network ID, defaults to `50`.
+* `GETH_ALGO` - specify the consensus algorith for block producing. Defaults to `clique` (PoA), but `ethash` (PoW) is supported too. Make sure you adjust difficulty by patching your Geth (see at the bottom of this page)
 * `CHAIN_DIR` - specify the data dir, a prefix for all data dirs and logs. Defaults to `./data`
 
-After init is done, the following command can be used to launch a Ganache instance:
+Chain options can be tweaked in `./test/ethereum/geth/genesis.json`
+
+After init is done, the following command can be used to launch a full Geth node instance:
 
 ```
-$ ./test/ethereum/ganache.sh
+$ ./test/ethereum/geth.sh
 ```
 
-Options can be set via ENV variables:
+Running options can be set via ENV variables:
 
-* `GANACHE_NETWORK_ID` - specify Ethereum Network ID, defaults to `50`.
+* `GETH_NETWORK_ID` - specify Ethereum Network ID, defaults to `50`.
+* `GETH_ALGO` - specify the consensus algorith for block producing. Defaults to `ethash` (PoW), but `clique` (PoA) supported.
+* `GETH_PORT` - specify the port for server to listen on. Defaults to `8545`.
 * `CHAIN_DIR` - specify the data dir, a prefix for all data dirs and logs. Defaults to `./data`
 
 ### Cosmos Daemon
@@ -88,6 +104,40 @@ Full list of the supported ENV variables:
 ### Cosmos Accounts
 
 The script imports 3 validator accounts and 1 user account, specified by mnemonics in the script itself. Each validator account accessible as `val` on the corresponding nodes, and user account is shared across all three nodes as `user`.
+
+### Misc: Patching Geth
+
+Geth by default scales difficulty of the blocks to hit the target block pace. So even if your network starts with `difficulty=1` in genesis, the difficulty will be higher in the next blocks and waiting times would be very high. Especially that DAG regeneration phases. A solution to this in local setup would be to either use `clique` consensus for PoA-style block producing, or just patch the Geth code, so the difficulty won't grow.
+
+Just clone the `go-ethereum` repo, apply this patch:
+
+```diff
+diff --git a/consensus/ethash/consensus.go b/consensus/ethash/consensus.go
+index bdc02098a..c17ea5b76 100644
+--- a/consensus/ethash/consensus.go
++++ b/consensus/ethash/consensus.go
+@@ -315,19 +315,7 @@ func (ethash *Ethash) CalcDifficulty(chain consensus.ChainHeaderReader, time uin
+ // the difficulty that a new block should have when created at time
+ // given the parent block's time and difficulty.
+ func CalcDifficulty(config *params.ChainConfig, time uint64, parent *types.Header) *big.Int {
+-       next := new(big.Int).Add(parent.Number, big1)
+-       switch {
+-       case config.IsMuirGlacier(next):
+-               return calcDifficultyEip2384(time, parent)
+-       case config.IsConstantinople(next):
+-               return calcDifficultyConstantinople(time, parent)
+-       case config.IsByzantium(next):
+-               return calcDifficultyByzantium(time, parent)
+-       case config.IsHomestead(next):
+-               return calcDifficultyHomestead(time, parent)
+-       default:
+-               return calcDifficultyFrontier(time, parent)
+-       }
++       return big1
+ }
+```
+
+And install it with `go install ./cmd/geth`. Welcome to the Geth forking!
 
 ## Contributing
 
