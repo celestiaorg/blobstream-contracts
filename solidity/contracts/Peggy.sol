@@ -1,6 +1,7 @@
-pragma solidity ^0.6.6;
+// SPDX-License-Identifier: Apache-2.0
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
+pragma solidity ^0.8.0;
+
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
@@ -27,7 +28,6 @@ struct LogicCallArgs {
 }
 
 contract Peggy is ReentrancyGuard {
-	using SafeMath for uint256;
 	using SafeERC20 for IERC20;
 
 	// These are updated often
@@ -373,7 +373,7 @@ contract Peggy is ReentrancyGuard {
 				uint256 totalFee;
 				for (uint256 i = 0; i < _amounts.length; i++) {
 					IERC20(_tokenContract).safeTransfer(_destinations[i], _amounts[i]);
-					totalFee = totalFee.add(_fees[i]);
+					totalFee = totalFee + _fees[i];
 				}
 
 				// Send transaction fees to msg.sender
@@ -383,7 +383,7 @@ contract Peggy is ReentrancyGuard {
 
 		// LOGS scoped to reduce stack depth
 		{
-			state_lastEventNonce = state_lastEventNonce.add(1);
+			state_lastEventNonce = state_lastEventNonce + 1;
 			emit TransactionBatchExecutedEvent(_batchNonce, _tokenContract, state_lastEventNonce);
 		}
 	}
@@ -507,7 +507,7 @@ contract Peggy is ReentrancyGuard {
 
 		// LOGS scoped to reduce stack depth
 		{
-			state_lastEventNonce = state_lastEventNonce.add(1);
+			state_lastEventNonce = state_lastEventNonce + 1;
 			emit LogicCallEvent(
 				_args.invalidationId,
 				_args.invalidationNonce,
@@ -523,7 +523,7 @@ contract Peggy is ReentrancyGuard {
 		uint256 _amount
 	) public nonReentrant {
 		IERC20(_tokenContract).safeTransferFrom(msg.sender, address(this), _amount);
-		state_lastEventNonce = state_lastEventNonce.add(1);
+		state_lastEventNonce = state_lastEventNonce + 1;
 		emit SendToCosmosEvent(
 			_tokenContract,
 			msg.sender,
@@ -543,7 +543,7 @@ contract Peggy is ReentrancyGuard {
 		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
 
 		// Fire an event to let the Cosmos module know
-		state_lastEventNonce = state_lastEventNonce.add(1);
+		state_lastEventNonce = state_lastEventNonce + 1;
 		emit ERC20DeployedEvent(
 			_cosmosDenom,
 			address(erc20),
@@ -554,6 +554,8 @@ contract Peggy is ReentrancyGuard {
 		);
 	}
 
+	uint256 public stuff;
+
 	constructor(
 		// A unique identifier for this peggy instance to use in signatures
 		bytes32 _peggyId,
@@ -562,7 +564,7 @@ contract Peggy is ReentrancyGuard {
 		// The validator set
 		address[] memory _validators,
 		uint256[] memory _powers
-	) public {
+	) {
 		// CHECKS
 
 		// Check that validators, powers, and signatures (v,r,s) set is well-formed
@@ -577,6 +579,7 @@ contract Peggy is ReentrancyGuard {
 				break;
 			}
 		}
+
 		require(
 			cumulativePower > _powerThreshold,
 			"Submitted validator set signatures do not have enough power."
@@ -595,3 +598,4 @@ contract Peggy is ReentrancyGuard {
 		emit ValsetUpdatedEvent(0, _validators, _powers);
 	}
 }
+
