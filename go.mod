@@ -3,7 +3,7 @@ module github.com/InjectiveLabs/peggo
 go 1.15
 
 require (
-	github.com/InjectiveLabs/evm-deploy-contract v1.3.2
+	github.com/InjectiveLabs/evm-deploy-contract v1.4.0
 	github.com/InjectiveLabs/sdk-go v1.15.1
 	github.com/alexcesaro/statsd v2.0.0+incompatible
 	github.com/avast/retry-go v3.0.0+incompatible
@@ -27,4 +27,3 @@ require (
 )
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.2-alpha.regen.4
-replace github.com/InjectiveLabs/evm-deploy-contract => /Users/xlab/Documents/dev/InjectiveLabs/evm-deploy-contract

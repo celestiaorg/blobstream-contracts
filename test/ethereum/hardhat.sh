@@ -11,6 +11,7 @@ HARDHAT_PORT="${HARDHAT_PORT:-8545}"
 CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
 
 hdir="$CHAIN_DIR/$HARDHAT_NETWORK_ID"
+mkdir -p $hdir
 
 # kill $(ps -ef | grep hardhat | grep -v grep | awk '{print $2}') &>/dev/null || true
 kill $(cat $hdir.hardhat.pid) &>/dev/null && rm $hdir.hardhat.pid || true

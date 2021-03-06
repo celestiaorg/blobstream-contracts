@@ -4,12 +4,15 @@ import (
 	"context"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	ctypes "github.com/ethereum/go-ethereum/core/types"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"github.com/InjectiveLabs/evm-deploy-contract/deployer"
 	"github.com/InjectiveLabs/evm-deploy-contract/sol"
+	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
 )
 
 var _ = Describe("Contract Tests", func() {
@@ -111,19 +114,19 @@ var _ = Describe("Contract Tests", func() {
 
 		_ = Context("Peggy contract deployment done", func() {
 			var (
-				ethFrom Account
+				peggyOwner Account
 			)
 
 			BeforeEach(func() {
-				ethFrom = EthAccounts[0]
+				peggyOwner = EthAccounts[0]
 			})
 
 			JustBeforeEach(func() {
 				orFail(deployErr)
 
 				peggyTxOpts = deployer.ContractTxOpts{
-					From:         ethFrom.EthAddress,
-					FromPk:       ethFrom.EthPrivKey,
+					From:         peggyOwner.EthAddress,
+					FromPk:       peggyOwner.EthPrivKey,
 					SolSource:    "../../solidity/contracts/Peggy.sol",
 					ContractName: "Peggy",
 					Contract:     peggyContract.Address,
@@ -131,43 +134,145 @@ var _ = Describe("Contract Tests", func() {
 				}
 
 				peggyCallOpts = deployer.ContractCallOpts{
-					From:         ethFrom.EthAddress,
+					From:         peggyOwner.EthAddress,
 					SolSource:    "../../solidity/contracts/Peggy.sol",
 					ContractName: "Peggy",
 					Contract:     peggyContract.Address,
 				}
 			})
 
-			It("Should have address", func() {
-				Ω(peggyTxOpts.Contract).ShouldNot(Equal(zeroAddress))
-				Ω(peggyCallOpts.Contract).ShouldNot(Equal(zeroAddress))
+			_ = Describe("Check contract state", func() {
+				It("Should have address", func() {
+					Ω(peggyTxOpts.Contract).ShouldNot(Equal(zeroAddress))
+					Ω(peggyCallOpts.Contract).ShouldNot(Equal(zeroAddress))
+				})
+
+				It("Should have valid power threshold", func() {
+					var state_powerThreshold *big.Int
+
+					out, outAbi, err := ContractDeployer.Call(context.Background(), peggyCallOpts,
+						"state_powerThreshold", noArgs,
+					)
+					Ω(err).Should(BeNil())
+
+					err = outAbi.Copy(&state_powerThreshold, out)
+					Ω(err).Should(BeNil())
+					Ω(state_powerThreshold.String()).Should(Equal(minPower.String()))
+				})
+
+				It("Should have valid peggyId", func() {
+					var state_peggyId common.Hash
+
+					out, outAbi, err := ContractDeployer.Call(context.Background(), peggyCallOpts,
+						"state_peggyId", noArgs,
+					)
+					Ω(err).Should(BeNil())
+
+					err = outAbi.Copy(&state_peggyId, out)
+					Ω(err).Should(BeNil())
+					Ω(state_peggyId).Should(Equal(peggyID))
+				})
+
+				It("Should have generated a valid checkpoint", func() {
+					var state_lastValsetCheckpoint common.Hash
+
+					out, outAbi, err := ContractDeployer.Call(context.Background(), peggyCallOpts,
+						"state_lastValsetCheckpoint", noArgs,
+					)
+					Ω(err).Should(BeNil())
+
+					offchainCheckpoint := makeCheckpoint(validators, powers, big.NewInt(0), peggyID)
+
+					err = outAbi.Copy(&state_lastValsetCheckpoint, out)
+					Ω(err).Should(BeNil())
+					Ω(state_lastValsetCheckpoint).Should(Equal(offchainCheckpoint))
+				})
+
+				// Check also the event
 			})
 
-			It("Should have valid power threshold", func() {
-				var state_powerThreshold *big.Int
+			_ = Describe("ERC20 token deployment via Peggy", func() {
+				var (
+					state_lastEventNonce *big.Int
+					prevEventNonce       *big.Int
 
-				out, outAbi, err := ContractDeployer.Call(context.Background(), peggyCallOpts,
-					"state_powerThreshold", noArgs,
+					erc20DeployTxHash  common.Hash
+					erc20DeployErr     error
+					erc20DeployedEvent = wrappers.PeggyERC20DeployedEvent{}
 				)
-				Ω(err).Should(BeNil())
 
-				err = outAbi.Copy(&state_powerThreshold, out)
-				Ω(err).Should(BeNil())
-				Ω(state_powerThreshold.String()).Should(Equal(minPower.String()))
-			})
+				BeforeEach(func() {
+					if state_lastEventNonce != nil {
+						prevEventNonce = state_lastEventNonce
+					}
 
-			It("Should have valid peggyId", func() {
-				var state_peggyId common.Hash
+					out, outAbi, err := ContractDeployer.Call(context.Background(), peggyCallOpts,
+						"state_lastEventNonce", noArgs,
+					)
+					Ω(err).Should(BeNil())
+					err = outAbi.Copy(&state_lastEventNonce, out)
+					Ω(err).Should(BeNil())
+				})
 
-				out, outAbi, err := ContractDeployer.Call(context.Background(), peggyCallOpts,
-					"state_peggyId", noArgs,
-				)
-				Ω(err).Should(BeNil())
+				It("Deploys a new ERC20 contract instance", func() {
+					erc20DeployTxHash, _, erc20DeployErr = ContractDeployer.Tx(context.Background(), peggyTxOpts,
+						"deployERC20", withArgsFn("inj", "INJ", "INJ", byte(18)),
+					)
+					Ω(erc20DeployErr).Should(BeNil())
+					Ω(erc20DeployTxHash).ShouldNot(Equal(zeroHash))
+				})
 
-				err = outAbi.Copy(&state_peggyId, out)
-				Ω(err).Should(BeNil())
-				Ω(state_peggyId).Should(Equal(peggyID))
+				It("Nonce during deployment increased", func() {
+					next := new(big.Int).Add(prevEventNonce, big.NewInt(1))
+					Ω(state_lastEventNonce.String()).Should(Equal(next.String()))
+				})
+
+				_ = When("New ERC20 instance deployed", func() {
+					BeforeEach(func() {
+						orFail(erc20DeployErr)
+
+						peggyLogsOpts := deployer.ContractLogsOpts{
+							SolSource:    "../../solidity/contracts/Peggy.sol",
+							ContractName: "Peggy",
+							Contract:     peggyContract.Address,
+						}
+
+						_, err := ContractDeployer.Logs(
+							context.Background(),
+							peggyLogsOpts,
+							erc20DeployTxHash,
+							"ERC20DeployedEvent",
+							unpackERC20DeployedEventTo(&erc20DeployedEvent),
+						)
+						orFail(err)
+					})
+
+					_ = Describe("ERC20DeployedEvent", func() {
+						It("Should have valid token params", func() {
+							Ω(erc20DeployedEvent.CosmosDenom).Should(Equal("inj"))
+							Ω(erc20DeployedEvent.Symbol).Should(Equal("INJ"))
+							Ω(erc20DeployedEvent.Name).Should(Equal("INJ"))
+							Ω(erc20DeployedEvent.Decimals).Should(BeEquivalentTo(18))
+						})
+
+						It("Should have TokenContract address", func() {
+							Ω(erc20DeployedEvent.TokenContract).ShouldNot(Equal(zeroAddress))
+						})
+
+						It("Should have valid EventNonce", func() {
+							Ω(erc20DeployedEvent.EventNonce).ShouldNot(BeNil())
+							Ω(erc20DeployedEvent.EventNonce.String()).Should(Equal(state_lastEventNonce.String()))
+						})
+					})
+				})
 			})
 		})
 	})
 })
+
+func unpackERC20DeployedEventTo(result *wrappers.PeggyERC20DeployedEvent) deployer.ContractLogUnpackFunc {
+	return func(unpacker deployer.LogUnpacker, event abi.Event, log ctypes.Log) (interface{}, error) {
+		err := unpacker.UnpackLog(result, event.Name, log)
+		return &result, err
+	}
+}

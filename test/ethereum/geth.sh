@@ -12,6 +12,7 @@ GETH_BLOCK_GAS_LIMIT="${GETH_BLOCK_GAS_LIMIT:-60000000}"
 CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
 
 hdir="$CHAIN_DIR/$GETH_NETWORK_ID"
+mkdir -p $hdir
 
 # killall geth
 kill $(cat $hdir.geth.pid) &>/dev/null && rm $hdir.geth.pid || true

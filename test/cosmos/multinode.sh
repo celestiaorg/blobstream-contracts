@@ -103,7 +103,7 @@ kbt="--keyring-backend test"
 cid="--chain-id $CHAIN_ID"
 
 # Check if the data dir has been initialized already
-if [[ ! -d "$CHAIN_DIR" ]]; then
+if [[ ! -d "$hdir" ]]; then
 	echo "Creating 3x $NODE_BIN validators with chain-id=$CHAIN_ID"
 
 	# Build genesis file and create accounts
