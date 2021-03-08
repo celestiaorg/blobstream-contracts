@@ -165,7 +165,7 @@ var _ = Describe("Contract Tests", func() {
 
 					err = outAbi.Copy(&state_powerThreshold, out)
 					Ω(err).Should(BeNil())
-					Ω(state_powerThreshold.String()).Should(Equal(minPower.String()))
+					Ω(state_powerThreshold).Should(BeEquivalentTo(minPower))
 				})
 
 				It("Should have valid peggyId", func() {
@@ -256,7 +256,7 @@ var _ = Describe("Contract Tests", func() {
 
 				It("Nonce during deployment increased", func() {
 					next := new(big.Int).Add(prevEventNonce, big.NewInt(1))
-					Ω(state_lastEventNonce.String()).Should(Equal(next.String()))
+					Ω(state_lastEventNonce).Should(BeEquivalentTo(next))
 				})
 
 				_ = When("New ERC20 instance deployed", func() {
@@ -287,7 +287,7 @@ var _ = Describe("Contract Tests", func() {
 
 						It("Should have valid EventNonce", func() {
 							Ω(erc20DeployedEvent.EventNonce).ShouldNot(BeNil())
-							Ω(erc20DeployedEvent.EventNonce.String()).Should(Equal(state_lastEventNonce.String()))
+							Ω(erc20DeployedEvent.EventNonce).Should(BeEquivalentTo(state_lastEventNonce))
 						})
 					})
 				})
