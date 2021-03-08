@@ -2,7 +2,8 @@
 
 pragma solidity ^0.8.0;
 import "./@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "./console.sol";
+
+import "./hardhat/console.sol";
 
 // One of three testing coins
 contract TestERC20A is ERC20 {
