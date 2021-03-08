@@ -20,10 +20,12 @@ var _ = Describe("Contract Tests", func() {
 		var (
 			peggyTxOpts   deployer.ContractTxOpts
 			peggyCallOpts deployer.ContractCallOpts
+			peggyLogsOpts deployer.ContractLogsOpts
 			peggyContract *sol.Contract
 
-			deployArgs deployer.AbiMethodInputMapperFunc
-			deployErr  error
+			deployArgs   deployer.AbiMethodInputMapperFunc
+			deployErr    error
+			deployTxHash common.Hash
 
 			peggyID    common.Hash
 			minPower   *big.Int
@@ -63,7 +65,7 @@ var _ = Describe("Contract Tests", func() {
 				Await:        true,
 			}
 
-			_, peggyContract, deployErr = ContractDeployer.Deploy(context.Background(), peggyDeployOpts, deployArgs)
+			deployTxHash, peggyContract, deployErr = ContractDeployer.Deploy(context.Background(), peggyDeployOpts, deployArgs)
 		})
 
 		_ = Context("Contract fails to deploy", func() {
@@ -139,6 +141,12 @@ var _ = Describe("Contract Tests", func() {
 					ContractName: "Peggy",
 					Contract:     peggyContract.Address,
 				}
+
+				peggyLogsOpts = deployer.ContractLogsOpts{
+					SolSource:    "../../solidity/contracts/Peggy.sol",
+					ContractName: "Peggy",
+					Contract:     peggyContract.Address,
+				}
 			})
 
 			_ = Describe("Check contract state", func() {
@@ -188,7 +196,31 @@ var _ = Describe("Contract Tests", func() {
 					Ω(state_lastValsetCheckpoint).Should(Equal(offchainCheckpoint))
 				})
 
-				// Check also the event
+				_ = Describe("ValsetUpdatedEvent", func() {
+					var (
+						valsetUpdatedEvent = wrappers.PeggyValsetUpdatedEvent{}
+					)
+
+					BeforeEach(func() {
+						orFail(deployErr)
+
+						_, err := ContractDeployer.Logs(
+							context.Background(),
+							peggyLogsOpts,
+							deployTxHash,
+							"ValsetUpdatedEvent",
+							unpackValsetUpdatedEventTo(&valsetUpdatedEvent),
+						)
+						orFail(err)
+					})
+
+					It("Should have valid Valset parameters", func() {
+						Ω(valsetUpdatedEvent.NewValsetNonce).ShouldNot(BeNil())
+						Ω(valsetUpdatedEvent.NewValsetNonce.String()).Should(Equal("0"))
+						Ω(valsetUpdatedEvent.Validators).Should(BeEquivalentTo(validators))
+						Ω(valsetUpdatedEvent.Powers).Should(BeEquivalentTo(powers))
+					})
+				})
 			})
 
 			_ = Describe("ERC20 token deployment via Peggy", func() {
@@ -231,12 +263,6 @@ var _ = Describe("Contract Tests", func() {
 					BeforeEach(func() {
 						orFail(erc20DeployErr)
 
-						peggyLogsOpts := deployer.ContractLogsOpts{
-							SolSource:    "../../solidity/contracts/Peggy.sol",
-							ContractName: "Peggy",
-							Contract:     peggyContract.Address,
-						}
-
 						_, err := ContractDeployer.Logs(
 							context.Background(),
 							peggyLogsOpts,
@@ -271,6 +297,13 @@ var _ = Describe("Contract Tests", func() {
 })
 
 func unpackERC20DeployedEventTo(result *wrappers.PeggyERC20DeployedEvent) deployer.ContractLogUnpackFunc {
+	return func(unpacker deployer.LogUnpacker, event abi.Event, log ctypes.Log) (interface{}, error) {
+		err := unpacker.UnpackLog(result, event.Name, log)
+		return &result, err
+	}
+}
+
+func unpackValsetUpdatedEventTo(result *wrappers.PeggyValsetUpdatedEvent) deployer.ContractLogUnpackFunc {
 	return func(unpacker deployer.LogUnpacker, event abi.Event, log ctypes.Log) (interface{}, error) {
 		err := unpacker.UnpackLog(result, event.Name, log)
 		return &result, err
