@@ -100,6 +100,10 @@ func sumInts(n0 *big.Int, n ...*big.Int) *big.Int {
 	return sum
 }
 
+const (
+	signaturePrefix = "\x19Ethereum Signed Message:\n32"
+)
+
 func signDigest(digestHash common.Hash, keys ...*ecdsa.PrivateKey) (
 	v []uint8,
 	r []common.Hash,
@@ -109,13 +113,15 @@ func signDigest(digestHash common.Hash, keys ...*ecdsa.PrivateKey) (
 	// The produced signature is in the [R || S || V] format where V is 0 or 1.
 	var sig []byte
 
+	personalHash := crypto.Keccak256Hash(append([]byte(signaturePrefix), digestHash.Bytes()...))
+
 	for _, k := range keys {
-		sig, err = crypto.Sign(digestHash[:], k)
+		sig, err = crypto.Sign(personalHash[:], k)
 		if err != nil {
 			return
 		}
 
-		sigV := sig[64]
+		sigV := sig[64] + 27
 		sigR := common.Hash{}
 		_ = copy(sigR[:], sig[:32])
 		sigS := common.Hash{}

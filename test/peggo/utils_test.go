@@ -13,6 +13,9 @@ var _ = Describe("Testing utils check", func() {
 
 			result = formatBytes32String("checkpoint").Hex()
 			Ω(result).Should(Equal("0x636865636b706f696e7400000000000000000000000000000000000000000000"))
+
+			result = formatBytes32String("transactionBatch").Hex()
+			Ω(result).Should(Equal("0x7472616e73616374696f6e426174636800000000000000000000000000000000"))
 		})
 	})
 })

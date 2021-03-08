@@ -1,7 +1,6 @@
 package peggy
 
 import (
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -109,15 +108,6 @@ func EncodeTxBatchConfirm(peggyID common.Hash, batch *types.OutgoingTxBatch) com
 	return common.BytesToHash(hash.Bytes())
 }
 
-func strToFixByteArray(s string) ([32]byte, error) {
-	var out [32]byte
-	if len([]byte(s)) > 32 {
-		return out, fmt.Errorf("string too long")
-	}
-	copy(out[:], s)
-	return out, nil
-}
-
 const (
 	ValsetConfirmABIJSON = `[{
         "name": "checkpoint",
@@ -129,9 +119,6 @@ const (
             { "internalType": "uint256",   "name": "_valsetNonce", "type": "uint256" },
             { "internalType": "address[]", "name": "_validators",  "type": "address[]" },
             { "internalType": "uint256[]", "name": "_powers",      "type": "uint256[]" }
-        ],
-        "outputs": [
-            { "internalType": "bytes32", "name": "", "type": "bytes32" }
         ]
     }]`
 
@@ -146,10 +133,8 @@ const (
             { "internalType": "address[]", "name": "_destinations",  "type": "address[]" },
             { "internalType": "uint256[]", "name": "_fees",          "type": "uint256[]" },
             { "internalType": "uint256",   "name": "_batchNonce",    "type": "uint256" },
-            { "internalType": "address",   "name": "_tokenContract", "type": "address" }
-        ],
-        "outputs": [
-            { "internalType": "bytes32", "name": "", "type": "bytes32" }
+            { "internalType": "address",   "name": "_tokenContract", "type": "address" },
+            { "internalType": "uint256",   "name": "_batchTimeout",  "type": "uint256" }
         ]
     }]`
 )

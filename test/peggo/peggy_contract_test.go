@@ -362,6 +362,7 @@ var _ = Describe("Contract Tests", func() {
 									txDestinations,
 									txFees,
 									batchNonce,
+									batchTimeout,
 								)
 								orFail(prepareBatchErr)
 
@@ -429,7 +430,8 @@ var _ = Describe("Contract Tests", func() {
 								})
 
 								It("Increases the token balances of recipients", func() {
-									for _, recipient := range getEthAddresses(EthAccounts...) {
+									recipients := getEthAddresses(EthAccounts...)
+									for _, recipient := range recipients {
 										var recipientBalance *big.Int
 
 										out, outAbi, err := ContractDeployer.Call(context.Background(), erc20CallOpts,
@@ -439,7 +441,14 @@ var _ = Describe("Contract Tests", func() {
 										err = outAbi.Copy(&recipientBalance, out)
 										Ω(err).Should(BeNil())
 
-										Ω(recipientBalance.String()).Should(Equal("1"))
+										if recipient == peggyOwner.EthAddress {
+											// the peggyOwner address collected all the fees also
+											Ω(recipientBalance.String()).Should(Equal(
+												sumInts(big.NewInt(1), txFees...).String(),
+											))
+										} else {
+											Ω(recipientBalance.String()).Should(Equal("1"))
+										}
 									}
 								})
 							})
@@ -460,6 +469,7 @@ func prepareOutgoingTransferBatch(
 	txDestinations []common.Address,
 	txFees []*big.Int,
 	batchNonce *big.Int,
+	batchTimeout *big.Int,
 ) (common.Hash, error) {
 	abiEncodedBatch, err := outgoingBatchTxConfirmABI.Pack("transactionBatch",
 		peggyID,
@@ -469,13 +479,14 @@ func prepareOutgoingTransferBatch(
 		txFees,
 		batchNonce,
 		tokenContract,
+		batchTimeout,
 	)
 	if err != nil {
 		return common.Hash{}, err
 	}
 
 	hash := crypto.Keccak256Hash(abiEncodedBatch[4:])
-	return common.BytesToHash(hash.Bytes()), nil
+	return hash, nil
 }
 
 func unpackERC20DeployedEventTo(result *wrappers.PeggyERC20DeployedEvent) deployer.ContractLogUnpackFunc {
