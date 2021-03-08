@@ -3,7 +3,7 @@ module github.com/InjectiveLabs/peggo
 go 1.15
 
 require (
-	github.com/InjectiveLabs/evm-deploy-contract v1.4.0
+	github.com/InjectiveLabs/evm-deploy-contract v1.4.1
 	github.com/InjectiveLabs/sdk-go v1.15.1
 	github.com/alexcesaro/statsd v2.0.0+incompatible
 	github.com/avast/retry-go v3.0.0+incompatible

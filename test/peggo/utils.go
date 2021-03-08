@@ -1,6 +1,7 @@
 package solidity
 
 import (
+	"crypto/ecdsa"
 	"math/big"
 	"strings"
 
@@ -59,6 +60,11 @@ var zeroAddress = common.Address{}
 
 var zeroHash = common.Hash{}
 
+// maxUInt256 returns a value equal to 2**256 - 1 (MAX_UINT in Solidity).
+func maxUInt256() *big.Int {
+	return new(big.Int).Sub(new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil), big.NewInt(1))
+}
+
 func orFail(err error) {
 	if err != nil {
 		Fail(err.Error(), 1)
@@ -79,4 +85,46 @@ func withArgsFn(args ...interface{}) deployer.AbiMethodInputMapperFunc {
 	return func(_ abi.Arguments) []interface{} {
 		return args
 	}
+}
+
+func sumInts(n0 *big.Int, n ...*big.Int) *big.Int {
+	sum := new(big.Int)
+	if n0 != nil {
+		sum.Set(n0)
+	}
+
+	for _, i := range n {
+		sum.Add(sum, i)
+	}
+
+	return sum
+}
+
+func signDigest(digestHash common.Hash, keys ...*ecdsa.PrivateKey) (
+	v []uint8,
+	r []common.Hash,
+	s []common.Hash,
+	err error,
+) {
+	// The produced signature is in the [R || S || V] format where V is 0 or 1.
+	var sig []byte
+
+	for _, k := range keys {
+		sig, err = crypto.Sign(digestHash[:], k)
+		if err != nil {
+			return
+		}
+
+		sigV := sig[64]
+		sigR := common.Hash{}
+		_ = copy(sigR[:], sig[:32])
+		sigS := common.Hash{}
+		_ = copy(sigS[:], sig[32:64])
+
+		v = append(v, sigV)
+		r = append(r, sigR)
+		s = append(s, sigS)
+	}
+
+	return
 }

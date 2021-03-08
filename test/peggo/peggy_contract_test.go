@@ -3,15 +3,19 @@ package solidity
 import (
 	"context"
 	"math/big"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	ctypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"github.com/InjectiveLabs/evm-deploy-contract/deployer"
+
 	"github.com/InjectiveLabs/evm-deploy-contract/sol"
+	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
 	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
 )
 
@@ -165,7 +169,7 @@ var _ = Describe("Contract Tests", func() {
 
 					err = outAbi.Copy(&state_powerThreshold, out)
 					Ω(err).Should(BeNil())
-					Ω(state_powerThreshold).Should(BeEquivalentTo(minPower))
+					Ω(state_powerThreshold.String()).Should(Equal(minPower.String()))
 				})
 
 				It("Should have valid peggyId", func() {
@@ -202,8 +206,6 @@ var _ = Describe("Contract Tests", func() {
 					)
 
 					BeforeEach(func() {
-						orFail(deployErr)
-
 						_, err := ContractDeployer.Logs(
 							context.Background(),
 							peggyLogsOpts,
@@ -256,7 +258,7 @@ var _ = Describe("Contract Tests", func() {
 
 				It("Nonce during deployment increased", func() {
 					next := new(big.Int).Add(prevEventNonce, big.NewInt(1))
-					Ω(state_lastEventNonce).Should(BeEquivalentTo(next))
+					Ω(state_lastEventNonce.String()).Should(Equal(next.String()))
 				})
 
 				_ = When("New ERC20 instance deployed", func() {
@@ -287,7 +289,160 @@ var _ = Describe("Contract Tests", func() {
 
 						It("Should have valid EventNonce", func() {
 							Ω(erc20DeployedEvent.EventNonce).ShouldNot(BeNil())
-							Ω(erc20DeployedEvent.EventNonce).Should(BeEquivalentTo(state_lastEventNonce))
+							Ω(erc20DeployedEvent.EventNonce.String()).Should(Equal(state_lastEventNonce.String()))
+						})
+					})
+
+					_ = Describe("ERC20 Token", func() {
+						var (
+							erc20CallOpts deployer.ContractCallOpts
+						)
+
+						BeforeEach(func() {
+							erc20CallOpts = deployer.ContractCallOpts{
+								From:         peggyOwner.EthAddress,
+								SolSource:    "../../solidity/contracts/CosmosToken.sol",
+								ContractName: "CosmosERC20",
+								Contract:     erc20DeployedEvent.TokenContract,
+							}
+						})
+
+						It("Should have MAX_UINT balance on Peggy", func() {
+							var peggyBalance *big.Int
+
+							out, outAbi, err := ContractDeployer.Call(context.Background(), erc20CallOpts,
+								"balanceOf", withArgsFn(peggyContract.Address))
+							Ω(err).Should(BeNil())
+
+							err = outAbi.Copy(&peggyBalance, out)
+							Ω(err).Should(BeNil())
+
+							Ω(peggyBalance).Should(BeEquivalentTo(maxUInt256()))
+						})
+
+						_ = When("Cosmos -> Ethereum batch being submitted", func() {
+							var (
+								submitBatchTxHash common.Hash
+								submitBatchErr    error
+								prepareBatchErr   error
+								signBatchErr      error
+
+								txAmounts            []*big.Int
+								txDestinations       []common.Address
+								txFees               []*big.Int
+								transactionBatchHash common.Hash
+
+								sigsV []uint8
+								sigsR []common.Hash
+								sigsS []common.Hash
+
+								currentValsetNonce *big.Int
+								batchNonce         *big.Int
+								batchTimeout       *big.Int
+							)
+
+							BeforeEach(func() {
+								currentValsetNonce = big.NewInt(0)
+								batchNonce = big.NewInt(1)
+								batchTimeout = big.NewInt(10000)
+
+								txAmounts = make([]*big.Int, len(EthAccounts))
+								txDestinations = getEthAddresses(EthAccounts...)
+								txFees = make([]*big.Int, len(EthAccounts))
+
+								for i := range EthAccounts {
+									txAmounts[i] = big.NewInt(1)
+									txFees[i] = big.NewInt(1)
+								}
+
+								transactionBatchHash, prepareBatchErr = prepareOutgoingTransferBatch(
+									peggyID,
+									erc20DeployedEvent.TokenContract,
+									txAmounts,
+									txDestinations,
+									txFees,
+									batchNonce,
+								)
+								orFail(prepareBatchErr)
+
+								sigsV, sigsR, sigsS, signBatchErr = signDigest(
+									transactionBatchHash, getSigningKeys(CosmosAccounts[:3]...)...)
+								orFail(signBatchErr)
+							})
+
+							JustBeforeEach(func() {
+								// don't resend the batch
+								if submitBatchTxHash != zeroHash {
+									return
+								}
+
+								submitBatchTxHash, _, submitBatchErr = ContractDeployer.Tx(context.Background(), peggyTxOpts,
+									"submitBatch", withArgsFn(
+										// The validators that approve the batch
+										validators,         // 	address[] memory _currentValidators,
+										powers,             // 	uint256[] memory _currentPowers,
+										currentValsetNonce, // 	uint256 _currentValsetNonce,
+
+										// These are arrays of the parts of the validators signatures
+										sigsV, // 	uint8[] memory _v,
+										sigsR, // 	bytes32[] memory _r,
+										sigsS, // 	bytes32[] memory _s,
+
+										// The batch of transactions
+										txAmounts,                        // 	uint256[] memory _amounts,
+										txDestinations,                   // 	address[] memory _destinations,
+										txFees,                           // 	uint256[] memory _fees,
+										batchNonce,                       // 	uint256 _batchNonce,
+										erc20DeployedEvent.TokenContract, // 	address _tokenContract,
+
+										// a block height beyond which this batch is not valid
+										// used to provide a fee-free timeout
+										batchTimeout, // 	uint256 _batchTimeout
+									))
+
+							})
+
+							_ = When("TxBatch submission failed", func() {
+								BeforeEach(func() {})
+								AfterEach(func() {})
+							})
+
+							_ = Context("TxBatch submitted successfully", func() {
+								BeforeEach(func() {
+									orFail(submitBatchErr)
+								})
+
+								It("Changes the balance of the Peggy contract", func() {
+									var peggyBalance *big.Int
+
+									out, outAbi, err := ContractDeployer.Call(context.Background(), erc20CallOpts,
+										"balanceOf", withArgsFn(peggyContract.Address))
+									Ω(err).Should(BeNil())
+
+									err = outAbi.Copy(&peggyBalance, out)
+									Ω(err).Should(BeNil())
+
+									expenses := sumInts(nil, txAmounts...)
+									expenses = sumInts(expenses, txFees...)
+									remainder := new(big.Int).Sub(maxUInt256(), expenses)
+									Ω(peggyBalance.String()).Should(Equal(remainder.String()))
+								})
+
+								It("Increases the token balances of recipients", func() {
+									for _, recipient := range getEthAddresses(EthAccounts...) {
+										var recipientBalance *big.Int
+
+										out, outAbi, err := ContractDeployer.Call(context.Background(), erc20CallOpts,
+											"balanceOf", withArgsFn(recipient))
+										Ω(err).Should(BeNil())
+
+										err = outAbi.Copy(&recipientBalance, out)
+										Ω(err).Should(BeNil())
+
+										Ω(recipientBalance.String()).Should(Equal("1"))
+									}
+								})
+							})
 						})
 					})
 				})
@@ -295,6 +450,33 @@ var _ = Describe("Contract Tests", func() {
 		})
 	})
 })
+
+var outgoingBatchTxConfirmABI, _ = abi.JSON(strings.NewReader(peggy.OutgoingBatchTxConfirmABIJSON))
+
+func prepareOutgoingTransferBatch(
+	peggyID common.Hash,
+	tokenContract common.Address,
+	txAmounts []*big.Int,
+	txDestinations []common.Address,
+	txFees []*big.Int,
+	batchNonce *big.Int,
+) (common.Hash, error) {
+	abiEncodedBatch, err := outgoingBatchTxConfirmABI.Pack("transactionBatch",
+		peggyID,
+		formatBytes32String("transactionBatch"),
+		txAmounts,
+		txDestinations,
+		txFees,
+		batchNonce,
+		tokenContract,
+	)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	hash := crypto.Keccak256Hash(abiEncodedBatch[4:])
+	return common.BytesToHash(hash.Bytes()), nil
+}
 
 func unpackERC20DeployedEventTo(result *wrappers.PeggyERC20DeployedEvent) deployer.ContractLogUnpackFunc {
 	return func(unpacker deployer.LogUnpacker, event abi.Event, log ctypes.Log) (interface{}, error) {
