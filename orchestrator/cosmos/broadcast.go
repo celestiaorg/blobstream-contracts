@@ -14,7 +14,7 @@ import (
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/keystore"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
 	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
-	
+
 	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
 )
 
@@ -278,9 +278,6 @@ func (s *peggyBroadcastClient) sendDepositClaims(
 		EthereumSender: deposit.Sender.Hex(),
 		CosmosReceiver: sdk.AccAddress(deposit.Destination[:]).String(),
 		Orchestrator:   s.broadcastClient.FromAddress().String(),
-		TokenName:      deposit.Name,
-		TokenSymbol:    deposit.Symbol,
-		TokenDecimals:  uint64(deposit.Decimals),
 	}
 
 	if err := s.broadcastClient.QueueBroadcastMsg(msg); err != nil {
