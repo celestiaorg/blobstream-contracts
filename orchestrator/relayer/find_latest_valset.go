@@ -10,7 +10,8 @@ import (
 
 	"github.com/InjectiveLabs/peggo/modules/peggy/types"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/util"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/wrappers"
+	
+	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
 )
 
 const defaultBlocksToSearch = 2000

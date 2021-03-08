@@ -7,6 +7,7 @@ import "./@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "./@openzeppelin/contracts/utils/Address.sol";
 import "./@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./CosmosToken.sol";
+import "./console.sol";
 
 contract Peggy is ReentrancyGuard {
 	using SafeERC20 for IERC20;
@@ -310,6 +311,25 @@ contract Peggy is ReentrancyGuard {
 				_amounts.length == _destinations.length && _amounts.length == _fees.length,
 				"Malformed batch of transactions"
 			);
+
+			console.log("checkValidatorSignatures for threshold", state_powerThreshold);
+			console.log("checkValidatorSignatures validators:", _currentValidators);
+			console.log("checkValidatorSignatures powers:", _currentPowers);
+
+			bytes32 txBatchHash = 				keccak256(
+					abi.encode(
+						state_peggyId,
+						// bytes32 encoding of "transactionBatch"
+						0x7472616e73616374696f6e426174636800000000000000000000000000000000,
+						_amounts,
+						_destinations,
+						_fees,
+						_batchNonce,
+						_tokenContract,
+						_batchTimeout
+					)
+				);
+			console.log("checkValidatorSignatures txBatchHash:", txBatchHash);
 
 			// Check that enough current validators have signed off on the transaction batch and valset
 			checkValidatorSignatures(

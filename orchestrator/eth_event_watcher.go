@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/wrappers"
+	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
 )
 
 // CheckForEvents checks for events such as a deposit to the Peggy Ethereum contract or a validator set update

@@ -13,8 +13,9 @@ import (
 	"github.com/InjectiveLabs/peggo/orchestrator/cosmos/client"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/keystore"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/wrappers"
 	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
+	
+	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
 )
 
 type PeggyBroadcastClient interface {
