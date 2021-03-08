@@ -25,7 +25,7 @@ You can specify any remote EVM endpoint to run the test against, but the best an
 Preferred Solc compiler toolkit:
 * https://github.com/crytic/solc-select
 
-Run `solc select 0.8.2` before starting any tests.
+Run `solc-select use 0.8.2` before starting any tests.
 
 ### Running with Hardhat
 
