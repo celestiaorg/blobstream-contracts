@@ -17,6 +17,7 @@ import (
 	keyscodec "github.com/InjectiveLabs/sdk-go/chain/crypto/codec"
 
 	peggy "github.com/InjectiveLabs/peggo/modules/peggy/types"
+	ctypes "github.com/InjectiveLabs/sdk-go/chain/types"
 )
 
 // NewTxConfig initializes new Cosmos TxConfig with certain signModes enabled.
@@ -27,6 +28,7 @@ func NewTxConfig(signModes []signingtypes.SignMode) client.TxConfig {
 
 	// This is specific to Injective chain (\w Ethermint keys)
 	keyscodec.RegisterInterfaces(interfaceRegistry)
+	ctypes.RegisterInterfaces(interfaceRegistry)
 
 	marshaler := codec.NewProtoCodec(interfaceRegistry)
 	return tx.NewTxConfig(marshaler, signModes)
@@ -46,6 +48,7 @@ func NewClientContext(
 
 	// This is specific to Injective chain (\w Ethermint keys)
 	keyscodec.RegisterInterfaces(interfaceRegistry)
+	ctypes.RegisterInterfaces(interfaceRegistry)
 
 	marshaler := codec.NewProtoCodec(interfaceRegistry)
 	encodingConfig := EncodingConfig{
