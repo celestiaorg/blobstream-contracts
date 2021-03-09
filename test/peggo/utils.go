@@ -3,7 +3,6 @@ package solidity
 import (
 	"crypto/ecdsa"
 	"math/big"
-	"strings"
 
 	"github.com/InjectiveLabs/evm-deploy-contract/deployer"
 	. "github.com/onsi/ginkgo"
@@ -21,40 +20,6 @@ func formatBytes32String(str string) common.Hash {
 	copy(v[:], str)
 	return v
 }
-
-func makeCheckpoint(
-	validators []common.Address,
-	powers []*big.Int,
-	valsetNonce *big.Int,
-	peggyId common.Hash,
-) common.Hash {
-	methodName := formatBytes32String("checkpoint")
-
-	buf, err := checkpointABI.Pack("checkpoint",
-		peggyId, methodName, valsetNonce, validators, powers,
-	)
-	orFail(err)
-
-	return crypto.Keccak256Hash(buf[4:])
-}
-
-var checkpointABI, _ = abi.JSON(strings.NewReader(checkpointABIJSON))
-
-var checkpointABIJSON = `[{
-		"name": "checkpoint",
-		"stateMutability": "pure",
-		"type": "function",
-		"inputs": [
-			{ "internalType": "bytes32",   "name": "_peggyId",     "type": "bytes32" },
-			{ "internalType": "bytes32",   "name": "_methodName",  "type": "bytes32" },
-			{ "internalType": "uint256",   "name": "_valsetNonce", "type": "uint256" },
-			{ "internalType": "address[]", "name": "_validators",  "type": "address[]" },
-			{ "internalType": "uint256[]", "name": "_powers",      "type": "uint256[]" }
-		],
-		"outputs": [
-			{ "internalType": "bytes32", "name": "", "type": "bytes32" }
-		]
-	}]`
 
 var zeroAddress = common.Address{}
 

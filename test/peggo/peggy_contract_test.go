@@ -193,7 +193,7 @@ var _ = Describe("Contract Tests", func() {
 					)
 					Ω(err).Should(BeNil())
 
-					offchainCheckpoint := makeCheckpoint(validators, powers, big.NewInt(0), peggyID)
+					offchainCheckpoint := makeValsetCheckpoint(peggyID, validators, powers, big.NewInt(0))
 
 					err = outAbi.Copy(&state_lastValsetCheckpoint, out)
 					Ω(err).Should(BeNil())
@@ -225,10 +225,256 @@ var _ = Describe("Contract Tests", func() {
 				})
 			})
 
+			_ = Describe("Valset Update", func() {
+				var (
+					updateValsetTxHash common.Hash
+					updateValsetErr    error
+					signValsetErr      error
+
+					newValidators        []common.Address
+					newPowers            []*big.Int
+					valsetCheckpointHash common.Hash
+
+					sigsV []uint8
+					sigsR []common.Hash
+					sigsS []common.Hash
+
+					state_lastValsetNonce *big.Int
+					nextValsetNonce       *big.Int
+				)
+
+				BeforeEach(func() {
+					out, outAbi, err := ContractDeployer.Call(context.Background(), peggyCallOpts,
+						"state_lastValsetNonce", noArgs,
+					)
+					Ω(err).Should(BeNil())
+					err = outAbi.Copy(&state_lastValsetNonce, out)
+					Ω(err).Should(BeNil())
+				})
+
+				_ = When("ValsetUpdate being submitted", func() {
+					BeforeEach(func() {
+						// don't recompute new checkpoint
+						if updateValsetTxHash != zeroHash {
+							return
+						}
+
+						newValidators = make([]common.Address, len(validators))
+						for i := 0; i < len(validators); i++ {
+							// simply reverse the validator set
+							newValidators[i] = validators[len(validators)-1-i]
+						}
+
+						newPowers = make([]*big.Int, len(powers))
+						for i := 0; i < len(powers); i++ {
+							// simply reverse the powers set
+							newPowers[i] = powers[len(powers)-1-i]
+						}
+
+						nextValsetNonce = new(big.Int).Add(state_lastValsetNonce, big.NewInt(1))
+
+						valsetCheckpointHash = makeValsetCheckpoint(
+							peggyID,
+							newValidators,
+							newPowers,
+							nextValsetNonce,
+						)
+
+						sigsV, sigsR, sigsS, signValsetErr = signDigest(
+							valsetCheckpointHash, getSigningKeys(CosmosAccounts[:3]...)...)
+						orFail(signValsetErr)
+					})
+
+					JustBeforeEach(func() {
+						// don't resend the batch
+						if updateValsetTxHash != zeroHash {
+							return
+						}
+
+						updateValsetTxHash, _, updateValsetErr = ContractDeployer.Tx(context.Background(), peggyTxOpts,
+							"updateValset", withArgsFn(
+								// The new version of the validator set
+								newValidators,   // address[] memory _newValidators,
+								newPowers,       // uint256[] memory _newPowers,
+								nextValsetNonce, // uint256 _newValsetNonce,
+								// The current validators that approve the change
+								validators,            // address[] memory _currentValidators,
+								powers,                // uint256[] memory _currentPowers,
+								state_lastValsetNonce, // uint256 _currentValsetNonce,
+								// These are arrays of the parts of the current validator's signatures
+								sigsV, // uint8[] memory _v,
+								sigsR, // bytes32[] memory _r,
+								sigsS, // bytes32[] memory _s
+							))
+
+					})
+
+					_ = When("ValsetUpdate submission failed", func() {
+						BeforeEach(func() {})
+						AfterEach(func() {
+							updateValsetTxHash = zeroHash
+						})
+					})
+
+					_ = Context("ValsetUpdate submitted successfully", func() {
+						BeforeEach(func() {
+							orFail(updateValsetErr)
+						})
+
+						It("Updates Valset Nonce", func() {
+							out, outAbi, err := ContractDeployer.Call(context.Background(), peggyCallOpts,
+								"state_lastValsetNonce", noArgs,
+							)
+							Ω(err).Should(BeNil())
+							err = outAbi.Copy(&state_lastValsetNonce, out)
+							Ω(err).Should(BeNil())
+
+							Ω(state_lastValsetNonce).ShouldNot(BeNil())
+							Ω(state_lastValsetNonce.String()).Should(Equal(nextValsetNonce.String()))
+						})
+
+						It("Updates Valset Checkpoint", func() {
+							var state_lastValsetCheckpoint common.Hash
+
+							out, outAbi, err := ContractDeployer.Call(context.Background(), peggyCallOpts,
+								"state_lastValsetCheckpoint", noArgs,
+							)
+							Ω(err).Should(BeNil())
+
+							err = outAbi.Copy(&state_lastValsetCheckpoint, out)
+							Ω(err).Should(BeNil())
+							Ω(state_lastValsetCheckpoint).Should(Equal(valsetCheckpointHash))
+						})
+
+						_ = Describe("ValsetUpdatedEvent", func() {
+							var (
+								valsetUpdatedEvent = wrappers.PeggyValsetUpdatedEvent{}
+							)
+
+							BeforeEach(func() {
+								_, err := ContractDeployer.Logs(
+									context.Background(),
+									peggyLogsOpts,
+									updateValsetTxHash,
+									"ValsetUpdatedEvent",
+									unpackValsetUpdatedEventTo(&valsetUpdatedEvent),
+								)
+								orFail(err)
+							})
+
+							It("Should have valid Valset parameters", func() {
+								Ω(valsetUpdatedEvent.NewValsetNonce).ShouldNot(BeNil())
+								Ω(valsetUpdatedEvent.NewValsetNonce.String()).Should(Equal(nextValsetNonce.String()))
+								Ω(valsetUpdatedEvent.Validators).Should(BeEquivalentTo(newValidators))
+								Ω(valsetUpdatedEvent.Powers).Should(BeEquivalentTo(newPowers))
+							})
+						})
+					})
+				})
+
+				_ = When("ValsetUpdate submitted to rollback the Valset", func() {
+					// NOTE: we could just override "validators" with "newValidator", as well as
+					// "powers" with "newPowers", but instead we're going to rollback the Valset on the contract.
+
+					var (
+						rollbackValsetTxHash common.Hash
+						rollbackValsetErr    error
+					)
+
+					BeforeEach(func() {
+						if rollbackValsetTxHash != zeroHash {
+							return
+						}
+
+						nextValsetNonce = new(big.Int).Add(state_lastValsetNonce, big.NewInt(1))
+
+						valsetCheckpointHash = makeValsetCheckpoint(
+							peggyID,
+							validators,
+							powers,
+							nextValsetNonce,
+						)
+
+						sigsV, sigsR, sigsS, signValsetErr = signDigest(
+							valsetCheckpointHash, getSigningKeysForAddresses(newValidators, CosmosAccounts[:3]...)...)
+						orFail(signValsetErr)
+
+						// NOTE: this is a rollback, the current valset was the "new valset".
+						rollbackValsetTxHash, _, rollbackValsetErr = ContractDeployer.Tx(context.Background(), peggyTxOpts,
+							"updateValset", withArgsFn(
+								// The new version of the validator set
+								validators,      // address[] memory _newValidators,
+								powers,          // uint256[] memory _newPowers,
+								nextValsetNonce, // uint256 _newValsetNonce,
+								// The current validators that approve the change
+								newValidators,         // address[] memory _currentValidators,
+								newPowers,             // uint256[] memory _currentPowers,
+								state_lastValsetNonce, // uint256 _currentValsetNonce,
+								// These are arrays of the parts of the current validator's signatures
+								sigsV, // uint8[] memory _v,
+								sigsR, // bytes32[] memory _r,
+								sigsS, // bytes32[] memory _s
+							))
+						orFail(rollbackValsetErr)
+					})
+
+					It("Updates Valset Nonce", func() {
+						out, outAbi, err := ContractDeployer.Call(context.Background(), peggyCallOpts,
+							"state_lastValsetNonce", noArgs,
+						)
+						Ω(err).Should(BeNil())
+						err = outAbi.Copy(&state_lastValsetNonce, out)
+						Ω(err).Should(BeNil())
+
+						Ω(state_lastValsetNonce).ShouldNot(BeNil())
+						Ω(state_lastValsetNonce.String()).Should(Equal(nextValsetNonce.String()))
+					})
+
+					It("Updates Valset Checkpoint", func() {
+						var state_lastValsetCheckpoint common.Hash
+
+						out, outAbi, err := ContractDeployer.Call(context.Background(), peggyCallOpts,
+							"state_lastValsetCheckpoint", noArgs,
+						)
+						Ω(err).Should(BeNil())
+
+						err = outAbi.Copy(&state_lastValsetCheckpoint, out)
+						Ω(err).Should(BeNil())
+						Ω(state_lastValsetCheckpoint).Should(Equal(valsetCheckpointHash))
+					})
+
+					_ = Describe("ValsetUpdatedEvent", func() {
+						var (
+							valsetUpdatedEvent = wrappers.PeggyValsetUpdatedEvent{}
+						)
+
+						BeforeEach(func() {
+							_, err := ContractDeployer.Logs(
+								context.Background(),
+								peggyLogsOpts,
+								rollbackValsetTxHash,
+								"ValsetUpdatedEvent",
+								unpackValsetUpdatedEventTo(&valsetUpdatedEvent),
+							)
+							orFail(err)
+						})
+
+						It("Should have valid Valset parameters", func() {
+							Ω(valsetUpdatedEvent.NewValsetNonce).ShouldNot(BeNil())
+							Ω(valsetUpdatedEvent.NewValsetNonce.String()).Should(Equal(nextValsetNonce.String()))
+							Ω(valsetUpdatedEvent.Validators).Should(BeEquivalentTo(validators))
+							Ω(valsetUpdatedEvent.Powers).Should(BeEquivalentTo(powers))
+						})
+					})
+
+				})
+			})
+
 			_ = Describe("ERC20 token deployment via Peggy", func() {
 				var (
-					state_lastEventNonce *big.Int
-					prevEventNonce       *big.Int
+					state_lastValsetNonce *big.Int
+					state_lastEventNonce  *big.Int
+					prevEventNonce        *big.Int
 
 					erc20DeployTxHash  common.Hash
 					erc20DeployErr     error
@@ -241,6 +487,15 @@ var _ = Describe("Contract Tests", func() {
 					}
 
 					out, outAbi, err := ContractDeployer.Call(context.Background(), peggyCallOpts,
+						"state_lastValsetNonce", noArgs,
+					)
+					Ω(err).Should(BeNil())
+					err = outAbi.Copy(&state_lastValsetNonce, out)
+					Ω(err).Should(BeNil())
+				})
+
+				BeforeEach(func() {
+					out, outAbi, err := ContractDeployer.Call(context.Background(), peggyCallOpts,
 						"state_lastEventNonce", noArgs,
 					)
 					Ω(err).Should(BeNil())
@@ -248,20 +503,24 @@ var _ = Describe("Contract Tests", func() {
 					Ω(err).Should(BeNil())
 				})
 
-				It("Deploys a new ERC20 contract instance", func() {
+				JustBeforeEach(func() {
+					// don't redeploy
+					if erc20DeployTxHash != zeroHash {
+						return
+					}
+
 					erc20DeployTxHash, _, erc20DeployErr = ContractDeployer.Tx(context.Background(), peggyTxOpts,
 						"deployERC20", withArgsFn("inj", "INJ", "INJ", byte(18)),
 					)
+					orFail(erc20DeployErr)
+				})
+
+				It("Deploys new ERC20 contract instance", func() {
 					Ω(erc20DeployErr).Should(BeNil())
 					Ω(erc20DeployTxHash).ShouldNot(Equal(zeroHash))
 				})
 
-				It("Nonce during deployment increased", func() {
-					next := new(big.Int).Add(prevEventNonce, big.NewInt(1))
-					Ω(state_lastEventNonce.String()).Should(Equal(next.String()))
-				})
-
-				_ = When("New ERC20 instance deployed", func() {
+				_ = When("New ERC20 instance deployed successfully", func() {
 					BeforeEach(func() {
 						orFail(erc20DeployErr)
 
@@ -278,6 +537,11 @@ var _ = Describe("Contract Tests", func() {
 							unpackERC20DeployedEventTo(&erc20DeployedEvent),
 						)
 						orFail(err)
+					})
+
+					It("Nonce during deployment increased", func() {
+						next := new(big.Int).Add(prevEventNonce, big.NewInt(1))
+						Ω(state_lastEventNonce.String()).Should(Equal(next.String()))
 					})
 
 					_ = Describe("ERC20DeployedEvent", func() {
@@ -329,25 +593,26 @@ var _ = Describe("Contract Tests", func() {
 							var (
 								submitBatchTxHash common.Hash
 								submitBatchErr    error
-								prepareBatchErr   error
 								signBatchErr      error
 
-								txAmounts            []*big.Int
-								txDestinations       []common.Address
-								txFees               []*big.Int
-								transactionBatchHash common.Hash
+								txAmounts      []*big.Int
+								txDestinations []common.Address
+								txFees         []*big.Int
 
 								sigsV []uint8
 								sigsR []common.Hash
 								sigsS []common.Hash
 
-								currentValsetNonce *big.Int
-								batchNonce         *big.Int
-								batchTimeout       *big.Int
+								batchNonce   *big.Int
+								batchTimeout *big.Int
 							)
 
 							BeforeEach(func() {
-								currentValsetNonce = big.NewInt(0)
+								// don't recompute hash
+								if submitBatchTxHash != zeroHash {
+									return
+								}
+
 								batchNonce = big.NewInt(1)
 								batchTimeout = big.NewInt(10000)
 
@@ -360,7 +625,7 @@ var _ = Describe("Contract Tests", func() {
 									txFees[i] = big.NewInt(1)
 								}
 
-								transactionBatchHash, prepareBatchErr = prepareOutgoingTransferBatch(
+								transactionBatchHash := prepareOutgoingTransferBatch(
 									peggyID,
 									erc20DeployedEvent.TokenContract,
 									txAmounts,
@@ -369,7 +634,6 @@ var _ = Describe("Contract Tests", func() {
 									batchNonce,
 									batchTimeout,
 								)
-								orFail(prepareBatchErr)
 
 								sigsV, sigsR, sigsS, signBatchErr = signDigest(
 									transactionBatchHash, getSigningKeys(CosmosAccounts[:3]...)...)
@@ -385,9 +649,9 @@ var _ = Describe("Contract Tests", func() {
 								submitBatchTxHash, _, submitBatchErr = ContractDeployer.Tx(context.Background(), peggyTxOpts,
 									"submitBatch", withArgsFn(
 										// The validators that approve the batch
-										validators,         // 	address[] memory _currentValidators,
-										powers,             // 	uint256[] memory _currentPowers,
-										currentValsetNonce, // 	uint256 _currentValsetNonce,
+										validators,            // 	address[] memory _currentValidators,
+										powers,                // 	uint256[] memory _currentPowers,
+										state_lastValsetNonce, // 	uint256 _currentValsetNonce,
 
 										// These are arrays of the parts of the validators signatures
 										sigsV, // 	uint8[] memory _v,
@@ -410,7 +674,9 @@ var _ = Describe("Contract Tests", func() {
 
 							_ = When("TxBatch submission failed", func() {
 								BeforeEach(func() {})
-								AfterEach(func() {})
+								AfterEach(func() {
+									submitBatchTxHash = zeroHash
+								})
 							})
 
 							_ = Context("TxBatch submitted successfully", func() {
@@ -457,6 +723,20 @@ var _ = Describe("Contract Tests", func() {
 									}
 								})
 
+								It("Updates batch nonce for the token contract", func() {
+									var lastBatchNonce *big.Int
+
+									out, outAbi, err := ContractDeployer.Call(context.Background(), peggyCallOpts,
+										"lastBatchNonce", withArgsFn(erc20DeployedEvent.TokenContract))
+									Ω(err).Should(BeNil())
+
+									err = outAbi.Copy(&lastBatchNonce, out)
+									Ω(err).Should(BeNil())
+
+									Ω(lastBatchNonce).ShouldNot(BeNil())
+									Ω(lastBatchNonce.String()).Should(Equal(batchNonce.String()))
+								})
+
 								_ = Describe("TransactionBatchExecutedEvent", func() {
 									var (
 										transactionBatchExecutedEvent = wrappers.PeggyTransactionBatchExecutedEvent{}
@@ -485,6 +765,10 @@ var _ = Describe("Contract Tests", func() {
 								})
 							})
 						})
+
+						_ = When("Ethereum -> Cosmos batch being submitted", func() {
+
+						})
 					})
 				})
 			})
@@ -502,7 +786,7 @@ func prepareOutgoingTransferBatch(
 	txFees []*big.Int,
 	batchNonce *big.Int,
 	batchTimeout *big.Int,
-) (common.Hash, error) {
+) common.Hash {
 	abiEncodedBatch, err := outgoingBatchTxConfirmABI.Pack("transactionBatch",
 		peggyID,
 		formatBytes32String("transactionBatch"),
@@ -513,12 +797,9 @@ func prepareOutgoingTransferBatch(
 		tokenContract,
 		batchTimeout,
 	)
-	if err != nil {
-		return common.Hash{}, err
-	}
+	orFail(err)
 
-	hash := crypto.Keccak256Hash(abiEncodedBatch[4:])
-	return hash, nil
+	return crypto.Keccak256Hash(abiEncodedBatch[4:])
 }
 
 func unpackERC20DeployedEventTo(result *wrappers.PeggyERC20DeployedEvent) deployer.ContractLogUnpackFunc {

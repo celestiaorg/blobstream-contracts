@@ -42,7 +42,7 @@ contract Peggy is ReentrancyGuard {
 		uint256 _eventNonce
 	);
 	event ERC20DeployedEvent(
-		// FYI: Can't index on a string without doing a bunch of weird stuff
+		// TODO(xlab): _cosmosDenom can be represented as bytes32 to allow indexing
 		string _cosmosDenom,
 		address indexed _tokenContract,
 		string _name,

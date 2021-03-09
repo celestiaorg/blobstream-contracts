@@ -3,13 +3,17 @@ package solidity
 import (
 	"context"
 	"math/big"
+	"strings"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"github.com/InjectiveLabs/evm-deploy-contract/deployer"
 	"github.com/InjectiveLabs/evm-deploy-contract/sol"
+	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
 )
 
 var _ = Describe("Contract Tests", func() {
@@ -121,7 +125,7 @@ var _ = Describe("Contract Tests", func() {
 
 				Ω(lastCheckpoint).ShouldNot(Equal(zeroHash))
 				Ω(lastCheckpoint).Should(Equal(
-					makeCheckpoint(validators, powers, valsetNonce, peggyID),
+					makeValsetCheckpoint(peggyID, validators, powers, valsetNonce),
 				))
 			})
 
@@ -141,3 +145,21 @@ var _ = Describe("Contract Tests", func() {
 		})
 	})
 })
+
+var valsetConfirmABI, _ = abi.JSON(strings.NewReader(peggy.ValsetConfirmABIJSON))
+
+func makeValsetCheckpoint(
+	peggyID common.Hash,
+	validators []common.Address,
+	powers []*big.Int,
+	valsetNonce *big.Int,
+) common.Hash {
+	methodName := formatBytes32String("checkpoint")
+
+	buf, err := valsetConfirmABI.Pack("checkpoint",
+		peggyID, methodName, valsetNonce, validators, powers,
+	)
+	orFail(err)
+
+	return crypto.Keccak256Hash(buf[4:])
+}

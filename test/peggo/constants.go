@@ -153,6 +153,21 @@ func getSigningKeys(accounts ...Account) []*ecdsa.PrivateKey {
 	return privkeys
 }
 
+func getSigningKeysForAddresses(addresses []common.Address, accounts ...Account) []*ecdsa.PrivateKey {
+	privkeys := make([]*ecdsa.PrivateKey, len(addresses))
+
+	for i, a := range addresses {
+		for _, acc := range accounts {
+			if acc.EthAddress == a {
+				privkeys[i] = acc.EthPrivKey
+				break
+			}
+		}
+	}
+
+	return privkeys
+}
+
 type Account struct {
 	Address  string
 	Key      string
