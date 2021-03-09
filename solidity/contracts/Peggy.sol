@@ -56,39 +56,6 @@ contract Peggy is ReentrancyGuard {
 		uint256[] _powers
 	);
 
-	// TEST FIXTURES
-	// These are here to make it easier to measure gas usage. They should be removed before production
-	function testMakeCheckpoint(
-		address[] memory _validators,
-		uint256[] memory _powers,
-		uint256 _valsetNonce,
-		bytes32 _peggyId
-	) public pure {
-		makeCheckpoint(_validators, _powers, _valsetNonce, _peggyId);
-	}
-
-	function testCheckValidatorSignatures(
-		address[] memory _currentValidators,
-		uint256[] memory _currentPowers,
-		uint8[] memory _v,
-		bytes32[] memory _r,
-		bytes32[] memory _s,
-		bytes32 _theHash,
-		uint256 _powerThreshold
-	) public pure {
-		checkValidatorSignatures(
-			_currentValidators,
-			_currentPowers,
-			_v,
-			_r,
-			_s,
-			_theHash,
-			_powerThreshold
-		);
-	}
-
-	// END TEST FIXTURES
-
 	function lastBatchNonce(address _erc20Address) public view returns (uint256) {
 		return state_lastBatchNonces[_erc20Address];
 	}
