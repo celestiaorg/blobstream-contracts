@@ -265,6 +265,11 @@ var _ = Describe("Contract Tests", func() {
 					BeforeEach(func() {
 						orFail(erc20DeployErr)
 
+						// don't re-read the event
+						if erc20DeployedEvent.TokenContract != zeroAddress {
+							return
+						}
+
 						_, err := ContractDeployer.Logs(
 							context.Background(),
 							peggyLogsOpts,
@@ -451,6 +456,33 @@ var _ = Describe("Contract Tests", func() {
 										}
 									}
 								})
+
+								_ = Describe("TransactionBatchExecutedEvent", func() {
+									var (
+										transactionBatchExecutedEvent = wrappers.PeggyTransactionBatchExecutedEvent{}
+									)
+
+									BeforeEach(func() {
+										orFail(submitBatchErr)
+
+										_, err := ContractDeployer.Logs(
+											context.Background(),
+											peggyLogsOpts,
+											submitBatchTxHash,
+											"TransactionBatchExecutedEvent",
+											unpackTransactionBatchExecutedEventTo(&transactionBatchExecutedEvent),
+										)
+										orFail(err)
+									})
+
+									It("Should have valid batch and nonce params", func() {
+										Ω(transactionBatchExecutedEvent.EventNonce).ShouldNot(BeNil())
+										Ω(transactionBatchExecutedEvent.EventNonce.String()).Should(Equal(state_lastEventNonce.String()))
+										Ω(transactionBatchExecutedEvent.BatchNonce).ShouldNot(BeNil())
+										Ω(transactionBatchExecutedEvent.BatchNonce.String()).Should(Equal(batchNonce.String()))
+										Ω(transactionBatchExecutedEvent.Token).Should(Equal(erc20DeployedEvent.TokenContract))
+									})
+								})
 							})
 						})
 					})
@@ -497,6 +529,13 @@ func unpackERC20DeployedEventTo(result *wrappers.PeggyERC20DeployedEvent) deploy
 }
 
 func unpackValsetUpdatedEventTo(result *wrappers.PeggyValsetUpdatedEvent) deployer.ContractLogUnpackFunc {
+	return func(unpacker deployer.LogUnpacker, event abi.Event, log ctypes.Log) (interface{}, error) {
+		err := unpacker.UnpackLog(result, event.Name, log)
+		return &result, err
+	}
+}
+
+func unpackTransactionBatchExecutedEventTo(result *wrappers.PeggyTransactionBatchExecutedEvent) deployer.ContractLogUnpackFunc {
 	return func(unpacker deployer.LogUnpacker, event abi.Event, log ctypes.Log) (interface{}, error) {
 		err := unpacker.UnpackLog(result, event.Name, log)
 		return &result, err
