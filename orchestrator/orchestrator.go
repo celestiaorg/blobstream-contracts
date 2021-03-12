@@ -21,7 +21,6 @@ type PeggyOrchestrator interface {
 
 	EthOracleMainLoop(ctx context.Context) error
 	EthSignerMainLoop(ctx context.Context) error
-	ValsetRequesterLoop(ctx context.Context) error
 	BatchRequesterLoop(ctx context.Context) error
 	RelayerMainLoop(ctx context.Context) error
 }
@@ -37,7 +36,7 @@ type peggyOrchestrator struct {
 	ethFrom              ethcmn.Address
 	ethSignerFn          keystore.SignerFn
 	ethPersonalSignFn    keystore.PersonalSignFn
-	erc20ContractMapping map[string]ethcmn.Address
+	erc20ContractMapping map[ethcmn.Address]string
 }
 
 func NewPeggyOrchestrator(
@@ -48,7 +47,7 @@ func NewPeggyOrchestrator(
 	ethFrom ethcmn.Address,
 	ethSignerFn keystore.SignerFn,
 	ethPersonalSignFn keystore.PersonalSignFn,
-	erc20ContractMapping map[string]ethcmn.Address,
+	erc20ContractMapping map[ethcmn.Address]string,
 ) PeggyOrchestrator {
 	return &peggyOrchestrator{
 		tmClient:             tmClient,

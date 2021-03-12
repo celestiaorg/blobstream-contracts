@@ -5,7 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
@@ -20,18 +19,14 @@ import (
 
 type PeggyBroadcastClient interface {
 	ValFromAddress() sdk.ValAddress
+	AccFromAddress() sdk.AccAddress
 
-	// UpdatePeggyEthAddress broadcasts a transaction updating the ETH address for the sending
-	// Cosmos address. The sending Cosmos address should be a validator.
-	UpdatePeggyEthAddress(
+	/// Send a transaction updating the eth address for the sending
+	/// Cosmos address. The sending Cosmos address should be a validator
+	UpdatePeggyOrchestratorAddresses(
 		ctx context.Context,
 		ethFrom ethcmn.Address,
-	) error
-
-	// SendValsetRequest broadcasts a transaction requesting that a valset be formed for a given block
-	// height.
-	SendValsetRequest(
-		ctx context.Context,
+		orchAddr sdk.AccAddress,
 	) error
 
 	// SendValsetConfirm broadcasts in a confirmation for a specific validator set for a specific block height.
@@ -94,6 +89,11 @@ func (s *peggyBroadcastClient) ValFromAddress() sdk.ValAddress {
 	return sdk.ValAddress(s.broadcastClient.FromAddress().Bytes())
 }
 
+func (s *peggyBroadcastClient) AccFromAddress() sdk.AccAddress {
+	return s.broadcastClient.FromAddress()
+}
+
+
 type peggyBroadcastClient struct {
 	daemonQueryClient types.QueryClient
 	broadcastClient   client.CosmosClient
@@ -103,71 +103,38 @@ type peggyBroadcastClient struct {
 	svcTags metrics.Tags
 }
 
-func (s *peggyBroadcastClient) UpdatePeggyEthAddress(
+func (s *peggyBroadcastClient) UpdatePeggyOrchestratorAddresses(
 	ctx context.Context,
 	ethFrom ethcmn.Address,
+	orchestratorAddr sdk.AccAddress,
 ) error {
 	metrics.ReportFuncCall(s.svcTags)
 	doneFn := metrics.ReportFuncTiming(s.svcTags)
 	defer doneFn()
+	// SetOrchestratorAddresses
 
-	valAddr := s.ValFromAddress()
-	signature, err := s.ethPersonalSignFn(ethFrom, crypto.Keccak256(valAddr.Bytes()))
-	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
-		err = errors.New("failed to sign validator address")
-		return err
-	}
-
-	// SetEthAddress
+	// This message allows validators to delegate their voting responsibilities
+	// to a given key. This key is then used as an optional authentication method
+	// for sigining oracle claims
 	// This is used by the validators to set the Ethereum address that represents
 	// them on the Ethereum side of the bridge. They must sign their Cosmos address
 	// using the Ethereum address they have submitted. Like ValsetResponse this
 	// message can in theory be submitted by anyone, but only the current validator
 	// sets submissions carry any weight.
+
 	// -------------
-	msg := &types.MsgSetEthAddress{
-		Address:   ethFrom.Hex(),
-		Validator: valAddr.String(),
-		Signature: ethcmn.Bytes2Hex(signature),
+	msg := &types.MsgSetOrchestratorAddresses{
+		Sender:       s.AccFromAddress().String(),
+		EthAddress:   ethFrom.Hex(),
+		Orchestrator: orchestratorAddr.String(),
 	}
 
-	_, err = s.broadcastClient.SyncBroadcastMsg(msg)
+	_, err := s.broadcastClient.SyncBroadcastMsg(msg)
 	if err != nil {
 		metrics.ReportFuncError(s.svcTags)
-		err = errors.Wrap(err, "broadcasting MsgSetEthAddress failed")
+		err = errors.Wrap(err, "broadcasting MsgSetOrchestratorAddresses failed")
 		return err
 	}
-
-	return nil
-}
-
-func (s *peggyBroadcastClient) SendValsetRequest(
-	ctx context.Context,
-) error {
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
-
-	// ValsetRequest
-	// This message starts off the validator set update process by coordinating a
-	// block height around which signatures over the validators, powers, and
-	// ethereum addresses will be made and submitted using a ValsetConfirm. Anyone
-	// can send this message as it is not authenticated except as a valid tx. In
-	// theory people could spam it and the validators will have to determine which
-	// block to actually coordinate around by looking over the valset requests and
-	// seeing which one some other validator has already submitted a ValsetResponse
-	// for.
-	// -------------
-	msg := &types.MsgValsetRequest{
-		Requester: s.ValFromAddress().String(),
-	}
-	if err := s.broadcastClient.QueueBroadcastMsg(msg); err != nil {
-		metrics.ReportFuncError(s.svcTags)
-		err = errors.Wrap(err, "broadcasting MsgValsetRequest failed")
-		return err
-	}
-
 	return nil
 }
 
@@ -205,10 +172,10 @@ func (s *peggyBroadcastClient) SendValsetConfirm(
 	// chain store and submit them to Ethereum to update the validator set
 	// -------------
 	msg := &types.MsgValsetConfirm{
-		Validator:  s.ValFromAddress().String(),
-		EthAddress: ethFrom.Hex(),
-		Nonce:      valset.Nonce,
-		Signature:  ethcmn.Bytes2Hex(signature),
+		Orchestrator: s.ValFromAddress().String(),
+		EthAddress:   ethFrom.Hex(),
+		Nonce:        valset.Nonce,
+		Signature:    ethcmn.Bytes2Hex(signature),
 	}
 	if err = s.broadcastClient.QueueBroadcastMsg(msg); err != nil {
 		metrics.ReportFuncError(s.svcTags)
@@ -246,7 +213,7 @@ func (s *peggyBroadcastClient) SendBatchConfirm(
 	// as well as an Ethereum signature over this batch by the validator
 	// -------------
 	msg := &types.MsgConfirmBatch{
-		Validator:     s.ValFromAddress().String(),
+		Orchestrator:  s.ValFromAddress().String(),
 		Nonce:         batch.BatchNonce,
 		Signature:     ethcmn.Bytes2Hex(signature),
 		EthSigner:     ethFrom.Hex(),
@@ -413,8 +380,8 @@ func (s *peggyBroadcastClient) SendRequestBatch(
 	// can finally submit the batch
 	// -------------
 	msg := &types.MsgRequestBatch{
-		Denom:     denom,
-		Requester: s.ValFromAddress().String(),
+		Denom:        denom,
+		Orchestrator: s.ValFromAddress().String(),
 	}
 	if err := s.broadcastClient.QueueBroadcastMsg(msg); err != nil {
 		metrics.ReportFuncError(s.svcTags)

@@ -53,20 +53,21 @@ func stdinConfirm(msg string) bool {
 	}
 }
 
-// parseERC20ContractMapping converts list of denom:address pairs to a proper typed map.
-func parseERC20ContractMapping(items []string) map[string]ethcmn.Address {
-	res := make(map[string]ethcmn.Address)
+// parseERC20ContractMapping converts list of address:denom pairs to a proper typed map.
+func parseERC20ContractMapping(items []string) map[ethcmn.Address]string {
+	res := make(map[ethcmn.Address]string)
 
 	for _, item := range items {
-		// item is a pair denom:address
+		// item is a pair address:denom
 		parts := strings.Split(item, ":")
-		addr := ethcmn.HexToAddress(parts[1])
+		addr := ethcmn.HexToAddress(parts[0])
 
 		if len(parts) != 2 || len(parts[0]) == 0 || addr == (ethcmn.Address{}) {
 			log.Fatalln("failed to parse ERC20 mapping: check that all inputs contain valid denom:address pairs")
 		}
 
-		res[parts[0]] = addr
+		denom := parts[1]
+		res[addr] = denom
 	}
 
 	return res

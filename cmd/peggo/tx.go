@@ -124,7 +124,7 @@ func registerEthKeyCmd(cmd *cli.Cmd) {
 		log.Infoln("Using Cosmos ValAddress", valAddress.String())
 		log.Infoln("Using Ethereum address", ethKeyFromAddress.String())
 
-		actionConfirmed := *alwaysAutoConfirm || stdinConfirm("Confirm UpdatePeggyEthAddress transaction? [y/N]: ")
+		actionConfirmed := *alwaysAutoConfirm || stdinConfirm("Confirm UpdatePeggyOrchestratorAddresses transaction? [y/N]: ")
 		if !actionConfirmed {
 			return
 		}
@@ -167,7 +167,7 @@ func registerEthKeyCmd(cmd *cli.Cmd) {
 		broadcastCtx, cancelFn := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancelFn()
 
-		if err = peggyBroadcaster.UpdatePeggyEthAddress(broadcastCtx, ethKeyFromAddress); err != nil {
+		if err = peggyBroadcaster.UpdatePeggyOrchestratorAddresses(broadcastCtx, ethKeyFromAddress, valAddress); err != nil {
 			log.WithError(err).Errorln("failed to broadcast Tx")
 			time.Sleep(time.Second)
 			return

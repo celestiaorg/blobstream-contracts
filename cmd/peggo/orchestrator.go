@@ -113,7 +113,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		&statsdDisabled,
 	)
 
-	erc20ContractMapping = cmd.StringsArg("ERC20_MAPPING", []string{}, "Mapping between cosmos_denom:contract_address for ERC20 tokens")
+	erc20ContractMapping = cmd.StringsArg("ERC20_MAPPING", []string{}, "Mapping between contract_address:cosmos_denom for ERC20 tokens")
 
 	cmd.Action = func() {
 		// ensure a clean exit

@@ -26,7 +26,7 @@ func (s *peggyOrchestrator) GetLastCheckedBlock(ctx context.Context) (uint64, er
 	}
 	currentBlock := latestHeader.Number.Uint64()
 
-	lastEventNonce, err := s.cosmosQueryClient.LastEventNonce(ctx, s.peggyBroadcastClient.ValFromAddress())
+	lastEventNonce, err := s.cosmosQueryClient.LastEventNonce(ctx, s.peggyBroadcastClient.AccFromAddress())
 	if err != nil {
 		return 0, err
 	} else if lastEventNonce == 0 {

@@ -79,7 +79,7 @@ func (s *peggyOrchestrator) CheckForEvents(
 	// block, so we also need this routine so make sure we don't send in the first event in this hypothetical
 	// multi event block again. In theory we only send all events for every block and that will pass of fail
 	// atomicly but lets not take that risk.
-	lastEventNonce, err := s.cosmosQueryClient.LastEventNonce(ctx, s.peggyBroadcastClient.ValFromAddress())
+	lastEventNonce, err := s.cosmosQueryClient.LastEventNonce(ctx, s.peggyBroadcastClient.AccFromAddress())
 	if err != nil {
 		err = errors.New("failed to query last event nonce from backend")
 		return 0, err
