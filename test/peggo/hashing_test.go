@@ -31,11 +31,12 @@ var _ = Describe("Contract Tests", func() {
 			}
 
 			hashingTestDeployOpts := deployer.ContractDeployOpts{
-				From:         EthAccounts[0].EthAddress,
-				FromPk:       EthAccounts[0].EthPrivKey,
-				SolSource:    "../../solidity/contracts/HashingTest.sol",
-				ContractName: "HashingTest",
-				Await:        true,
+				From:          EthAccounts[0].EthAddress,
+				FromPk:        EthAccounts[0].EthPrivKey,
+				SolSource:     "../../solidity/contracts/HashingTest.sol",
+				ContractName:  "HashingTest",
+				Await:         true,
+				CoverageAgent: CoverageAgent,
 			}
 
 			_, hashingTestContract, deployErr = ContractDeployer.Deploy(context.Background(), hashingTestDeployOpts, noArgs)
@@ -59,19 +60,24 @@ var _ = Describe("Contract Tests", func() {
 				orFail(deployErr)
 
 				hashingTestTxOpts = deployer.ContractTxOpts{
-					From:         EthAccounts[0].EthAddress,
-					FromPk:       EthAccounts[0].EthPrivKey,
-					SolSource:    "../../solidity/contracts/HashingTest.sol",
-					ContractName: "HashingTest",
-					Contract:     hashingTestContract.Address,
-					Await:        true,
+					From:          EthAccounts[0].EthAddress,
+					FromPk:        EthAccounts[0].EthPrivKey,
+					SolSource:     "../../solidity/contracts/HashingTest.sol",
+					ContractName:  "HashingTest",
+					Contract:      hashingTestContract.Address,
+					Await:         true,
+					CoverageAgent: CoverageAgent,
 				}
 
 				hashingTestCallOpts = deployer.ContractCallOpts{
-					From:         EthAccounts[0].EthAddress,
-					SolSource:    "../../solidity/contracts/HashingTest.sol",
-					ContractName: "HashingTest",
-					Contract:     hashingTestContract.Address,
+					From:          EthAccounts[0].EthAddress,
+					SolSource:     "../../solidity/contracts/HashingTest.sol",
+					ContractName:  "HashingTest",
+					Contract:      hashingTestContract.Address,
+					CoverageAgent: CoverageAgent,
+					CoverageCall: deployer.ContractCoverageCallOpts{
+						FromPk: EthAccounts[0].EthPrivKey,
+					},
 				}
 			})
 

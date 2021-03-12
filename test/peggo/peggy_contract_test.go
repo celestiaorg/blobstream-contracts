@@ -62,11 +62,12 @@ var _ = Describe("Contract Tests", func() {
 			}
 
 			peggyDeployOpts := deployer.ContractDeployOpts{
-				From:         EthAccounts[0].EthAddress,
-				FromPk:       EthAccounts[0].EthPrivKey,
-				SolSource:    "../../solidity/contracts/Peggy.sol",
-				ContractName: "Peggy",
-				Await:        true,
+				From:          EthAccounts[0].EthAddress,
+				FromPk:        EthAccounts[0].EthPrivKey,
+				SolSource:     "../../solidity/contracts/Peggy.sol",
+				ContractName:  "Peggy",
+				Await:         true,
+				CoverageAgent: CoverageAgent,
 			}
 
 			deployTxHash, peggyContract, deployErr = ContractDeployer.Deploy(context.Background(), peggyDeployOpts, deployArgs)
@@ -131,25 +132,31 @@ var _ = Describe("Contract Tests", func() {
 				orFail(deployErr)
 
 				peggyTxOpts = deployer.ContractTxOpts{
-					From:         peggyOwner.EthAddress,
-					FromPk:       peggyOwner.EthPrivKey,
-					SolSource:    "../../solidity/contracts/Peggy.sol",
-					ContractName: "Peggy",
-					Contract:     peggyContract.Address,
-					Await:        true,
+					From:          peggyOwner.EthAddress,
+					FromPk:        peggyOwner.EthPrivKey,
+					SolSource:     "../../solidity/contracts/Peggy.sol",
+					ContractName:  "Peggy",
+					Contract:      peggyContract.Address,
+					Await:         true,
+					CoverageAgent: CoverageAgent,
 				}
 
 				peggyCallOpts = deployer.ContractCallOpts{
-					From:         peggyOwner.EthAddress,
-					SolSource:    "../../solidity/contracts/Peggy.sol",
-					ContractName: "Peggy",
-					Contract:     peggyContract.Address,
+					From:          peggyOwner.EthAddress,
+					SolSource:     "../../solidity/contracts/Peggy.sol",
+					ContractName:  "Peggy",
+					Contract:      peggyContract.Address,
+					CoverageAgent: CoverageAgent,
+					CoverageCall: deployer.ContractCoverageCallOpts{
+						FromPk: peggyOwner.EthPrivKey,
+					},
 				}
 
 				peggyLogsOpts = deployer.ContractLogsOpts{
-					SolSource:    "../../solidity/contracts/Peggy.sol",
-					ContractName: "Peggy",
-					Contract:     peggyContract.Address,
+					SolSource:     "../../solidity/contracts/Peggy.sol",
+					ContractName:  "Peggy",
+					Contract:      peggyContract.Address,
+					CoverageAgent: CoverageAgent,
 				}
 			})
 
@@ -569,10 +576,14 @@ var _ = Describe("Contract Tests", func() {
 
 						BeforeEach(func() {
 							erc20CallOpts = deployer.ContractCallOpts{
-								From:         peggyOwner.EthAddress,
-								SolSource:    "../../solidity/contracts/CosmosToken.sol",
-								ContractName: "CosmosERC20",
-								Contract:     erc20DeployedEvent.TokenContract,
+								From:          peggyOwner.EthAddress,
+								SolSource:     "../../solidity/contracts/CosmosToken.sol",
+								ContractName:  "CosmosERC20",
+								Contract:      erc20DeployedEvent.TokenContract,
+								CoverageAgent: CoverageAgent,
+								CoverageCall: deployer.ContractCoverageCallOpts{
+									FromPk: peggyOwner.EthPrivKey,
+								},
 							}
 						})
 

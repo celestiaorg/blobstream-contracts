@@ -3,6 +3,7 @@ package solidity
 import (
 	"crypto/ecdsa"
 	"math/big"
+	"strings"
 
 	"github.com/InjectiveLabs/evm-deploy-contract/deployer"
 	. "github.com/onsi/ginkgo"
@@ -28,6 +29,15 @@ var zeroHash = common.Hash{}
 // maxUInt256 returns a value equal to 2**256 - 1 (MAX_UINT in Solidity).
 func maxUInt256() *big.Int {
 	return new(big.Int).Sub(new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil), big.NewInt(1))
+}
+
+func toBool(s string) bool {
+	switch strings.ToLower(s) {
+	case "true", "1", "t", "yes":
+		return true
+	default:
+		return false
+	}
 }
 
 func orFail(err error) {

@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/InjectiveLabs/evm-deploy-contract/deployer"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cosmtypes "github.com/cosmos/cosmos-sdk/types"
@@ -23,6 +22,12 @@ var cosmosCfg *cosmtypes.Config
 func init() {
 	if _, ok := os.LookupEnv("PEGGO_TEST_EVM_RPC"); !ok {
 		os.Setenv("PEGGO_TEST_EVM_RPC", "http://localhost:8545")
+	}
+	if _, ok := os.LookupEnv("PEGGO_TEST_COVERAGE"); !ok {
+		os.Setenv("PEGGO_TEST_COVERAGE", "0")
+	}
+	if _, ok := os.LookupEnv("PEGGO_TEST_COVERAGE_MODE"); !ok {
+		os.Setenv("PEGGO_TEST_COVERAGE_MODE", "set")
 	}
 	if _, ok := os.LookupEnv("PEGGO_TEST_BECH32_PREFIX"); !ok {
 		os.Setenv("PEGGO_TEST_BECH32_PREFIX", "inj")
@@ -78,16 +83,6 @@ func init() {
 		a.Parse()
 		CosmosAccounts[idx] = a
 	}
-
-	d, err := deployer.New(
-		deployer.OptionEVMRPCEndpoint(os.Getenv("PEGGO_TEST_EVM_RPC")),
-		deployer.OptionGasLimit(10000000),
-	)
-	if err != nil {
-		panic(err)
-	}
-
-	ContractDeployer = d
 }
 
 // readEnv is a special utility that reads `.env` file into actual environment variables
@@ -105,8 +100,6 @@ func readEnv() {
 		}
 	}
 }
-
-var ContractDeployer deployer.Deployer
 
 // Ganache snapshot
 // Mnemonic:      concert load couple harbor equip island argue ramp clarify fence smart topic
