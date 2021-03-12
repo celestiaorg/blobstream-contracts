@@ -1,0 +1,1248 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">solidity/contracts/HashingTest.sol (95.7%)</option>
+				
+				<option value="file1">solidity/contracts/Peggy.sol (75.9%)</option>
+				
+				<option value="file2">solidity/contracts/CosmosToken.sol (0.0%)</option>
+				
+				<option value="file3">contracts/utils/ReentrancyGuard.sol (0.0%)</option>
+				
+				<option value="file4">contracts/utils/Address.sol (0.0%)</option>
+				
+				<option value="file5">token/ERC20/SafeERC20.sol (0.0%)</option>
+				
+				<option value="file6">token/ERC20/ERC20.sol (0.0%)</option>
+				
+				<option value="file7">contracts/GSN/Context.sol (0.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" >// SPDX-License-Identifier: Apache-2.0
+
+pragma solidity ^0.8.0;
+
+
+contract HashingTest {
+        bytes32 public lastCheckpoint;
+        address[] public state_validators;
+        uint256[] public state_powers;
+        uint256 public state_nonce;
+
+        function IterativeHash(
+                address[] memory _validators,
+                uint256[] memory _powers,
+                uint256 _valsetNonce,
+                bytes32 _peggyId
+        ) public {
+                // bytes32 encoding of the string "checkpoint"
+                <span class="cov8" title="1">bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000</span>;
+
+                <span class="cov8" title="1">bytes32 checkpoint = keccak256(abi.encode(_peggyId, methodName, _valsetNonce))</span>;
+
+                // Iterative hashing of valset
+                <span class="cov8" title="1">{
+                        </span><span class="cov8" title="1">for (uint256 i = 0; i &lt; _validators.length; i = i + 1) {
+                                // Check that validator powers are decreasing or equal (this allows the next
+                                // caller to break out of signature evaluation ASAP to save more gas)
+                                if (i != 0) {
+                                        require(
+                                                !(_powers[i] &gt; _powers[i - 1]),
+                                                "Validator power must not be higher than previous validator in batch"
+                                        );
+                                }
+                                checkpoint = keccak256(abi.encode(checkpoint, _validators[i], _powers[i]));
+                        }</span></span></span></span>
+                }
+
+                <span class="cov8" title="1">lastCheckpoint = checkpoint</span>;
+        }
+
+        function ConcatHash(
+                address[] memory _validators,
+                uint256[] memory _powers,
+                uint256 _valsetNonce,
+                bytes32 _peggyId
+        ) public {
+                // bytes32 encoding of the string "checkpoint"
+                <span class="cov8" title="1">bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000</span>;
+
+                <span class="cov8" title="1">bytes32 idHash = keccak256(abi.encode(_peggyId, methodName, _valsetNonce))</span>;
+
+                <span class="cov8" title="1">bytes32 validatorHash = keccak256(abi.encode(_validators))</span>;
+
+                <span class="cov8" title="1">bytes32 powersHash = keccak256(abi.encode(_powers))</span>;
+
+                <span class="cov8" title="1">bytes32 checkpoint = keccak256(abi.encode(idHash, validatorHash, powersHash))</span>;
+
+                <span class="cov8" title="1">lastCheckpoint = checkpoint</span>;
+        }
+
+        function ConcatHash2(
+                address[] memory _validators,
+                uint256[] memory _powers,
+                uint256 _valsetNonce,
+                bytes32 _peggyId
+        ) public {
+                // bytes32 encoding of the string "checkpoint"
+                <span class="cov8" title="1">bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000</span>;
+
+                <span class="cov8" title="1">bytes32 checkpoint = keccak256(
+                        abi.encode(_peggyId, methodName, _valsetNonce, _validators, _powers)
+                )</span>;
+
+                <span class="cov8" title="1">lastCheckpoint = checkpoint</span>;
+        }
+
+        function JustSaveEverything(
+                address[] memory _validators,
+                uint256[] memory _powers,
+                uint256 _valsetNonce
+        ) public {
+                <span class="cov8" title="1">state_validators = _validators</span>;
+                <span class="cov8" title="1">state_powers = _powers</span>;
+                <span class="cov8" title="1">state_nonce = _valsetNonce</span>;
+        }
+
+        function JustSaveEverythingAgain(
+                address[] memory _validators,
+                uint256[] memory _powers,
+                uint256 _valsetNonce
+        ) public {
+                <span class="cov8" title="1">state_validators = _validators</span>;
+                <span class="cov8" title="1">state_powers = _powers</span>;
+                <span class="cov8" title="1">state_nonce = _valsetNonce</span>;
+        }
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">// SPDX-License-Identifier: Apache-2.0
+
+pragma solidity ^0.8.0;
+
+import "./@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "./@openzeppelin/contracts/utils/Address.sol";
+import "./@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./CosmosToken.sol";
+
+
+contract Peggy is ReentrancyGuard {
+        using SafeERC20 for IERC20;
+
+        // These are updated often
+        bytes32 public state_lastValsetCheckpoint;
+        mapping(address =&gt; uint256) public state_lastBatchNonces;
+        mapping(bytes32 =&gt; uint256) public state_invalidationMapping;
+        uint256 public state_lastValsetNonce = 0;
+        uint256 public state_lastEventNonce = 0;
+
+        // These are set once at initialization
+        bytes32 public state_peggyId;
+        uint256 public state_powerThreshold;
+
+        // TransactionBatchExecutedEvent and SendToCosmosEvent both include the field _eventNonce.
+        // This is incremented every time one of these events is emitted. It is checked by the
+        // Cosmos module to ensure that all events are received in order, and that none are lost.
+        //
+        // ValsetUpdatedEvent does not include the field _eventNonce because it is never submitted to the Cosmos
+        // module. It is purely for the use of relayers to allow them to successfully submit batches.
+        event TransactionBatchExecutedEvent(
+                uint256 indexed _batchNonce,
+                address indexed _token,
+                uint256 _eventNonce
+        );
+        event SendToCosmosEvent(
+                address indexed _tokenContract,
+                address indexed _sender,
+                bytes32 indexed _destination,
+                uint256 _amount,
+                uint256 _eventNonce
+        );
+        event ERC20DeployedEvent(
+                // TODO(xlab): _cosmosDenom can be represented as bytes32 to allow indexing
+                string _cosmosDenom,
+                address indexed _tokenContract,
+                string _name,
+                string _symbol,
+                uint8 _decimals,
+                uint256 _eventNonce
+        );
+        event ValsetUpdatedEvent(
+                uint256 indexed _newValsetNonce,
+                address[] _validators,
+                uint256[] _powers
+        );
+
+        function lastBatchNonce(address _erc20Address) public view returns (uint256) {
+                <span class="cov8" title="1">return state_lastBatchNonces[_erc20Address]</span>;
+        }
+
+        // Utility function to verify geth style signatures
+        function verifySig(
+                address _signer,
+                bytes32 _theHash,
+                uint8 _v,
+                bytes32 _r,
+                bytes32 _s
+        ) private pure returns (bool) {
+                <span class="cov8" title="1">bytes32 messageDigest =
+                        keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _theHash))</span>;
+                <span class="cov8" title="1">return _signer == ecrecover(messageDigest, _v, _r, _s)</span>;
+        }
+
+        // Make a new checkpoint from the supplied validator set
+        // A checkpoint is a hash of all relevant information about the valset. This is stored by the contract,
+        // instead of storing the information directly. This saves on storage and gas.
+        // The format of the checkpoint is:
+        // h(peggyId, "checkpoint", valsetNonce, validators[], powers[])
+        // Where h is the keccak256 hash function.
+        // The validator powers must be decreasing or equal. This is important for checking the signatures on the
+        // next valset, since it allows the caller to stop verifying signatures once a quorum of signatures have been verified.
+        function makeCheckpoint(
+                address[] memory _validators,
+                uint256[] memory _powers,
+                uint256 _valsetNonce,
+                bytes32 _peggyId
+        ) private pure returns (bytes32) {
+                // bytes32 encoding of the string "checkpoint"
+                <span class="cov8" title="1">bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000</span>;
+
+                <span class="cov8" title="1">bytes32 checkpoint =
+                        keccak256(abi.encode(_peggyId, methodName, _valsetNonce, _validators, _powers))</span>;
+
+                <span class="cov8" title="1">return checkpoint</span>;
+        }
+
+        function checkValidatorSignatures(
+                // The current validator set and their powers
+                address[] memory _currentValidators,
+                uint256[] memory _currentPowers,
+                // The current validator's signatures
+                uint8[] memory _v,
+                bytes32[] memory _r,
+                bytes32[] memory _s,
+                // This is what we are checking they have signed
+                bytes32 _theHash,
+                uint256 _powerThreshold
+        ) private pure {
+                <span class="cov8" title="1">uint256 cumulativePower = 0</span>;
+
+                <span class="cov8" title="1">for (uint256 i = 0; i &lt; _currentValidators.length; i++) {
+                        // If v is set to 0, this signifies that it was not possible to get a signature from this validator and we skip evaluation
+                        // (In a valid signature, it is either 27 or 28)
+                        if (_v[i] != 0) {
+                                // Check that the current validator has signed off on the hash
+                                require(
+                                        verifySig(_currentValidators[i], _theHash, _v[i], _r[i], _s[i]),
+                                        "Validator signature does not match."
+                                );
+
+                                // Sum up cumulative power
+                                cumulativePower = cumulativePower + _currentPowers[i];
+
+                                // Break early to avoid wasting gas
+                                if (cumulativePower &gt; _powerThreshold) {
+                                        break;
+                                }
+                        }
+                }</span></span></span></span></span></span>
+
+                // Check that there was enough power
+                <span class="cov0" title="0">require(
+                        cumulativePower &gt; _powerThreshold,
+                        "Submitted validator set signatures do not have enough power."
+                )</span>;
+                // Success
+        }
+
+        // This updates the valset by checking that the validators in the current valset have signed off on the
+        // new valset. The signatures supplied are the signatures of the current valset over the checkpoint hash
+        // generated from the new valset.
+        // Anyone can call this function, but they must supply valid signatures of state_powerThreshold of the current valset over
+        // the new valset.
+        function updateValset(
+                // The new version of the validator set
+                address[] memory _newValidators,
+                uint256[] memory _newPowers,
+                uint256 _newValsetNonce,
+                // The current validators that approve the change
+                address[] memory _currentValidators,
+                uint256[] memory _currentPowers,
+                uint256 _currentValsetNonce,
+                // These are arrays of the parts of the current validator's signatures
+                uint8[] memory _v,
+                bytes32[] memory _r,
+                bytes32[] memory _s
+        ) public {
+                // CHECKS
+
+                // Check that the valset nonce is greater than the old one
+                <span class="cov0" title="0">require(
+                        _newValsetNonce &gt; _currentValsetNonce,
+                        "New valset nonce must be greater than the current nonce"
+                )</span>;
+
+                // Check that new validators and powers set is well-formed
+                <span class="cov0" title="0">require(_newValidators.length == _newPowers.length, "Malformed new validator set")</span>;
+
+                // Check that current validators, powers, and signatures (v,r,s) set is well-formed
+                <span class="cov0" title="0">require(
+                        _currentValidators.length == _currentPowers.length &amp;&amp;
+                                _currentValidators.length == _v.length &amp;&amp;
+                                _currentValidators.length == _r.length &amp;&amp;
+                                _currentValidators.length == _s.length,
+                        "Malformed current validator set"
+                )</span>;
+
+                // Check that the supplied current validator set matches the saved checkpoint
+                <span class="cov0" title="0">require(
+                        makeCheckpoint(
+                                _currentValidators,
+                                _currentPowers,
+                                _currentValsetNonce,
+                                state_peggyId
+                        ) == state_lastValsetCheckpoint,
+                        "Supplied current validators and powers do not match checkpoint."
+                )</span>;
+
+                // Check that enough current validators have signed off on the new validator set
+                <span class="cov8" title="1">bytes32 newCheckpoint =
+                        makeCheckpoint(_newValidators, _newPowers, _newValsetNonce, state_peggyId)</span>;
+
+                <span class="cov8" title="1">checkValidatorSignatures(
+                        _currentValidators,
+                        _currentPowers,
+                        _v,
+                        _r,
+                        _s,
+                        newCheckpoint,
+                        state_powerThreshold
+                )</span>;
+
+                // ACTIONS
+
+                // Stored to be used next time to validate that the valset
+                // supplied by the caller is correct.
+                <span class="cov8" title="1">state_lastValsetCheckpoint = newCheckpoint</span>;
+
+                // Store new nonce
+                <span class="cov8" title="1">state_lastValsetNonce = _newValsetNonce</span>;
+
+                // LOGS
+
+                <span class="cov8" title="1">emit ValsetUpdatedEvent(_newValsetNonce, _newValidators, _newPowers)</span>;
+        }
+
+        // submitBatch processes a batch of Cosmos -&gt; Ethereum transactions by sending the tokens in the transactions
+        // to the destination addresses. It is approved by the current Cosmos validator set.
+        // Anyone can call this function, but they must supply valid signatures of state_powerThreshold of the current valset over
+        // the batch.
+        function submitBatch(
+                // The validators that approve the batch
+                address[] memory _currentValidators,
+                uint256[] memory _currentPowers,
+                uint256 _currentValsetNonce,
+                // These are arrays of the parts of the validators signatures
+                uint8[] memory _v,
+                bytes32[] memory _r,
+                bytes32[] memory _s,
+                // The batch of transactions
+                uint256[] memory _amounts,
+                address[] memory _destinations,
+                uint256[] memory _fees,
+                uint256 _batchNonce,
+                address _tokenContract,
+                // a block height beyond which this batch is not valid
+                // used to provide a fee-free timeout
+                uint256 _batchTimeout
+        ) nonReentrant public {
+                // CHECKS scoped to reduce stack depth
+                <span class="cov8" title="1">{
+                        // Check that the batch nonce is higher than the last nonce for this token
+                        </span><span class="cov0" title="0">require(
+                                state_lastBatchNonces[_tokenContract] &lt; _batchNonce,
+                                "New batch nonce must be greater than the current nonce"
+                        )</span>;
+
+                        // Check that the block height is less than the timeout height
+                        <span class="cov0" title="0">require(
+                                block.number &lt; _batchTimeout,
+                                "Batch timeout must be greater than the current block height"
+                        )</span>;
+
+                        // Check that current validators, powers, and signatures (v,r,s) set is well-formed
+                        <span class="cov0" title="0">require(
+                                _currentValidators.length == _currentPowers.length &amp;&amp;
+                                        _currentValidators.length == _v.length &amp;&amp;
+                                        _currentValidators.length == _r.length &amp;&amp;
+                                        _currentValidators.length == _s.length,
+                                "Malformed current validator set"
+                        )</span>;
+
+                        // Check that the supplied current validator set matches the saved checkpoint
+                        <span class="cov0" title="0">require(
+                                makeCheckpoint(
+                                        _currentValidators,
+                                        _currentPowers,
+                                        _currentValsetNonce,
+                                        state_peggyId
+                                ) == state_lastValsetCheckpoint,
+                                "Supplied current validators and powers do not match checkpoint."
+                        )</span>;
+
+                        // Check that the transaction batch is well-formed
+                        <span class="cov0" title="0">require(
+                                _amounts.length == _destinations.length &amp;&amp; _amounts.length == _fees.length,
+                                "Malformed batch of transactions"
+                        )</span>;
+
+                        // Check that enough current validators have signed off on the transaction batch and valset
+                        <span class="cov8" title="1">checkValidatorSignatures(
+                                _currentValidators,
+                                _currentPowers,
+                                _v,
+                                _r,
+                                _s,
+                                // Get hash of the transaction batch and checkpoint
+                                keccak256(
+                                        abi.encode(
+                                                state_peggyId,
+                                                // bytes32 encoding of "transactionBatch"
+                                                0x7472616e73616374696f6e426174636800000000000000000000000000000000,
+                                                _amounts,
+                                                _destinations,
+                                                _fees,
+                                                _batchNonce,
+                                                _tokenContract,
+                                                _batchTimeout
+                                        )
+                                ),
+                                state_powerThreshold
+                        )</span>;
+
+                        // ACTIONS
+
+                        // Store batch nonce
+                        <span class="cov8" title="1">state_lastBatchNonces[_tokenContract] = _batchNonce</span>;
+
+                        <span class="cov8" title="1">{
+                                // Send transaction amounts to destinations
+                                </span><span class="cov8" title="1">uint256 totalFee</span>;
+                                <span class="cov8" title="1">for (uint256 i = 0; i &lt; _amounts.length; i++) {
+                                        IERC20(_tokenContract).safeTransfer(_destinations[i], _amounts[i]);
+                                        totalFee = totalFee + _fees[i];
+                                }</span></span></span>
+
+                                // Send transaction fees to msg.sender
+                                <span class="cov8" title="1">IERC20(_tokenContract).safeTransfer(msg.sender, totalFee)</span>;
+                        }
+                }
+
+                // LOGS scoped to reduce stack depth
+                <span class="cov8" title="1">{
+                        </span><span class="cov8" title="1">state_lastEventNonce = state_lastEventNonce + 1</span>;
+                        <span class="cov8" title="1">emit TransactionBatchExecutedEvent(_batchNonce, _tokenContract, state_lastEventNonce)</span>;
+                }
+        }
+
+        function sendToCosmos(
+                address _tokenContract,
+                bytes32 _destination,
+                uint256 _amount
+        ) public nonReentrant {
+                <span class="cov0" title="0">IERC20(_tokenContract).safeTransferFrom(msg.sender, address(this), _amount)</span>;
+                <span class="cov0" title="0">state_lastEventNonce = state_lastEventNonce + 1</span>;
+                <span class="cov0" title="0">emit SendToCosmosEvent(
+                        _tokenContract,
+                        msg.sender,
+                        _destination,
+                        _amount,
+                        state_lastEventNonce
+                )</span>;
+        }
+
+        function deployERC20(
+                string memory _cosmosDenom,
+                string memory _name,
+                string memory _symbol,
+                uint8 _decimals
+        ) public {
+                // Deploy an ERC20 with entire supply granted to Peggy.sol
+                <span class="cov8" title="1">CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals)</span>;
+
+                // Fire an event to let the Cosmos module know
+                <span class="cov8" title="1">state_lastEventNonce = state_lastEventNonce + 1</span>;
+                <span class="cov8" title="1">emit ERC20DeployedEvent(
+                        _cosmosDenom,
+                        address(erc20),
+                        _name,
+                        _symbol,
+                        _decimals,
+                        state_lastEventNonce
+                )</span>;
+        }
+
+        uint256 public stuff;
+
+        constructor(
+                // A unique identifier for this peggy instance to use in signatures
+                bytes32 _peggyId,
+                // How much voting power is needed to approve operations
+                uint256 _powerThreshold,
+                // The validator set
+                address[] memory _validators,
+                uint256[] memory _powers
+        ) {
+                // CHECKS
+
+                // Check that validators, powers, and signatures (v,r,s) set is well-formed
+                <span class="cov8" title="1">require(_validators.length == _powers.length, "Malformed current validator set")</span>;
+
+                // Check cumulative power to ensure the contract has sufficient power to actually
+                // pass a vote
+                <span class="cov8" title="1">uint256 cumulativePower = 0</span>;
+                <span class="cov8" title="1">for (uint256 i = 0; i &lt; _powers.length; i++) {
+                        cumulativePower = cumulativePower + _powers[i];
+                        if (cumulativePower &gt; _powerThreshold) {
+                                break;
+                        }
+                }</span></span></span></span>
+
+                <span class="cov8" title="1">require(
+                        cumulativePower &gt; _powerThreshold,
+                        "Submitted validator set signatures do not have enough power."
+                )</span>;
+
+                <span class="cov8" title="1">bytes32 newCheckpoint = makeCheckpoint(_validators, _powers, 0, _peggyId)</span>;
+
+                // ACTIONS
+
+                <span class="cov8" title="1">state_peggyId = _peggyId</span>;
+                <span class="cov8" title="1">state_powerThreshold = _powerThreshold</span>;
+                <span class="cov8" title="1">state_lastValsetCheckpoint = newCheckpoint</span>;
+
+                // LOGS
+
+                <span class="cov8" title="1">emit ValsetUpdatedEvent(0, _validators, _powers)</span>;
+        }
+}
+
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">// SPDX-License-Identifier: Apache-2.0
+
+pragma solidity ^0.8.0;
+
+import "./@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+contract CosmosERC20 is ERC20 {
+        uint256 MAX_UINT = 2**256 - 1;
+
+        constructor(
+                address _peggyAddress,
+                string memory _name,
+                string memory _symbol,
+                uint8 _decimals
+        ) ERC20(_name, _symbol) {
+                <span class="cov0" title="0">_setupDecimals(_decimals)</span>;
+                <span class="cov0" title="0">_mint(_peggyAddress, MAX_UINT)</span>;
+        }
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+/**
+ * @dev Contract module that helps prevent reentrant calls to a function.
+ *
+ * Inheriting from `ReentrancyGuard` will make the {nonReentrant} modifier
+ * available, which can be applied to functions to make sure there are no nested
+ * (reentrant) calls to them.
+ *
+ * Note that because there is a single `nonReentrant` guard, functions marked as
+ * `nonReentrant` may not call one another. This can be worked around by making
+ * those functions `private`, and then adding `external` `nonReentrant` entry
+ * points to them.
+ *
+ * TIP: If you would like to learn more about reentrancy and alternative ways
+ * to protect against it, check out our blog post
+ * https://blog.openzeppelin.com/reentrancy-after-istanbul/[Reentrancy After Istanbul].
+ */
+contract ReentrancyGuard {
+    // Booleans are more expensive than uint256 or any type that takes up a full
+    // word because each write operation emits an extra SLOAD to first read the
+    // slot's contents, replace the bits taken up by the boolean, and then write
+    // back. This is the compiler's defense against contract upgrades and
+    // pointer aliasing, and it cannot be disabled.
+
+    // The values being non-zero value makes deployment a bit more expensive,
+    // but in exchange the refund on every call to nonReentrant will be lower in
+    // amount. Since refunds are capped to a percentage of the total
+    // transaction's gas, it is best to keep them low in cases like this one, to
+    // increase the likelihood of the full refund coming into effect.
+    uint256 private constant _NOT_ENTERED = 1;
+    uint256 private constant _ENTERED = 2;
+
+    uint256 private _status;
+
+    constructor () {
+        <span class="cov0" title="0">_status = _NOT_ENTERED</span>;
+    }
+
+    /**
+     * @dev Prevents a contract from calling itself, directly or indirectly.
+     * Calling a `nonReentrant` function from another `nonReentrant`
+     * function is not supported. It is possible to prevent this from happening
+     * by making the `nonReentrant` function external, and make it call a
+     * `private` function that does the actual work.
+     */
+    modifier nonReentrant() {
+        // On the first call to nonReentrant, _notEntered will be true
+        <span class="cov0" title="0">require(_status != _ENTERED, "ReentrancyGuard: reentrant call")</span>;
+
+        // Any calls to nonReentrant after this point will fail
+        <span class="cov0" title="0">_status = _ENTERED</span>;
+
+        <span class="cov0" title="0">_</span>;
+
+        // By storing the original value once again, a refund is triggered (see
+        // https://eips.ethereum.org/EIPS/eip-2200)
+        <span class="cov0" title="0">_status = _NOT_ENTERED</span>;
+    }
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+/**
+ * @dev Collection of functions related to the address type
+ */
+library Address {
+    /**
+     * @dev Returns true if `account` is a contract.
+     *
+     * [IMPORTANT]
+     * ====
+     * It is unsafe to assume that an address for which this function returns
+     * false is an externally-owned account (EOA) and not a contract.
+     *
+     * Among others, `isContract` will return false for the following
+     * types of addresses:
+     *
+     *  - an externally-owned account
+     *  - a contract in construction
+     *  - an address where a contract will be created
+     *  - an address where a contract lived, but was destroyed
+     * ====
+     */
+    function isContract(address account) internal view returns (bool) {
+        // This method relies in extcodesize, which returns 0 for contracts in
+        // construction, since the code is only stored at the end of the
+        // constructor execution.
+
+        <span class="cov0" title="0">uint256 size</span>;
+        // solhint-disable-next-line no-inline-assembly
+        <span class="cov0" title="0">assembly { size := extcodesize(account) }</span>
+        <span class="cov0" title="0">return size &gt; 0</span>;
+    }
+
+    /**
+     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to
+     * `recipient`, forwarding all available gas and reverting on errors.
+     *
+     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost
+     * of certain opcodes, possibly making contracts go over the 2300 gas limit
+     * imposed by `transfer`, making them unable to receive funds via
+     * `transfer`. {sendValue} removes this limitation.
+     *
+     * https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/[Learn more].
+     *
+     * IMPORTANT: because control is transferred to `recipient`, care must be
+     * taken to not create reentrancy vulnerabilities. Consider using
+     * {ReentrancyGuard} or the
+     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].
+     */
+    function sendValue(address payable recipient, uint256 amount) internal {
+        <span class="cov0" title="0">require(address(this).balance &gt;= amount, "Address: insufficient balance")</span>;
+
+        // solhint-disable-next-line avoid-low-level-calls, avoid-call-value
+        <span class="cov0" title="0">(bool success, ) = recipient.call{ value: amount }("")</span>;
+        <span class="cov0" title="0">require(success, "Address: unable to send value, recipient may have reverted")</span>;
+    }
+
+    /**
+     * @dev Performs a Solidity function call using a low level `call`. A
+     * plain`call` is an unsafe replacement for a function call: use this
+     * function instead.
+     *
+     * If `target` reverts with a revert reason, it is bubbled up by this
+     * function (like regular Solidity function calls).
+     *
+     * Returns the raw returned data. To convert to the expected return value,
+     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].
+     *
+     * Requirements:
+     *
+     * - `target` must be a contract.
+     * - calling `target` with `data` must not revert.
+     *
+     * _Available since v3.1._
+     */
+    function functionCall(address target, bytes memory data) internal returns (bytes memory) {
+      <span class="cov0" title="0">return functionCall(target, data, "Address: low-level call failed")</span>;
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], but with
+     * `errorMessage` as a fallback revert reason when `target` reverts.
+     *
+     * _Available since v3.1._
+     */
+    function functionCall(address target, bytes memory data, string memory errorMessage) internal returns (bytes memory) {
+        <span class="cov0" title="0">return _functionCallWithValue(target, data, 0, errorMessage)</span>;
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
+     * but also transferring `value` wei to `target`.
+     *
+     * Requirements:
+     *
+     * - the calling contract must have an ETH balance of at least `value`.
+     * - the called Solidity function must be `payable`.
+     *
+     * _Available since v3.1._
+     */
+    function functionCallWithValue(address target, bytes memory data, uint256 value) internal returns (bytes memory) {
+        <span class="cov0" title="0">return functionCallWithValue(target, data, value, "Address: low-level call with value failed")</span>;
+    }
+
+    /**
+     * @dev Same as {xref-Address-functionCallWithValue-address-bytes-uint256-}[`functionCallWithValue`], but
+     * with `errorMessage` as a fallback revert reason when `target` reverts.
+     *
+     * _Available since v3.1._
+     */
+    function functionCallWithValue(address target, bytes memory data, uint256 value, string memory errorMessage) internal returns (bytes memory) {
+        <span class="cov0" title="0">require(address(this).balance &gt;= value, "Address: insufficient balance for call")</span>;
+        <span class="cov0" title="0">return _functionCallWithValue(target, data, value, errorMessage)</span>;
+    }
+
+    function _functionCallWithValue(address target, bytes memory data, uint256 weiValue, string memory errorMessage) private returns (bytes memory) {
+        <span class="cov0" title="0">require(isContract(target), "Address: call to non-contract")</span>;
+
+        // solhint-disable-next-line avoid-low-level-calls
+        <span class="cov0" title="0">(bool success, bytes memory returndata) = target.call{ value: weiValue }(data)</span>;
+        <span class="cov0" title="0">if (success) {
+            return returndata;
+        } else {
+            // Look for revert reason and bubble it up if present
+            if (returndata.length &gt; 0) {
+                // The easiest way to bubble the revert reason is using memory via assembly
+
+                // solhint-disable-next-line no-inline-assembly
+                assembly {
+                    let returndata_size := mload(returndata)
+                    revert(add(32, returndata), returndata_size)
+                }
+            } else {
+                revert(errorMessage);
+            }
+        }</span></span></span></span></span>
+    }
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+import "./IERC20.sol";
+import "../../utils/Address.sol";
+
+/**
+ * @title SafeERC20
+ * @dev Wrappers around ERC20 operations that throw on failure (when the token
+ * contract returns false). Tokens that return no value (and instead revert or
+ * throw on failure) are also supported, non-reverting calls are assumed to be
+ * successful.
+ * To use this library you can add a `using SafeERC20 for IERC20;` statement to your contract,
+ * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ */
+library SafeERC20 {
+    using Address for address;
+
+    function safeTransfer(IERC20 token, address to, uint256 value) internal {
+        <span class="cov0" title="0">_callOptionalReturn(token, abi.encodeWithSelector(token.transfer.selector, to, value))</span>;
+    }
+
+    function safeTransferFrom(IERC20 token, address from, address to, uint256 value) internal {
+        <span class="cov0" title="0">_callOptionalReturn(token, abi.encodeWithSelector(token.transferFrom.selector, from, to, value))</span>;
+    }
+
+    /**
+     * @dev Deprecated. This function has issues similar to the ones found in
+     * {IERC20-approve}, and its usage is discouraged.
+     *
+     * Whenever possible, use {safeIncreaseAllowance} and
+     * {safeDecreaseAllowance} instead.
+     */
+    function safeApprove(IERC20 token, address spender, uint256 value) internal {
+        // safeApprove should only be called when setting an initial allowance,
+        // or when resetting it to zero. To increase and decrease it, use
+        // 'safeIncreaseAllowance' and 'safeDecreaseAllowance'
+        // solhint-disable-next-line max-line-length
+        <span class="cov0" title="0">require((value == 0) || (token.allowance(address(this), spender) == 0),
+            "SafeERC20: approve from non-zero to non-zero allowance"
+        )</span>;
+        <span class="cov0" title="0">_callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, value))</span>;
+    }
+
+    function safeIncreaseAllowance(IERC20 token, address spender, uint256 value) internal {
+        <span class="cov0" title="0">uint256 newAllowance = token.allowance(address(this), spender) + value</span>;
+        <span class="cov0" title="0">_callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance))</span>;
+    }
+
+    function safeDecreaseAllowance(IERC20 token, address spender, uint256 value) internal {
+        <span class="cov0" title="0">uint256 newAllowance = token.allowance(address(this), spender) - value</span>;
+        <span class="cov0" title="0">_callOptionalReturn(token, abi.encodeWithSelector(token.approve.selector, spender, newAllowance))</span>;
+    }
+
+    /**
+     * @dev Imitates a Solidity high-level call (i.e. a regular function call to a contract), relaxing the requirement
+     * on the return value: the return value is optional (but if data is returned, it must not be false).
+     * @param token The token targeted by the call.
+     * @param data The call data (encoded using abi.encode or one of its variants).
+     */
+    function _callOptionalReturn(IERC20 token, bytes memory data) private {
+        // We need to perform a low level call here, to bypass Solidity's return data size checking mechanism, since
+        // we're implementing it ourselves. We use {Address.functionCall} to perform this call, which verifies that
+        // the target address contains contract code and also asserts for success in the low-level call.
+
+        <span class="cov0" title="0">bytes memory returndata = address(token).functionCall(data, "SafeERC20: low-level call failed")</span>;
+        <span class="cov0" title="0">if (returndata.length &gt; 0) { // Return data is optional
+            // solhint-disable-next-line max-line-length
+            require(abi.decode(returndata, (bool)), "SafeERC20: ERC20 operation did not succeed");
+        }</span></span>
+    }
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+import "../../GSN/Context.sol";
+import "./IERC20.sol";
+import "../../utils/Address.sol";
+
+/**
+ * @dev Implementation of the {IERC20} interface.
+ *
+ * This implementation is agnostic to the way tokens are created. This means
+ * that a supply mechanism has to be added in a derived contract using {_mint}.
+ * For a generic mechanism see {ERC20PresetMinterPauser}.
+ *
+ * TIP: For a detailed writeup see our guide
+ * https://forum.zeppelin.solutions/t/how-to-implement-erc20-supply-mechanisms/226[How
+ * to implement supply mechanisms].
+ *
+ * We have followed general OpenZeppelin guidelines: functions revert instead
+ * of returning `false` on failure. This behavior is nonetheless conventional
+ * and does not conflict with the expectations of ERC20 applications.
+ *
+ * Additionally, an {Approval} event is emitted on calls to {transferFrom}.
+ * This allows applications to reconstruct the allowance for all accounts just
+ * by listening to said events. Other implementations of the EIP may not emit
+ * these events, as it isn't required by the specification.
+ *
+ * Finally, the non-standard {decreaseAllowance} and {increaseAllowance}
+ * functions have been added to mitigate the well-known issues around setting
+ * allowances. See {IERC20-approve}.
+ */
+contract ERC20 is Context, IERC20 {
+    using Address for address;
+
+    mapping (address =&gt; uint256) private _balances;
+
+    mapping (address =&gt; mapping (address =&gt; uint256)) private _allowances;
+
+    uint256 private _totalSupply;
+
+    string private _name;
+    string private _symbol;
+    uint8 private _decimals;
+
+    /**
+     * @dev Sets the values for {name} and {symbol}, initializes {decimals} with
+     * a default value of 18.
+     *
+     * To select a different value for {decimals}, use {_setupDecimals}.
+     *
+     * All three of these values are immutable: they can only be set once during
+     * construction.
+     */
+    constructor (string memory tokenName, string memory tokenSymbol) {
+        <span class="cov0" title="0">_name = tokenName</span>;
+        <span class="cov0" title="0">_symbol = tokenSymbol</span>;
+        <span class="cov0" title="0">_decimals = 18</span>;
+    }
+
+    /**
+     * @dev Returns the name of the token.
+     */
+    function name() public view returns (string memory) {
+        <span class="cov0" title="0">return _name</span>;
+    }
+
+    /**
+     * @dev Returns the symbol of the token, usually a shorter version of the
+     * name.
+     */
+    function symbol() public view returns (string memory) {
+        <span class="cov0" title="0">return _symbol</span>;
+    }
+
+    /**
+     * @dev Returns the number of decimals used to get its user representation.
+     * For example, if `decimals` equals `2`, a balance of `505` tokens should
+     * be displayed to a user as `5,05` (`505 / 10 ** 2`).
+     *
+     * Tokens usually opt for a value of 18, imitating the relationship between
+     * Ether and Wei. This is the value {ERC20} uses, unless {_setupDecimals} is
+     * called.
+     *
+     * NOTE: This information is only used for _display_ purposes: it in
+     * no way affects any of the arithmetic of the contract, including
+     * {IERC20-balanceOf} and {IERC20-transfer}.
+     */
+    function decimals() public view returns (uint8) {
+        <span class="cov0" title="0">return _decimals</span>;
+    }
+
+    /**
+     * @dev See {IERC20-totalSupply}.
+     */
+    function totalSupply() public view override returns (uint256) {
+        <span class="cov0" title="0">return _totalSupply</span>;
+    }
+
+    /**
+     * @dev See {IERC20-balanceOf}.
+     */
+    function balanceOf(address account) public view override returns (uint256) {
+        <span class="cov0" title="0">return _balances[account]</span>;
+    }
+
+    /**
+     * @dev See {IERC20-transfer}.
+     *
+     * Requirements:
+     *
+     * - `recipient` cannot be the zero address.
+     * - the caller must have a balance of at least `amount`.
+     */
+    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
+        <span class="cov0" title="0">_transfer(_msgSender(), recipient, amount)</span>;
+        <span class="cov0" title="0">return true</span>;
+    }
+
+    /**
+     * @dev See {IERC20-allowance}.
+     */
+    function allowance(address owner, address spender) public view virtual override returns (uint256) {
+        <span class="cov0" title="0">return _allowances[owner][spender]</span>;
+    }
+
+    /**
+     * @dev See {IERC20-approve}.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     */
+    function approve(address spender, uint256 amount) public virtual override returns (bool) {
+        <span class="cov0" title="0">_approve(_msgSender(), spender, amount)</span>;
+        <span class="cov0" title="0">return true</span>;
+    }
+
+    /**
+     * @dev See {IERC20-transferFrom}.
+     *
+     * Emits an {Approval} event indicating the updated allowance. This is not
+     * required by the EIP. See the note at the beginning of {ERC20};
+     *
+     * Requirements:
+     * - `sender` and `recipient` cannot be the zero address.
+     * - `sender` must have a balance of at least `amount`.
+     * - the caller must have allowance for ``sender``'s tokens of at least
+     * `amount`.
+     */
+    function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
+        <span class="cov0" title="0">_transfer(sender, recipient, amount)</span>;
+        <span class="cov0" title="0">_approve(sender, _msgSender(), _allowances[sender][_msgSender()] - amount)</span>;
+        <span class="cov0" title="0">return true</span>;
+    }
+
+    /**
+     * @dev Atomically increases the allowance granted to `spender` by the caller.
+     *
+     * This is an alternative to {approve} that can be used as a mitigation for
+     * problems described in {IERC20-approve}.
+     *
+     * Emits an {Approval} event indicating the updated allowance.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     */
+    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
+        <span class="cov0" title="0">_approve(_msgSender(), spender, _allowances[_msgSender()][spender] + addedValue)</span>;
+        <span class="cov0" title="0">return true</span>;
+    }
+
+    /**
+     * @dev Atomically decreases the allowance granted to `spender` by the caller.
+     *
+     * This is an alternative to {approve} that can be used as a mitigation for
+     * problems described in {IERC20-approve}.
+     *
+     * Emits an {Approval} event indicating the updated allowance.
+     *
+     * Requirements:
+     *
+     * - `spender` cannot be the zero address.
+     * - `spender` must have allowance for the caller of at least
+     * `subtractedValue`.
+     */
+    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
+        <span class="cov0" title="0">_approve(_msgSender(), spender, _allowances[_msgSender()][spender] - subtractedValue)</span>;
+        <span class="cov0" title="0">return true</span>;
+    }
+
+    /**
+     * @dev Moves tokens `amount` from `sender` to `recipient`.
+     *
+     * This is internal function is equivalent to {transfer}, and can be used to
+     * e.g. implement automatic token fees, slashing mechanisms, etc.
+     *
+     * Emits a {Transfer} event.
+     *
+     * Requirements:
+     *
+     * - `sender` cannot be the zero address.
+     * - `recipient` cannot be the zero address.
+     * - `sender` must have a balance of at least `amount`.
+     */
+    function _transfer(address sender, address recipient, uint256 amount) internal virtual {
+        <span class="cov0" title="0">require(sender != address(0), "ERC20: transfer from the zero address")</span>;
+        <span class="cov0" title="0">require(recipient != address(0), "ERC20: transfer to the zero address")</span>;
+
+        <span class="cov0" title="0">_beforeTokenTransfer(sender, recipient, amount)</span>;
+
+        <span class="cov0" title="0">_balances[sender] = _balances[sender] - amount</span>;
+        <span class="cov0" title="0">_balances[recipient] = _balances[recipient] + amount</span>;
+        <span class="cov0" title="0">emit Transfer(sender, recipient, amount)</span>;
+    }
+
+    /** @dev Creates `amount` tokens and assigns them to `account`, increasing
+     * the total supply.
+     *
+     * Emits a {Transfer} event with `from` set to the zero address.
+     *
+     * Requirements
+     *
+     * - `to` cannot be the zero address.
+     */
+    function _mint(address account, uint256 amount) internal virtual {
+        <span class="cov0" title="0">require(account != address(0), "ERC20: mint to the zero address")</span>;
+
+        <span class="cov0" title="0">_beforeTokenTransfer(address(0), account, amount)</span>;
+
+        <span class="cov0" title="0">_totalSupply = _totalSupply + amount</span>;
+        <span class="cov0" title="0">_balances[account] = _balances[account] + amount</span>;
+        <span class="cov0" title="0">emit Transfer(address(0), account, amount)</span>;
+    }
+
+    /**
+     * @dev Destroys `amount` tokens from `account`, reducing the
+     * total supply.
+     *
+     * Emits a {Transfer} event with `to` set to the zero address.
+     *
+     * Requirements
+     *
+     * - `account` cannot be the zero address.
+     * - `account` must have at least `amount` tokens.
+     */
+    function _burn(address account, uint256 amount) internal virtual {
+        <span class="cov0" title="0">require(account != address(0), "ERC20: burn from the zero address")</span>;
+
+        <span class="cov0" title="0">_beforeTokenTransfer(account, address(0), amount)</span>;
+
+        <span class="cov0" title="0">_balances[account] = _balances[account] - amount</span>;
+        <span class="cov0" title="0">_totalSupply = _totalSupply - amount</span>;
+        <span class="cov0" title="0">emit Transfer(account, address(0), amount)</span>;
+    }
+
+    /**
+     * @dev Sets `amount` as the allowance of `spender` over the `owner` s tokens.
+     *
+     * This internal function is equivalent to `approve`, and can be used to
+     * e.g. set automatic allowances for certain subsystems, etc.
+     *
+     * Emits an {Approval} event.
+     *
+     * Requirements:
+     *
+     * - `owner` cannot be the zero address.
+     * - `spender` cannot be the zero address.
+     */
+    function _approve(address owner, address spender, uint256 amount) internal virtual {
+        <span class="cov0" title="0">require(owner != address(0), "ERC20: approve from the zero address")</span>;
+        <span class="cov0" title="0">require(spender != address(0), "ERC20: approve to the zero address")</span>;
+
+        <span class="cov0" title="0">_allowances[owner][spender] = amount</span>;
+        <span class="cov0" title="0">emit Approval(owner, spender, amount)</span>;
+    }
+
+    /**
+     * @dev Sets {decimals} to a value other than the default one of 18.
+     *
+     * WARNING: This function should only be called from the constructor. Most
+     * applications that interact with token contracts will not expect
+     * {decimals} to ever change, and may work incorrectly if it does.
+     */
+    function _setupDecimals(uint8 decimals_) internal {
+        <span class="cov0" title="0">_decimals = decimals_</span>;
+    }
+
+    /**
+     * @dev Hook that is called before any transfer of tokens. This includes
+     * minting and burning.
+     *
+     * Calling conditions:
+     *
+     * - when `from` and `to` are both non-zero, `amount` of ``from``'s tokens
+     * will be to transferred to `to`.
+     * - when `from` is zero, `amount` tokens will be minted for `to`.
+     * - when `to` is zero, `amount` of ``from``'s tokens will be burned.
+     * - `from` and `to` are never both zero.
+     *
+     * To learn more about hooks, head to xref:ROOT:extending-contracts.adoc#using-hooks[Using Hooks].
+     */
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual { }
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+/*
+ * @dev Provides information about the current execution context, including the
+ * sender of the transaction and its data. While these are generally available
+ * via msg.sender and msg.data, they should not be accessed in such a direct
+ * manner, since when dealing with GSN meta-transactions the account sending and
+ * paying for execution may not be the actual sender (as far as an application
+ * is concerned).
+ *
+ * This contract is only required for intermediate, library-like contracts.
+ */
+abstract contract Context {
+    function _msgSender() internal view virtual returns (address payable) {
+        <span class="cov0" title="0">return payable(msg.sender)</span>;
+    }
+
+    function _msgData() internal view virtual returns (bytes memory) {
+        <span class="cov0" title="0">this</span>; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
+        <span class="cov0" title="0">return msg.data</span>;
+    }
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible = document.getElementById('file0');
+		files.addEventListener('change', onChange, false);
+		function onChange() {
+			visible.style.display = 'none';
+			visible = document.getElementById(files.value);
+			visible.style.display = 'block';
+			window.scrollTo(0, 0);
+		}
+	})();
+	</script>
+</html>
