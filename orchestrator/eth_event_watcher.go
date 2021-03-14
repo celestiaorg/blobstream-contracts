@@ -91,7 +91,7 @@ func (s *peggyOrchestrator) CheckForEvents(
 	if len(deposits) > 0 {
 		log.WithFields(log.Fields{
 			"sender":      deposits[0].Sender.Hex(),
-			"destination": sdk.AccAddress(deposits[0].Destination[:]).String(),
+			"destination": sdk.AccAddress(deposits[0].Destination[12:32]).String(),
 			"amount":      deposits[0].Amount.String(),
 			"event_nonce": deposits[0].EventNonce.String(),
 		}).Infoln("Oracle observed a deposit")

@@ -93,7 +93,6 @@ func (s *peggyBroadcastClient) AccFromAddress() sdk.AccAddress {
 	return s.broadcastClient.FromAddress()
 }
 
-
 type peggyBroadcastClient struct {
 	daemonQueryClient types.QueryClient
 	broadcastClient   client.CosmosClient
@@ -243,7 +242,7 @@ func (s *peggyBroadcastClient) sendDepositClaims(
 		TokenContract:  deposit.TokenContract.Hex(),
 		Amount:         sdk.NewIntFromBigInt(deposit.Amount),
 		EthereumSender: deposit.Sender.Hex(),
-		CosmosReceiver: sdk.AccAddress(deposit.Destination[:]).String(),
+		CosmosReceiver: sdk.AccAddress(deposit.Destination[12:32]).String(),
 		Orchestrator:   s.broadcastClient.FromAddress().String(),
 	}
 
