@@ -3,14 +3,16 @@ module github.com/InjectiveLabs/peggo
 go 1.15
 
 require (
-	github.com/InjectiveLabs/evm-deploy-contract v1.5.0
-	github.com/InjectiveLabs/sdk-go v1.15.1
+	github.com/InjectiveLabs/evm-deploy-contract v1.6.0
+	github.com/InjectiveLabs/sdk-go v1.16.2
 	github.com/alexcesaro/statsd v2.0.0+incompatible
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/cosmos/cosmos-sdk v0.41.0
 	github.com/ethereum/go-ethereum v1.9.25
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.3
+	github.com/golang/protobuf v1.4.3
+	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/jawher/mow.cli v1.2.0
 	github.com/onsi/ginkgo v1.14.0
