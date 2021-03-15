@@ -179,7 +179,7 @@ func (s *peggyOrchestrator) EthSignerMainLoop(ctx context.Context) (err error) {
 		var oldestUnsignedValsets []*types.Valset
 
 		if err := retry.Do(func() error {
-			oldestValsets, err := s.cosmosQueryClient.OldestUnsignedValsets(ctx, s.peggyBroadcastClient.ValFromAddress())
+			oldestValsets, err := s.cosmosQueryClient.OldestUnsignedValsets(ctx, s.peggyBroadcastClient.AccFromAddress())
 			if err != nil {
 				if err == cosmos.ErrNotFound || oldestValsets == nil {
 					logger.Debugln("no Valset waiting to be signed")
@@ -216,7 +216,7 @@ func (s *peggyOrchestrator) EthSignerMainLoop(ctx context.Context) (err error) {
 		if err := retry.Do(func() error {
 			// sign the last unsigned batch, TODO check if we already have signed this
 
-			txBatch, err := s.cosmosQueryClient.OldestUnsignedTransactionBatch(ctx, s.peggyBroadcastClient.ValFromAddress())
+			txBatch, err := s.cosmosQueryClient.OldestUnsignedTransactionBatch(ctx, s.peggyBroadcastClient.AccFromAddress())
 			if err != nil {
 				if err == cosmos.ErrNotFound || txBatch == nil {
 					logger.Debugln("no TransactionBatch waiting to be signed")

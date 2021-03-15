@@ -171,7 +171,7 @@ func (s *peggyBroadcastClient) SendValsetConfirm(
 	// chain store and submit them to Ethereum to update the validator set
 	// -------------
 	msg := &types.MsgValsetConfirm{
-		Orchestrator: s.ValFromAddress().String(),
+		Orchestrator: s.AccFromAddress().String(),
 		EthAddress:   ethFrom.Hex(),
 		Nonce:        valset.Nonce,
 		Signature:    ethcmn.Bytes2Hex(signature),
@@ -212,7 +212,7 @@ func (s *peggyBroadcastClient) SendBatchConfirm(
 	// as well as an Ethereum signature over this batch by the validator
 	// -------------
 	msg := &types.MsgConfirmBatch{
-		Orchestrator:  s.ValFromAddress().String(),
+		Orchestrator:  s.AccFromAddress().String(),
 		Nonce:         batch.BatchNonce,
 		Signature:     ethcmn.Bytes2Hex(signature),
 		EthSigner:     ethFrom.Hex(),
@@ -265,7 +265,7 @@ func (s *peggyBroadcastClient) sendWithdrawClaims(
 		EventNonce:    withdraw.EventNonce.Uint64(),
 		BatchNonce:    withdraw.BatchNonce.Uint64(),
 		TokenContract: withdraw.Token.Hex(),
-		Orchestrator:  s.ValFromAddress().String(),
+		Orchestrator:  s.AccFromAddress().String(),
 	}
 	if err := s.broadcastClient.QueueBroadcastMsg(msg); err != nil {
 		metrics.ReportFuncError(s.svcTags)
@@ -347,7 +347,7 @@ func (s *peggyBroadcastClient) SendToEth(
 	// actually send this message in the first place. So a successful send has
 	// two layers of fees for the user
 	msg := &types.MsgSendToEth{
-		Sender:    s.ValFromAddress().String(),
+		Sender:    s.AccFromAddress().String(),
 		EthDest:   destination.Hex(),
 		Amount:    amount,
 		BridgeFee: fee, // TODO: use exactly that fee for transaction
@@ -380,7 +380,7 @@ func (s *peggyBroadcastClient) SendRequestBatch(
 	// -------------
 	msg := &types.MsgRequestBatch{
 		Denom:        denom,
-		Orchestrator: s.ValFromAddress().String(),
+		Orchestrator: s.AccFromAddress().String(),
 	}
 	if err := s.broadcastClient.QueueBroadcastMsg(msg); err != nil {
 		metrics.ReportFuncError(s.svcTags)

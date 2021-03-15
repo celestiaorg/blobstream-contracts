@@ -14,10 +14,10 @@ import (
 type PeggyQueryClient interface {
 	ValsetAt(ctx context.Context, nonce uint64) (*types.Valset, error)
 	CurrentValset(ctx context.Context) (*types.Valset, error)
-	OldestUnsignedValsets(ctx context.Context, valAddress sdk.ValAddress) ([]*types.Valset, error)
+	OldestUnsignedValsets(ctx context.Context, valAccountAddress sdk.AccAddress) ([]*types.Valset, error)
 	LatestValsets(ctx context.Context) ([]*types.Valset, error)
 	AllValsetConfirms(ctx context.Context, nonce uint64) ([]*types.MsgValsetConfirm, error)
-	OldestUnsignedTransactionBatch(ctx context.Context, valAddress sdk.ValAddress) (*types.OutgoingTxBatch, error)
+	OldestUnsignedTransactionBatch(ctx context.Context, valAccountAddress sdk.AccAddress) (*types.OutgoingTxBatch, error)
 	LatestTransactionBatches(ctx context.Context) ([]*types.OutgoingTxBatch, error)
 	UnbatchedTokensWithFees(ctx context.Context) ([]*types.BatchFees, error)
 
@@ -79,13 +79,13 @@ func (s *peggyQueryClient) CurrentValset(ctx context.Context) (*types.Valset, er
 	return daemonResp.Valset, nil
 }
 
-func (s *peggyQueryClient) OldestUnsignedValsets(ctx context.Context, valAddress sdk.ValAddress) ([]*types.Valset, error) {
+func (s *peggyQueryClient) OldestUnsignedValsets(ctx context.Context, valAccountAddress sdk.AccAddress) ([]*types.Valset, error) {
 	metrics.ReportFuncCall(s.svcTags)
 	doneFn := metrics.ReportFuncTiming(s.svcTags)
 	defer doneFn()
 
 	daemonResp, err := s.daemonQueryClient.LastPendingValsetRequestByAddr(ctx, &types.QueryLastPendingValsetRequestByAddrRequest{
-		Address: valAddress.String(),
+		Address: valAccountAddress.String(),
 	})
 	if err != nil {
 		metrics.ReportFuncError(s.svcTags)
@@ -134,13 +134,13 @@ func (s *peggyQueryClient) AllValsetConfirms(ctx context.Context, nonce uint64) 
 	return daemonResp.Confirms, nil
 }
 
-func (s *peggyQueryClient) OldestUnsignedTransactionBatch(ctx context.Context, valAddress sdk.ValAddress) (*types.OutgoingTxBatch, error) {
+func (s *peggyQueryClient) OldestUnsignedTransactionBatch(ctx context.Context, valAccountAddress sdk.AccAddress) (*types.OutgoingTxBatch, error) {
 	metrics.ReportFuncCall(s.svcTags)
 	doneFn := metrics.ReportFuncTiming(s.svcTags)
 	defer doneFn()
 
 	daemonResp, err := s.daemonQueryClient.LastPendingBatchRequestByAddr(ctx, &types.QueryLastPendingBatchRequestByAddrRequest{
-		Address: valAddress.String(),
+		Address: valAccountAddress.String(),
 	})
 	if err != nil {
 		metrics.ReportFuncError(s.svcTags)
