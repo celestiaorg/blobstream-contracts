@@ -42,3 +42,5 @@ solidity/0x_ganache_snapshot/
 # dir with temp data
 data/
 test/solidity/build
+solidity/deployment/build
+solidity/deployment/.env
