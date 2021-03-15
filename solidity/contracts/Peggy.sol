@@ -3,13 +3,14 @@
 pragma solidity ^0.8.0;
 
 import "./@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "./@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./@openzeppelin/contracts/utils/Address.sol";
-import "./@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "./@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "./@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./CosmosToken.sol";
 
 
-contract Peggy is ReentrancyGuard {
+contract Peggy is Initializable, ReentrancyGuard {
 	using SafeERC20 for IERC20;
 
 	// These are updated often
@@ -367,7 +368,7 @@ contract Peggy is ReentrancyGuard {
 
 	uint256 public stuff;
 
-	constructor(
+	function initialize(
 		// A unique identifier for this peggy instance to use in signatures
 		bytes32 _peggyId,
 		// How much voting power is needed to approve operations
@@ -375,7 +376,7 @@ contract Peggy is ReentrancyGuard {
 		// The validator set
 		address[] memory _validators,
 		uint256[] memory _powers
-	) {
+	) public initializer {
 		// CHECKS
 
 		// Check that validators, powers, and signatures (v,r,s) set is well-formed

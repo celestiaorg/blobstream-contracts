@@ -70,10 +70,23 @@ var _ = Describe("Contract Tests", func() {
 				CoverageAgent: CoverageAgent,
 			}
 
-			deployTxHash, peggyContract, deployErr = ContractDeployer.Deploy(context.Background(), peggyDeployOpts, deployArgs)
+			_, peggyContract, deployErr = ContractDeployer.Deploy(context.Background(), peggyDeployOpts, noArgs)
+			orFail(deployErr)
+
+			peggyTxOpts = deployer.ContractTxOpts{
+				From:          EthAccounts[0].EthAddress,
+				FromPk:        EthAccounts[0].EthPrivKey,
+				SolSource:     "../../solidity/contracts/Peggy.sol",
+				ContractName:  "Peggy",
+				Contract:      peggyContract.Address,
+				Await:         true,
+				CoverageAgent: CoverageAgent,
+			}
+
+			deployTxHash, _, deployErr = ContractDeployer.Tx(context.Background(), peggyTxOpts, "initialize", deployArgs)
 		})
 
-		_ = Context("Contract fails to deploy", func() {
+		_ = Context("Contract fails to initialize", func() {
 			AfterEach(func() {
 				deployArgs = withArgsFn(
 					peggyID,
@@ -119,7 +132,7 @@ var _ = Describe("Contract Tests", func() {
 			})
 		})
 
-		_ = Context("Peggy contract deployment done", func() {
+		_ = Context("Peggy contract deployment and initialization done", func() {
 			var (
 				peggyOwner Account
 			)
