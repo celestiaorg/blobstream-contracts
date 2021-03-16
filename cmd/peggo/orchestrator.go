@@ -205,7 +205,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		)
 		cancelWait()
 
-		ethCommitter, err := committer.NewEthCommitter(ethcmn.Address{}, nil, ethProvider)
+		ethCommitter, err := committer.NewEthCommitter(ethKeyFromAddress, signerFn, ethProvider)
 		orShutdown(err)
 
 		peggyContract, err := peggy.NewPeggyContract(ethCommitter, peggyAddress)
