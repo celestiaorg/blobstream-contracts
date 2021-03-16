@@ -4,7 +4,6 @@ import (
 	"context"
 	"math/big"
 	"strings"
-	"fmt"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -98,7 +97,6 @@ func (e *ethCommitter) SendTx(
 		})
 	}
 
-	fmt.Println("venky", "e.FromAddress", e.fromAddress)
 	if err := e.nonceCache.Serialize(e.fromAddress, func() (err error) {
 		nonce := e.nonceCache.Incr(e.fromAddress)
 		var resyncUsed bool
