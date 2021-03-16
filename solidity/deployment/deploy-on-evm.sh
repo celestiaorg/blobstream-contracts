@@ -41,8 +41,7 @@ echo -e "===\n"
 
 proxy_admin_address=`evm-deploy-contract \
 	--name ProxyAdmin \
-	--source ../contracts/@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol \
-	--allowed-paths ../contracts \
+	--source ../contracts/@openzeppelin/contracts/ProxyAdmin.sol \
 	deploy`
 
 echo "Deployed ProxyAdmin contract: $proxy_admin_address"
@@ -50,8 +49,7 @@ echo -e "===\n"
 
 peggy_proxy_address=`evm-deploy-contract \
 	--name TransparentUpgradeableProxy \
-	--source ../contracts/@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol \
-	--allowed-paths ../contracts \
+	--source ../contracts/@openzeppelin/contracts/TransparentUpgradeableProxy.sol \
 	deploy $peggy_impl_address $proxy_admin_address $peggy_init_data`
 
 echo "Deployed TransparentUpgradeableProxy for $peggy_impl_address (Peggy), with $proxy_admin_address (ProxyAdmin) as the admin"
