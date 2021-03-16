@@ -239,6 +239,7 @@ func (s *peggyBroadcastClient) sendDepositClaims(
 
 	msg := &types.MsgDepositClaim{
 		EventNonce:     deposit.EventNonce.Uint64(),
+		BlockHeight:    deposit.Raw.BlockNumber,
 		TokenContract:  deposit.TokenContract.Hex(),
 		Amount:         sdk.NewIntFromBigInt(deposit.Amount),
 		EthereumSender: deposit.Sender.Hex(),
