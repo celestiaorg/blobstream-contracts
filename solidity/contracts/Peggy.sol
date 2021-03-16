@@ -366,8 +366,6 @@ contract Peggy is Initializable, ReentrancyGuard {
 		);
 	}
 
-	uint256 public stuff;
-
 	function initialize(
 		// A unique identifier for this peggy instance to use in signatures
 		bytes32 _peggyId,
