@@ -130,6 +130,7 @@ func (e *ethCommitter) SendTx(
 			switch {
 			case strings.Contains(err.Error(), "invalid sender"):
 				err := errors.New("failed to sign transaction")
+				e.nonceCache.Incr(e.fromAddress)
 				return err
 			case strings.Contains(err.Error(), "nonce is too low"),
 				strings.Contains(err.Error(), "nonce is too high"),
@@ -160,8 +161,7 @@ func (e *ethCommitter) SendTx(
 
 				if strings.Contains(err.Error(), "VM Exception") {
 					// a VM execution consumes gas and nonce is increasing
-					nonce := e.nonceCache.Incr(e.fromAddress)
-					opts.Nonce = big.NewInt(nonce)
+					e.nonceCache.Incr(e.fromAddress)
 					return err
 				}
 
