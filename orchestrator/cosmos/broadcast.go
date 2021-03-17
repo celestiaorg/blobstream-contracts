@@ -265,6 +265,7 @@ func (s *peggyBroadcastClient) sendWithdrawClaims(
 	msg := &types.MsgWithdrawClaim{
 		EventNonce:    withdraw.EventNonce.Uint64(),
 		BatchNonce:    withdraw.BatchNonce.Uint64(),
+		BlockHeight:   withdraw.Raw.BlockNumber,
 		TokenContract: withdraw.Token.Hex(),
 		Orchestrator:  s.AccFromAddress().String(),
 	}
