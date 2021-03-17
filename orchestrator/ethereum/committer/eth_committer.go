@@ -98,7 +98,7 @@ func (e *ethCommitter) SendTx(
 	}
 
 	if err := e.nonceCache.Serialize(e.fromAddress, func() (err error) {
-		nonce := e.nonceCache.Incr(e.fromAddress)
+		nonce, _ := e.nonceCache.Get(e.fromAddress)
 		var resyncUsed bool
 
 		for {
@@ -108,10 +108,7 @@ func (e *ethCommitter) SendTx(
 			tx := types.NewTransaction(opts.Nonce.Uint64(), recipient, nil, opts.GasLimit, opts.GasPrice, txData)
 			signedTx, err := opts.Signer(opts.From, tx)
 			if err != nil {
-				e.nonceCache.Decr(e.fromAddress)
-
 				err := errors.Wrap(err, "failed to sign transaction")
-
 				return err
 			}
 
@@ -121,6 +118,7 @@ func (e *ethCommitter) SendTx(
 			if err == nil {
 				// override with a real hash from node resp
 				txHash = txHashRet
+				e.nonceCache.Incr(e.fromAddress)
 				return nil
 			} else {
 				log.WithFields(log.Fields{
@@ -131,10 +129,7 @@ func (e *ethCommitter) SendTx(
 
 			switch {
 			case strings.Contains(err.Error(), "invalid sender"):
-				e.nonceCache.Decr(e.fromAddress)
-
 				err := errors.New("failed to sign transaction")
-
 				return err
 			case strings.Contains(err.Error(), "nonce is too low"),
 				strings.Contains(err.Error(), "nonce is too high"),
@@ -149,8 +144,8 @@ func (e *ethCommitter) SendTx(
 				resyncNonces(e.fromAddress)
 
 				resyncUsed = true
-				// try again with new nonce
-				nonce = e.nonceCache.Incr(e.fromAddress)
+				// try again with updated nonce
+				nonce, _ = e.nonceCache.Get(e.fromAddress)
 				opts.Nonce = big.NewInt(nonce)
 
 				continue
@@ -165,10 +160,10 @@ func (e *ethCommitter) SendTx(
 
 				if strings.Contains(err.Error(), "VM Exception") {
 					// a VM execution consumes gas and nonce is increasing
+					nonce := e.nonceCache.Incr(e.fromAddress)
+					opts.Nonce = big.NewInt(nonce)
 					return err
 				}
-
-				e.nonceCache.Decr(e.fromAddress)
 
 				return err
 			}
