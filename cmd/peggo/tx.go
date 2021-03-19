@@ -29,10 +29,10 @@ func txCmdSubset(cmd *cli.Cmd) {
 func registerEthKeyCmd(cmd *cli.Cmd) {
 	var (
 		// Cosmos params
-		cosmosChainID  *string
-		cosmosGRPC     *string
-		tendermintRPC  *string
-		cosmosFeeDenom *string
+		cosmosChainID   *string
+		cosmosGRPC      *string
+		tendermintRPC   *string
+		cosmosGasPrices *string
 
 		// Cosmos Key Management
 		cosmosKeyringDir     *string
@@ -60,7 +60,7 @@ func registerEthKeyCmd(cmd *cli.Cmd) {
 		&cosmosChainID,
 		&cosmosGRPC,
 		&tendermintRPC,
-		&cosmosFeeDenom,
+		&cosmosGasPrices,
 	)
 
 	initCosmosKeyOptions(
@@ -141,7 +141,7 @@ func registerEthKeyCmd(cmd *cli.Cmd) {
 		}
 
 		clientCtx = clientCtx.WithClient(tmRPC)
-		daemonClient, err := client.NewCosmosClient(clientCtx, *cosmosGRPC)
+		daemonClient, err := client.NewCosmosClient(clientCtx, *cosmosGRPC, client.OptionGasPrices(*cosmosGasPrices))
 
 		if err != nil {
 			log.WithError(err).WithFields(log.Fields{

@@ -48,7 +48,7 @@ func initCosmosOptions(
 	cosmosChainID **string,
 	cosmosGRPC **string,
 	tendermintRPC **string,
-	cosmosFeeDenom **string,
+	cosmosGasPrices **string,
 ) {
 	*cosmosChainID = cmd.String(cli.StringOpt{
 		Name:   "cosmos-chain-id",
@@ -71,11 +71,11 @@ func initCosmosOptions(
 		Value:  "http://localhost:26657",
 	})
 
-	*cosmosFeeDenom = cmd.String(cli.StringOpt{
-		Name:   "cosmos-fee-denom",
-		Desc:   "The Cosmos Denom in which to pay Cosmos chain fees",
-		EnvVar: "PEGGO_COSMOS_FEE_DENOM",
-		Value:  "inj",
+	*cosmosGasPrices = cmd.String(cli.StringOpt{
+		Name:   "cosmos-gas-prices",
+		Desc:   "Specify Cosmos chain transaction fees as DecCoins gas prices",
+		EnvVar: "PEGGO_COSMOS_GAS_PRICES",
+		Value:  "", // example: 500000000inj
 	})
 }
 

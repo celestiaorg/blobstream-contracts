@@ -10,9 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gogo/protobuf/jsonpb"
 	"github.com/pkg/errors"
-	abci "github.com/tendermint/tendermint/abci/types"
 	log "github.com/xlab/suplog"
 	"google.golang.org/grpc"
 
@@ -40,21 +38,41 @@ type CosmosClient interface {
 
 // NewCosmosClient creates a new gRPC client that communicates with gRPC server at protoAddr.
 // protoAddr must be in form "tcp://127.0.0.1:8080" or "unix:///tmp/test.sock", protocol is required.
-func NewCosmosClient(ctx client.Context, protoAddr string) (CosmosClient, error) {
+func NewCosmosClient(
+	ctx client.Context,
+	protoAddr string,
+	options ...cosmosClientOption,
+) (CosmosClient, error) {
 	conn, err := grpc.Dial(protoAddr, grpc.WithInsecure(), grpc.WithContextDialer(dialerFunc))
 	if err != nil {
 		err := errors.Wrapf(err, "failed to connect to the gRPC: %s", protoAddr)
 		return nil, err
 	}
 
+	opts := defaultCosmosClientOptions()
+	for _, opt := range options {
+		if err := opt(opts); err != nil {
+			err = errors.Wrap(err, "error in a cosmos client option")
+			return nil, err
+		}
+	}
+
+	txFactory := NewTxFactory(ctx)
+	if len(opts.GasPrices) > 0 {
+		txFactory = txFactory.WithGasPrices(opts.GasPrices)
+	}
+
 	cc := &cosmosClient{
-		ctx: ctx,
+		ctx:  ctx,
+		opts: opts,
+
 		logger: log.WithFields(log.Fields{
 			"module": "peggo",
 			"svc":    "cosmosClient",
 		}),
+
 		conn:      conn,
-		txFactory: NewTxFactory(ctx),
+		txFactory: txFactory,
 		canSign:   ctx.Keyring != nil,
 		syncMux:   new(sync.Mutex),
 		msgC:      make(chan sdk.Msg, msgCommitBatchSizeLimit),
@@ -75,6 +93,29 @@ func NewCosmosClient(ctx client.Context, protoAddr string) (CosmosClient, error)
 	return cc, nil
 }
 
+type cosmosClientOptions struct {
+	GasPrices string
+}
+
+func defaultCosmosClientOptions() *cosmosClientOptions {
+	return &cosmosClientOptions{}
+}
+
+type cosmosClientOption func(opts *cosmosClientOptions) error
+
+func OptionGasPrices(gasPrices string) cosmosClientOption {
+	return func(opts *cosmosClientOptions) error {
+		_, err := sdk.ParseDecCoins(gasPrices)
+		if err != nil {
+			err = errors.Wrapf(err, "failed to ParseDecCoins %s", gasPrices)
+			return err
+		}
+
+		opts.GasPrices = gasPrices
+		return nil
+	}
+}
+
 func (c *cosmosClient) syncNonce() {
 	num, seq, err := c.txFactory.AccountRetriever().GetAccountNumberSequence(c.ctx, c.ctx.GetFromAddress())
 	if err != nil {
@@ -92,6 +133,7 @@ func (c *cosmosClient) syncNonce() {
 
 type cosmosClient struct {
 	ctx       client.Context
+	opts      *cosmosClientOptions
 	logger    log.Logger
 	conn      *grpc.ClientConn
 	txFactory tx.Factory
@@ -156,71 +198,39 @@ func (c *cosmosClient) broadcastTx(
 	await bool,
 	msgs ...sdk.Msg,
 ) (*sdk.TxResponse, error) {
-
 	txf, err := tx.PrepareFactory(clientCtx, txf)
 	if err != nil {
+		err = errors.Wrap(err, "tx factory preparation failed")
 		return nil, err
 	}
 
-	/*
-		CONTEXT
+	if txf.SimulateAndExecute() || clientCtx.Simulate {
+		_, adjusted, err := tx.CalculateGas(clientCtx.QueryWithData, txf, msgs...)
+		if err != nil {
+			err = errors.Wrap(err, "tx gas calculation failed")
+			return nil, err
+		}
 
-		submitTx flow:
-		txf.SimulateAndExecute() || clientCtx.Simulate
-			CalculateGas
-			txf.WithGas
-			...
-
-		the CalculateGas function call into the core to simulate and calculate the gas there
-		but it's broken in 0.40.1, look like work in progress
-
-		We attempt to simulate ourselves using abci.RequestQuery
-		unlike simulation inside the core, this somehow requires txf must have sufficient gas at beginning
-
-		So we can just input the big number of gas for the txf and simulate to get the correct gas value
-		this will be feasible enough until the core simulation works again
-	*/
-
-	//fund the tx with abundant amount of gas
-	txf = txf.WithGas(10000000000)
+		txf = txf.WithGas(adjusted)
+	}
 
 	builder, err := tx.BuildUnsignedTx(txf, msgs...)
 	if err != nil {
+		err = errors.Wrap(err, "BuildUnsignedTx failed")
 		return nil, err
 	}
 
-	err = tx.Sign(txf, clientCtx.GetFromName(), builder, false)
+	// builder.SetFeeGranter(clientCtx.GetFeeGranterAddress())
+	err = tx.Sign(txf, clientCtx.GetFromName(), builder, true)
 	if err != nil {
+		err = errors.Wrapf(err, "tx signing with from %s failed", clientCtx.GetFromName())
 		return nil, err
 	}
 
 	txBytes, err := clientCtx.TxConfig.TxEncoder()(builder.GetTx())
 	if err != nil {
+		err = errors.Wrap(err, "tx encoding with txConfig failed")
 		return nil, err
-	}
-
-	if txf.SimulateAndExecute() || clientCtx.Simulate {
-
-		// simulate by calling ABCI Query
-		query := abci.RequestQuery{
-			Path: "/app/simulate",
-			Data: txBytes,
-		}
-
-		queryResult, err := clientCtx.QueryABCI(query)
-		if err != nil {
-			return nil, err
-		}
-
-		var simResponse sdk.SimulationResponse
-		err = jsonpb.Unmarshal(strings.NewReader(string(queryResult.Value)), &simResponse)
-		if err != nil {
-			return nil, err
-		}
-
-		//around 750000 - 1500000
-		adjusted := simResponse.GetGasUsed()
-		txf = txf.WithGas(adjusted * 10000)
 	}
 
 	await = true

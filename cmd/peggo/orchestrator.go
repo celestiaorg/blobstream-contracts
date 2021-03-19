@@ -31,10 +31,10 @@ func orchestratorCmd(cmd *cli.Cmd) {
 	// orchestrator-specific CLI options
 	var (
 		// Cosmos params
-		cosmosChainID  *string
-		cosmosGRPC     *string
-		tendermintRPC  *string
-		cosmosFeeDenom *string
+		cosmosChainID   *string
+		cosmosGRPC      *string
+		tendermintRPC   *string
+		cosmosGasPrices *string
 
 		// Cosmos Key Management
 		cosmosKeyringDir     *string
@@ -74,7 +74,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		&cosmosChainID,
 		&cosmosGRPC,
 		&tendermintRPC,
-		&cosmosFeeDenom,
+		&cosmosGasPrices,
 	)
 
 	initCosmosKeyOptions(
@@ -183,7 +183,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		}
 		clientCtx = clientCtx.WithClient(tmRPC)
 
-		daemonClient, err := client.NewCosmosClient(clientCtx, *cosmosGRPC)
+		daemonClient, err := client.NewCosmosClient(clientCtx, *cosmosGRPC, client.OptionGasPrices(*cosmosGasPrices))
 		if err != nil {
 			log.WithError(err).WithFields(log.Fields{
 				"endpoint": *cosmosGRPC,
