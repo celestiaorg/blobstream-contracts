@@ -293,7 +293,7 @@ func (c *cosmosClient) runBatchBroadcast() {
 		log.Debugln("broadcastTx with nonce", c.accSeq)
 		res, err := c.broadcastTx(c.ctx, c.txFactory, true, msgBatch...)
 		if err != nil {
-			if strings.HasPrefix(err.Error(), "account sequence mismatch") {
+			if strings.Contains(err.Error(), "account sequence mismatch") {
 				c.syncNonce()
 				c.txFactory = c.txFactory.WithSequence(c.accSeq)
 				log.Debugln("retrying broadcastTx with nonce", c.accSeq)
