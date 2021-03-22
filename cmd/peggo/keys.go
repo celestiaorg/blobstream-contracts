@@ -365,11 +365,11 @@ type passReader struct {
 var _ io.Reader = &passReader{}
 
 func (r *passReader) Read(p []byte) (n int, err error) {
-	n, err = r.Read(p)
+	n, err = r.buf.Read(p)
 	if err == io.EOF || n == 0 {
 		r.buf.WriteString(r.pass + "\n")
 
-		n, err = r.Read(p)
+		n, err = r.buf.Read(p)
 	}
 
 	return
