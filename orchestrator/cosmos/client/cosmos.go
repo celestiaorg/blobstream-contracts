@@ -313,7 +313,7 @@ func (c *cosmosClient) runBatchBroadcast() {
 		}
 
 		if res.Code != 0 {
-			err = errors.Errorf("error %d (%d): %s", res.Code, res.Codespace, res.RawLog)
+			err = errors.Errorf("error %d (%s): %s", res.Code, res.Codespace, res.RawLog)
 			log.WithField("txHash", res.TxHash).WithError(err).Errorln("failed to commit msg batch")
 		} else {
 			log.WithField("txHash", res.TxHash).Debugln("msg batch committed successfully")
