@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -115,6 +116,19 @@ func checkStatsdPrefix(s string) string {
 		return s + "."
 	}
 	return s
+}
+
+func hexToBytes(str string) ([]byte, error) {
+	if strings.HasPrefix(str, "0x") {
+		str = str[2:]
+	}
+
+	data, err := hex.DecodeString(str)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 // waitForService awaits an active ClientConn to a GRPC service.

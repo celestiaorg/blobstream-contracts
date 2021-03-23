@@ -43,6 +43,7 @@ func New(paths ...string) (EthKeyStore, error) {
 	for _, path := range paths {
 		ks.paths[path] = struct{}{}
 	}
+	ks.reloadPathsCache()
 
 	return ks, nil
 }

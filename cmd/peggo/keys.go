@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -20,7 +21,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/usbwallet"
 	"github.com/ethereum/go-ethereum/common"
 	ethcmn "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
@@ -53,7 +53,7 @@ func initCosmosKeyring(
 			return emptyCosmosAddress, nil, err
 		}
 
-		pkBytes, err := hexutil.Decode(*cosmosPrivKey)
+		pkBytes, err := hexToBytes(*cosmosPrivKey)
 		if err != nil {
 			err = errors.Wrap(err, "failed to hex-decode cosmos account privkey")
 			return emptyCosmosAddress, nil, err
@@ -103,10 +103,17 @@ func initCosmosKeyring(
 			passReader = newPassReader(*cosmosKeyPassphrase)
 		}
 
+		var absoluteKeyringDir string
+		if filepath.IsAbs(*cosmosKeyringDir) {
+			absoluteKeyringDir = *cosmosKeyringDir
+		} else {
+			absoluteKeyringDir, _ = filepath.Abs(*cosmosKeyringDir)
+		}
+
 		kb, err := keyring.New(
 			*cosmosKeyringAppName,
 			*cosmosKeyringBackend,
-			*cosmosKeyringDir,
+			absoluteKeyringDir,
 			passReader,
 			hd.EthSecp256k1Option(),
 		)
