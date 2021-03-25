@@ -2,6 +2,7 @@ package orchestrator
 
 import (
 	"context"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -165,12 +166,12 @@ func filterTransactionBatchExecutedEventsByNonce(
 
 func isUnknownBlockErr(err error) bool {
 	// Geth error
-	if err.Error() == "unknown block" {
+	if strings.Contains(err.Error(), "unknown block") {
 		return true
 	}
 
 	// Parity error
-	if err.Error() == "One of the blocks specified in filter (fromBlock, toBlock or blockHash) cannot be found" {
+	if strings.Contains(err.Error(), "One of the blocks specified in filter") {
 		return true
 	}
 
