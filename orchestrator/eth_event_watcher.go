@@ -42,16 +42,24 @@ func (s *peggyOrchestrator) CheckForEvents(
 			End:   &currentBlock,
 		}, nil, nil, nil)
 		if err != nil {
-			log.Debugln("failed to filter past SendToCosmos events from Ethereum Start %d End %d", startingBlock, currentBlock)
-			err = errors.Wrap(err, "failed to filter past SendToCosmos events from Ethereum")
-			return 0, err
-		} else {
-			for iter.Next() {
-				sendToCosmosEvents = append(sendToCosmosEvents, iter.Event)
-			}
+			log.WithFields(log.Fields{
+				"start": startingBlock,
+				"end":   currentBlock,
+			}).Debugln("failed to filter past SendToCosmos events from Ethereum")
 
-			iter.Close()
+			if !isUnknownBlockErr(err) {
+				err = errors.Wrap(err, "failed to filter past SendToCosmos events from Ethereum")
+				return 0, err
+			} else if iter == nil {
+				return 0, errors.New("no iterator returned")
+			}
 		}
+
+		for iter.Next() {
+			sendToCosmosEvents = append(sendToCosmosEvents, iter.Event)
+		}
+
+		iter.Close()
 	}
 	log.Debugln("Deposits:", sendToCosmosEvents)
 
@@ -62,15 +70,24 @@ func (s *peggyOrchestrator) CheckForEvents(
 			End:   &currentBlock,
 		}, nil, nil)
 		if err != nil {
-			err = errors.Wrap(err, "failed to filter past TransactionBatchExecuted events from Ethereum")
-			return 0, err
-		} else {
-			for iter.Next() {
-				transactionBatchExecutedEvents = append(transactionBatchExecutedEvents, iter.Event)
-			}
+			log.WithFields(log.Fields{
+				"start": startingBlock,
+				"end":   currentBlock,
+			}).Debugln("failed to filter past TransactionBatchExecuted events from Ethereum")
 
-			iter.Close()
+			if !isUnknownBlockErr(err) {
+				err = errors.Wrap(err, "failed to filter past TransactionBatchExecuted events from Ethereum")
+				return 0, err
+			} else if iter == nil {
+				return 0, errors.New("no iterator returned")
+			}
 		}
+
+		for iter.Next() {
+			transactionBatchExecutedEvents = append(transactionBatchExecutedEvents, iter.Event)
+		}
+
+		iter.Close()
 	}
 	log.Debugln("Withdraws:", transactionBatchExecutedEvents)
 
@@ -144,4 +161,18 @@ func filterTransactionBatchExecutedEventsByNonce(
 	}
 
 	return res
+}
+
+func isUnknownBlockErr(err error) bool {
+	// Geth error
+	if err.Error() == "unknown block" {
+		return true
+	}
+
+	// Parity error
+	if err.Error() == "One of the blocks specified in filter (fromBlock, toBlock or blockHash) cannot be found" {
+		return true
+	}
+
+	return false
 }

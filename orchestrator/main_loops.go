@@ -352,6 +352,7 @@ func (s *peggyOrchestrator) BatchRequesterLoop(ctx context.Context) (err error) 
 				return retry.Do(func() (err error) {
 					// check if the token is present in cosmos denom. if so, send batch request with cosmosDenom
 					tokenAddr := ethcmn.HexToAddress(unbatchedToken.Token)
+
 					var denom string
 					if cosmosDenom, ok := s.erc20ContractMapping[tokenAddr]; ok {
 						// cosmos denom
@@ -363,9 +364,10 @@ func (s *peggyOrchestrator) BatchRequesterLoop(ctx context.Context) (err error) 
 
 					// send batch request only if fee is > 0. Add a threshold amount later through flags
 					if unbatchedToken.TopOneHundred.GT(cosmtypes.NewInt(0)) {
-						s.peggyBroadcastClient.SendRequestBatch(ctx, denom)
+						_ = s.peggyBroadcastClient.SendRequestBatch(ctx, denom)
 					}
-					return
+
+					return nil
 				}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
 					logger.WithError(err).Errorf("failed to get LatestUnbatchOutgoingTx, will retry (%d)", n)
 				}))
