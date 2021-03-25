@@ -12,7 +12,7 @@ CWD=$(pwd)
 # These options can be overridden by env
 CHAIN_ID="${CHAIN_ID:-888}"
 CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
-DENOM="${DENOM:-peggy}"
+DENOM="${DENOM:-uatom}"
 STAKE_DENOM="${STAKE_DENOM:-$DENOM}"
 CLEANUP="${CLEANUP:-0}"
 LOG_LEVEL="${LOG_LEVEL:-main:info,state:info,statesync:info,*:error}"
@@ -183,7 +183,7 @@ if [[ ! -d "$hdir" ]]; then
 	$REGEX_REPLACE 's|external_address = ""|external_address = "tcp://127.0.0.1:26657"|g' $n0cfg
 	$REGEX_REPLACE 's|"tcp://127.0.0.1:26657"|"tcp://0.0.0.0:26657"|g' $n0cfg
 	$REGEX_REPLACE 's|allow_duplicate_ip = false|allow_duplicate_ip = true|g' $n0cfg
-	$REGEX_REPLACE 's|log_level = "main:info,state:info,statesync:info,\*:error"|log_level = "'$LOG_LEVEL'"|g' $n0cfg
+	$REGEX_REPLACE 's|log_level = "info"|log_level = "'$LOG_LEVEL'"|g' $n0cfg
 	$REGEX_REPLACE 's|timeout_commit = ".*?"|timeout_commit = "1s"|g' $n0cfg
 
 	$REGEX_REPLACE 's|addr_book_strict = true|addr_book_strict = false|g' $n1cfg
@@ -192,9 +192,10 @@ if [[ ! -d "$hdir" ]]; then
 	$REGEX_REPLACE 's|"tcp://0.0.0.0:26656"|"tcp://0.0.0.0:26666"|g' $n1cfg
 	$REGEX_REPLACE 's|"localhost:6060"|"localhost:6061"|g' $n1cfg
 	$REGEX_REPLACE 's|"tcp://0.0.0.0:10337"|"tcp://0.0.0.0:11337"|g' $n1app
+	$REGEX_REPLACE 's|"0.0.0.0:1317"|"0.0.0.0:1417"|g' $n1app
 	$REGEX_REPLACE 's|"0.0.0.0:9090"|"0.0.0.0:9091"|g' $n1app
 	$REGEX_REPLACE 's|allow_duplicate_ip = false|allow_duplicate_ip = true|g' $n1cfg
-	$REGEX_REPLACE 's|log_level = "main:info,state:info,statesync:info,\*:error"|log_level = "'$LOG_LEVEL'"|g' $n1cfg
+	$REGEX_REPLACE 's|log_level = "info"|log_level = "'$LOG_LEVEL'"|g' $n1cfg
 	$REGEX_REPLACE 's|timeout_commit = ".*?"|timeout_commit = "1s"|g' $n1cfg
 
 	$REGEX_REPLACE 's|addr_book_strict = true|addr_book_strict = false|g' $n2cfg
@@ -203,9 +204,10 @@ if [[ ! -d "$hdir" ]]; then
 	$REGEX_REPLACE 's|"tcp://0.0.0.0:26656"|"tcp://0.0.0.0:26676"|g' $n2cfg
 	$REGEX_REPLACE 's|"localhost:6060"|"localhost:6062"|g' $n2cfg
 	$REGEX_REPLACE 's|"tcp://0.0.0.0:10337"|"tcp://0.0.0.0:12337"|g' $n2app
+	$REGEX_REPLACE 's|"0.0.0.0:1317"|"0.0.0.0:1517"|g' $n2app
 	$REGEX_REPLACE 's|"0.0.0.0:9090"|"0.0.0.0:9092"|g' $n2app
 	$REGEX_REPLACE 's|allow_duplicate_ip = false|allow_duplicate_ip = true|g' $n2cfg
-	$REGEX_REPLACE 's|log_level = "main:info,state:info,statesync:info,\*:error"|log_level = "'$LOG_LEVEL'"|g' $n2cfg
+	$REGEX_REPLACE 's|log_level = "info"|log_level = "'$LOG_LEVEL'"|g' $n2cfg
 	$REGEX_REPLACE 's|timeout_commit = ".*?"|timeout_commit = "1s"|g' $n2cfg
 
 	# Set peers for all three nodes
