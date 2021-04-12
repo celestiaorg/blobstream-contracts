@@ -242,7 +242,7 @@ func (s *peggyBroadcastClient) sendDepositClaims(
 		"destination": sdk.AccAddress(deposit.Destination[12:32]).String(),
 		"amount":      deposit.Amount.String(),
 		"event_nonce": deposit.EventNonce.String(),
-	}).Debugln("Oracle observed a deposit. Sending MsgDepositClaim")
+	}).Debugln("Oracle observed a deposit event. Sending MsgDepositClaim")
 
 	msg := &types.MsgDepositClaim{
 		EventNonce:     deposit.EventNonce.Uint64(),
@@ -272,7 +272,7 @@ func (s *peggyBroadcastClient) sendWithdrawClaims(
 		"nonce":          withdraw.BatchNonce.String(),
 		"token_contract": withdraw.Token.Hex(),
 		"event_nonce":    withdraw.EventNonce.String(),
-	}).Debugln("Oracle observed a withdraw batch. Sending MsgWithdrawClaim")
+	}).Debugln("Oracle observed a withdraw batch event. Sending MsgWithdrawClaim")
 
 	// WithdrawClaim claims that a batch of withdrawal
 	// operations on the bridge contract was executed.
