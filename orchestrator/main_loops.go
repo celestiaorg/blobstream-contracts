@@ -110,7 +110,6 @@ func (s *peggyOrchestrator) EthSignerMainLoop(ctx context.Context) (err error) {
 	logger := log.WithField("loop", "EthSignerMainLoop")
 
 	var peggyID common.Hash
-
 	if err := retry.Do(func() (err error) {
 		peggyID, err = s.peggyContract.GetPeggyID(ctx, s.peggyContract.FromAddress())
 		return
@@ -120,49 +119,10 @@ func (s *peggyOrchestrator) EthSignerMainLoop(ctx context.Context) (err error) {
 		logger.WithError(err).Errorln("got error, loop exits")
 		return err
 	}
-
 	logger.Debugf("received peggyID %s", peggyID.Hex())
 
 	return loops.RunLoop(ctx, defaultLoopDur, func() error {
-		var latestCosmosBlock int64
-		var latestEthBlock uint64
-
-		var pg loops.ParanoidGroup
-
-		pg.Go(func() error {
-			return retry.Do(func() error {
-				latestHeader, err := s.ethProvider.HeaderByNumber(ctx, nil)
-				if err != nil {
-					return err
-				}
-
-				latestEthBlock = latestHeader.Number.Uint64()
-				return nil
-			}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
-				logger.WithError(err).Warningf("failed to get latest header, will retry (%d)", n)
-			}))
-		})
-
-		pg.Go(func() error {
-			return retry.Do(func() (err error) {
-				latestCosmosBlock, err = s.tmClient.GetLatestBlockHeight(ctx)
-				return
-			}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
-				logger.WithError(err).Warningf("failed to get latest header, will retry (%d)", n)
-			}))
-		})
-
-		if err := pg.Wait(); err != nil {
-			logger.WithError(err).Errorln("got error, loop exits")
-			return err
-		}
-
-		logger.Debugf("latest Eth block %d, latest Cosmos block %d",
-			latestEthBlock, latestCosmosBlock,
-		)
-
 		var oldestUnsignedValsets []*types.Valset
-
 		if err := retry.Do(func() error {
 			oldestValsets, err := s.cosmosQueryClient.OldestUnsignedValsets(ctx, s.peggyBroadcastClient.AccFromAddress())
 			if err != nil {
@@ -173,7 +133,6 @@ func (s *peggyOrchestrator) EthSignerMainLoop(ctx context.Context) (err error) {
 
 				return err
 			}
-
 			oldestUnsignedValsets = oldestValsets
 			return nil
 		}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
@@ -185,7 +144,6 @@ func (s *peggyOrchestrator) EthSignerMainLoop(ctx context.Context) (err error) {
 
 		for _, oldestValset := range oldestUnsignedValsets {
 			logger.Infoln("Sending Valset confirm for %d", oldestValset.Nonce)
-
 			if err := retry.Do(func() error {
 				return s.peggyBroadcastClient.SendValsetConfirm(ctx, s.ethFrom, peggyID, oldestValset)
 			}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
@@ -197,20 +155,16 @@ func (s *peggyOrchestrator) EthSignerMainLoop(ctx context.Context) (err error) {
 		}
 
 		var oldestUnsignedTransactionBatch *types.OutgoingTxBatch
-
 		if err := retry.Do(func() error {
 			// sign the last unsigned batch, TODO check if we already have signed this
-
 			txBatch, err := s.cosmosQueryClient.OldestUnsignedTransactionBatch(ctx, s.peggyBroadcastClient.AccFromAddress())
 			if err != nil {
 				if err == cosmos.ErrNotFound || txBatch == nil {
 					logger.Debugln("no TransactionBatch waiting to be signed")
 					return nil
 				}
-
 				return err
 			}
-
 			oldestUnsignedTransactionBatch = txBatch
 			return nil
 		}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
@@ -221,8 +175,7 @@ func (s *peggyOrchestrator) EthSignerMainLoop(ctx context.Context) (err error) {
 		}
 
 		if oldestUnsignedTransactionBatch != nil {
-			logger.Infoln("Sending TransactionBatch confirm for %d", oldestUnsignedTransactionBatch.BatchNonce)
-
+			logger.Infoln("Sending TransactionBatch confirm for BatchNonce %d", oldestUnsignedTransactionBatch.BatchNonce)
 			if err := retry.Do(func() error {
 				return s.peggyBroadcastClient.SendBatchConfirm(ctx, s.ethFrom, peggyID, oldestUnsignedTransactionBatch)
 			}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
@@ -232,7 +185,6 @@ func (s *peggyOrchestrator) EthSignerMainLoop(ctx context.Context) (err error) {
 				return err
 			}
 		}
-
 		return nil
 	})
 }
@@ -332,32 +284,36 @@ func (s *peggyOrchestrator) BatchRequesterLoop(ctx context.Context) (err error) 
 				return nil
 			}
 
-			for _, unbatchedToken := range unbatchedTokensWithFees {
-				logger.Debugln("Sending batch request:", unbatchedToken.Token)
-				return retry.Do(func() (err error) {
-					// check if the token is present in cosmos denom. if so, send batch request with cosmosDenom
-					tokenAddr := ethcmn.HexToAddress(unbatchedToken.Token)
+			if len(unbatchedTokensWithFees) > 0 {
+				logger.WithField("unbatchedTokensWithFees", unbatchedTokensWithFees).Debugln("Check if token fees meets set threshold amount and send batch request")
+				for _, unbatchedToken := range unbatchedTokensWithFees {
+					return retry.Do(func() (err error) {
+						// check if the token is present in cosmos denom. if so, send batch request with cosmosDenom
+						tokenAddr := ethcmn.HexToAddress(unbatchedToken.Token)
 
-					var denom string
-					if cosmosDenom, ok := s.erc20ContractMapping[tokenAddr]; ok {
-						// cosmos denom
-						denom = cosmosDenom
-					} else {
-						// peggy denom
-						denom = types.PeggyDenom(tokenAddr.Hex())
-					}
+						var denom string
+						if cosmosDenom, ok := s.erc20ContractMapping[tokenAddr]; ok {
+							// cosmos denom
+							denom = cosmosDenom
+						} else {
+							// peggy denom
+							denom = types.PeggyDenom(tokenAddr.Hex())
+						}
 
-					// send batch request only if fee is > 0. Add a threshold amount later through flags
-					if unbatchedToken.TopOneHundred.GT(cosmtypes.NewInt(0)) {
-						_ = s.peggyBroadcastClient.SendRequestBatch(ctx, denom)
-					}
+						// send batch request only if fee is > 0. Add a threshold amount later through flags
+						if unbatchedToken.TopOneHundred.GT(cosmtypes.NewInt(0)) {
+							logger.WithFields(log.Fields{"tokenContract": tokenAddr, "denom": denom}).Infoln("sending batch request")
+							_ = s.peggyBroadcastClient.SendRequestBatch(ctx, denom)
+						}
 
-					return nil
-				}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
-					logger.WithError(err).Errorf("failed to get LatestUnbatchOutgoingTx, will retry (%d)", n)
-				}))
+						return nil
+					}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+						logger.WithError(err).Errorf("failed to get LatestUnbatchOutgoingTx, will retry (%d)", n)
+					}))
+				}
+			} else {
+				logger.Debugln("No outgoing withdraw tx or  Unbatched token fee less than threshold")
 			}
-
 			return nil
 		})
 		return pg.Wait()

@@ -32,7 +32,7 @@ func (s *peggyRelayer) RelayBatches(ctx context.Context) error {
 		oldestSigs = sigs
 	}
 	if oldestSignedBatch == nil {
-		log.Warningln("could not find batch with signatures, nothing to relay")
+		log.Debugln("could not find batch with signatures, nothing to relay")
 		return nil
 	}
 
@@ -52,7 +52,8 @@ func (s *peggyRelayer) RelayBatches(ctx context.Context) error {
 		return errors.New("latest valset not found")
 	}
 
-	log.Debugln("Found Latest valset", "currentValset", currentValset)
+	log.WithFields(log.Fields{"oldestSignedBatchNonce": oldestSignedBatch.BatchNonce, "latestEthereumBatchNonce": latestEthereumBatch.Uint64()}).Debugln("Found Latest valsets")
+
 	if oldestSignedBatch.BatchNonce > latestEthereumBatch.Uint64() {
 		log.Infof("We have detected latest batch %d but latest on Ethereum is %d sending an update!", oldestSignedBatch.BatchNonce, latestEthereumBatch)
 

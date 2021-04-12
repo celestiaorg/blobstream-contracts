@@ -10,7 +10,7 @@ import (
 
 	"github.com/InjectiveLabs/peggo/modules/peggy/types"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/util"
-	
+
 	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
 )
 
@@ -49,7 +49,7 @@ func (s *peggyRelayer) FindLatestValset(ctx context.Context) (*types.Valset, err
 
 	for currentBlock > 0 {
 		log.WithField("current_block", currentBlock).
-			Infoln("About to submit a Valset or Batch looking back into the history to find the last Valset Update")
+			Debugln("About to submit a Valset or Batch looking back into the history to find the last Valset Update")
 
 		var endSearchBlock uint64
 		if currentBlock <= defaultBlocksToSearch {

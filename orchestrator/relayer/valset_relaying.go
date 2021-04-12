@@ -37,7 +37,7 @@ func (s *peggyRelayer) RelayValsets(ctx context.Context) error {
 	}
 
 	if latestCosmosConfirmed == nil {
-		log.Warningln("no confirmed valsets found, nothing to relay")
+		log.Debugln("no confirmed valsets found, nothing to relay")
 		return nil
 	}
 
@@ -46,26 +46,35 @@ func (s *peggyRelayer) RelayValsets(ctx context.Context) error {
 		err = errors.Wrap(err, "couldn't find latest confirmed valset on Ethereum")
 		return err
 	}
-	log.Debugln("Found Latest valset", "currentEthValset", currentEthValset)
+	log.WithFields(log.Fields{"currentEthValset": currentEthValset, "latestCosmosConfirmed": latestCosmosConfirmed}).Debugln("Found Latest valsets")
 
 	if latestCosmosConfirmed.Nonce > currentEthValset.Nonce {
-		log.Infoln("Detected latest cosmos valset nonce %d, but latest on Ehtereum is %d. Sending update",
-			latestCosmosConfirmed.Nonce, currentEthValset.Nonce)
 
-		// TODO(xlab): if the power difference is less than one percent, skip updating
-		// the validator set
-
-		txHash, err := s.peggyContract.SendEthValsetUpdate(
-			ctx,
-			currentEthValset,
-			latestCosmosConfirmed,
-			latestCosmosSigs,
-		)
+		latestEthereumValsetNonce, err := s.peggyContract.GetValsetNonce(ctx, s.peggyContract.FromAddress())
 		if err != nil {
+			err = errors.Wrap(err, "failed to get latest Valset nonce")
 			return err
 		}
 
-		log.WithField("tx_hash", txHash.Hex()).Infoln("Sent Ethereum Tx (EthValsetUpdate)")
+		// Check if latestCosmosConfirmed already submitted by other validators in mean time
+		if latestCosmosConfirmed.Nonce > latestEthereumValsetNonce.Uint64() {
+			log.Infoln("Detected latest cosmos valset nonce %d, but latest valset on Ethereum is %d. Sending update to Ethereum",
+				latestCosmosConfirmed.Nonce, latestEthereumValsetNonce.Uint64())
+
+			// Send Valset Update to Ethereum
+			txHash, err := s.peggyContract.SendEthValsetUpdate(
+				ctx,
+				currentEthValset,
+				latestCosmosConfirmed,
+				latestCosmosSigs,
+			)
+			if err != nil {
+				return err
+			}
+
+			log.WithField("tx_hash", txHash.Hex()).Infoln("Sent Ethereum Tx (EthValsetUpdate)")
+		}
+
 	}
 
 	return nil
