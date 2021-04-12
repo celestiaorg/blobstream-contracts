@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
@@ -38,6 +37,7 @@ func (s *peggyOrchestrator) CheckForEvents(
 
 	var sendToCosmosEvents []*wrappers.PeggySendToCosmosEvent
 	{
+
 		iter, err := peggyFilterer.FilterSendToCosmosEvent(&bind.FilterOpts{
 			Start: startingBlock,
 			End:   &currentBlock,
@@ -46,10 +46,10 @@ func (s *peggyOrchestrator) CheckForEvents(
 			log.WithFields(log.Fields{
 				"start": startingBlock,
 				"end":   currentBlock,
-			}).Debugln("failed to filter past SendToCosmos events from Ethereum")
+			}).Errorln("failed to scan past SendToCosmos events from Ethereum")
 
 			if !isUnknownBlockErr(err) {
-				err = errors.Wrap(err, "failed to filter past SendToCosmos events from Ethereum")
+				err = errors.Wrap(err, "failed to scan past SendToCosmos events from Ethereum")
 				return 0, err
 			} else if iter == nil {
 				return 0, errors.New("no iterator returned")
@@ -62,7 +62,12 @@ func (s *peggyOrchestrator) CheckForEvents(
 
 		iter.Close()
 	}
-	log.Debugln("Deposits:", sendToCosmosEvents)
+
+	log.WithFields(log.Fields{
+		"start":    startingBlock,
+		"end":      currentBlock,
+		"Deposits": sendToCosmosEvents,
+	}).Debugln("Scanned SendToCosmos events from Ethereum")
 
 	var transactionBatchExecutedEvents []*wrappers.PeggyTransactionBatchExecutedEvent
 	{
@@ -74,10 +79,10 @@ func (s *peggyOrchestrator) CheckForEvents(
 			log.WithFields(log.Fields{
 				"start": startingBlock,
 				"end":   currentBlock,
-			}).Debugln("failed to filter past TransactionBatchExecuted events from Ethereum")
+			}).Errorln("failed to scan past TransactionBatchExecuted events from Ethereum")
 
 			if !isUnknownBlockErr(err) {
-				err = errors.Wrap(err, "failed to filter past TransactionBatchExecuted events from Ethereum")
+				err = errors.Wrap(err, "failed to scan past TransactionBatchExecuted events from Ethereum")
 				return 0, err
 			} else if iter == nil {
 				return 0, errors.New("no iterator returned")
@@ -90,38 +95,25 @@ func (s *peggyOrchestrator) CheckForEvents(
 
 		iter.Close()
 	}
-	log.Debugln("Withdraws:", transactionBatchExecutedEvents)
+	log.WithFields(log.Fields{
+		"start":     startingBlock,
+		"end":       currentBlock,
+		"Withdraws": transactionBatchExecutedEvents,
+	}).Debugln("Scanned TransactionBatchExecuted events from Ethereum")
 
-	// note that starting block overlaps with our last checked block, because we have to deal with
+	// note that starting block overlaps with our last che	cked block, because we have to deal with
 	// the possibility that the relayer was killed after relaying only one of multiple events in a single
 	// block, so we also need this routine so make sure we don't send in the first event in this hypothetical
 	// multi event block again. In theory we only send all events for every block and that will pass of fail
 	// atomicly but lets not take that risk.
-	lastEventNonce, err := s.cosmosQueryClient.LastEventNonce(ctx, s.peggyBroadcastClient.AccFromAddress())
+	lastClaimEvent, err := s.cosmosQueryClient.LastClaimEventByAddr(ctx, s.peggyBroadcastClient.AccFromAddress())
 	if err != nil {
-		err = errors.New("failed to query last event nonce from backend")
+		err = errors.New("failed to query last claim event from backend")
 		return 0, err
 	}
 
-	deposits := filterSendToCosmosEventsByNonce(sendToCosmosEvents, lastEventNonce)
-	withdraws := filterTransactionBatchExecutedEventsByNonce(transactionBatchExecutedEvents, lastEventNonce)
-
-	if len(deposits) > 0 {
-		log.WithFields(log.Fields{
-			"sender":      deposits[0].Sender.Hex(),
-			"destination": sdk.AccAddress(deposits[0].Destination[12:32]).String(),
-			"amount":      deposits[0].Amount.String(),
-			"event_nonce": deposits[0].EventNonce.String(),
-		}).Infoln("Oracle observed a deposit")
-	}
-
-	if len(withdraws) > 0 {
-		log.WithFields(log.Fields{
-			"nonce":          withdraws[0].BatchNonce.String(),
-			"token_contract": withdraws[0].Token.Hex(),
-			"event_nonce":    withdraws[0].EventNonce.String(),
-		}).Infoln("Oracle observed a withdraw batch")
-	}
+	deposits := filterSendToCosmosEventsByNonce(sendToCosmosEvents, lastClaimEvent.EthereumEventNonce)
+	withdraws := filterTransactionBatchExecutedEventsByNonce(transactionBatchExecutedEvents, lastClaimEvent.EthereumEventNonce)
 
 	if len(deposits) > 0 || len(withdraws) > 0 {
 		// todo get eth chain id from the chain

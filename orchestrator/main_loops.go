@@ -19,7 +19,7 @@ import (
 	ethcmn "github.com/ethereum/go-ethereum/common"
 )
 
-const defaultLoopDur = 10 * time.Second
+const defaultLoopDur = 30 * time.Second
 
 // Start combines the all major roles required to make
 // up the Orchestrator, all of these are async loops.
@@ -48,6 +48,7 @@ func (s *peggyOrchestrator) Start(ctx context.Context) error {
 // TODO this loop requires a method to bootstrap back to the correct event nonce when restarted
 func (s *peggyOrchestrator) EthOracleMainLoop(ctx context.Context) (err error) {
 	logger := log.WithField("loop", "EthOracleMainLoop")
+	lastResync := time.Now()
 
 	var lastCheckedBlock uint64
 
@@ -61,46 +62,9 @@ func (s *peggyOrchestrator) EthOracleMainLoop(ctx context.Context) (err error) {
 		return err
 	}
 
-	logger.Infoln("initial height sync complete")
+	logger.WithField("lastCheckedBlock", lastCheckedBlock).Infoln("Start scanning for events")
 
 	return loops.RunLoop(ctx, defaultLoopDur, func() error {
-		var latestCosmosBlock int64
-		var latestEthBlock uint64
-
-		var pg loops.ParanoidGroup
-
-		pg.Go(func() error {
-			return retry.Do(func() error {
-				latestHeader, err := s.ethProvider.HeaderByNumber(ctx, nil)
-				if err != nil {
-					return err
-				}
-
-				latestEthBlock = latestHeader.Number.Uint64()
-				return nil
-			}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
-				logger.WithError(err).Warningf("failed to get latest header, will retry (%d)", n)
-			}))
-		})
-
-		pg.Go(func() error {
-			return retry.Do(func() (err error) {
-				latestCosmosBlock, err = s.tmClient.GetLatestBlockHeight(ctx)
-				return
-			}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
-				logger.WithError(err).Warningf("failed to get latest header, will retry (%d)", n)
-			}))
-		})
-
-		if err := pg.Wait(); err != nil {
-			logger.WithError(err).Errorln("got error, loop exits")
-			return err
-		}
-
-		logger.Debugf("latest Eth block %d, latest Cosmos block %d",
-			latestEthBlock, latestCosmosBlock,
-		)
-
 		// Relays events from Ethereum -> Cosmos
 		var currentBlock uint64
 		if err := retry.Do(func() (err error) {
@@ -114,6 +78,27 @@ func (s *peggyOrchestrator) EthOracleMainLoop(ctx context.Context) (err error) {
 		}
 
 		lastCheckedBlock = currentBlock
+
+		/*
+			Auto re-sync to catch up the nonce.
+			Reasons why event nonce fall behind.
+				1. if validator was in UnBonding state, the claims broadcasted in last iteration are failed.
+				2. if infura call failed while filtering events, the peggo missed to broadcast claim events occured in last iteration.
+		**/
+		if time.Since(lastResync) == 6*time.Hour {
+			if err := retry.Do(func() (err error) {
+				lastCheckedBlock, err = s.GetLastCheckedBlock(ctx)
+				return
+			}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
+				logger.WithError(err).Warningf("failed to get last checked block, will retry (%d)", n)
+			})); err != nil {
+				logger.WithError(err).Errorln("got error, loop exits")
+				return err
+			}
+			lastResync = time.Now()
+			logger.WithFields(log.Fields{"lastResync": lastResync, "lastCheckedBlock": lastCheckedBlock}).Infoln("Auto resync")
+		}
+
 		return nil
 	})
 }
