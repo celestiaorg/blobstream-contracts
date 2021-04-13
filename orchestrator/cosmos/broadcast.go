@@ -237,6 +237,13 @@ func (s *peggyBroadcastClient) sendDepositClaims(
 	// issued to the Cosmos address in question
 	// -------------
 
+	log.WithFields(log.Fields{
+		"sender":      deposit.Sender.Hex(),
+		"destination": sdk.AccAddress(deposit.Destination[12:32]).String(),
+		"amount":      deposit.Amount.String(),
+		"event_nonce": deposit.EventNonce.String(),
+	}).Infoln("Oracle observed a deposit event. Sending MsgDepositClaim")
+
 	msg := &types.MsgDepositClaim{
 		EventNonce:     deposit.EventNonce.Uint64(),
 		BlockHeight:    deposit.Raw.BlockNumber,
@@ -260,6 +267,13 @@ func (s *peggyBroadcastClient) sendWithdrawClaims(
 	ctx context.Context,
 	withdraw *wrappers.PeggyTransactionBatchExecutedEvent,
 ) error {
+
+	log.WithFields(log.Fields{
+		"nonce":          withdraw.BatchNonce.String(),
+		"token_contract": withdraw.Token.Hex(),
+		"event_nonce":    withdraw.EventNonce.String(),
+	}).Infoln("Oracle observed a withdraw batch event. Sending MsgWithdrawClaim")
+
 	// WithdrawClaim claims that a batch of withdrawal
 	// operations on the bridge contract was executed.
 	msg := &types.MsgWithdrawClaim{

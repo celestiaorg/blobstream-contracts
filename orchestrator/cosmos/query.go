@@ -22,7 +22,7 @@ type PeggyQueryClient interface {
 	UnbatchedTokensWithFees(ctx context.Context) ([]*types.BatchFees, error)
 
 	TransactionBatchSignatures(ctx context.Context, nonce uint64, tokenContract ethcmn.Address) ([]*types.MsgConfirmBatch, error)
-	LastEventNonce(ctx context.Context, validatorAccountAddress sdk.AccAddress) (uint64, error)
+	LastClaimEventByAddr(ctx context.Context, validatorAccountAddress sdk.AccAddress) (*types.LastClaimEvent, error)
 }
 
 func NewPeggyQueryClient(client types.QueryClient) PeggyQueryClient {
@@ -207,21 +207,21 @@ func (s *peggyQueryClient) TransactionBatchSignatures(ctx context.Context, nonce
 	return daemonResp.Confirms, nil
 }
 
-func (s *peggyQueryClient) LastEventNonce(ctx context.Context, validatorAccountAddress sdk.AccAddress) (uint64, error) {
+func (s *peggyQueryClient) LastClaimEventByAddr(ctx context.Context, validatorAccountAddress sdk.AccAddress) (*types.LastClaimEvent, error) {
 	metrics.ReportFuncCall(s.svcTags)
 	doneFn := metrics.ReportFuncTiming(s.svcTags)
 	defer doneFn()
 
-	daemonResp, err := s.daemonQueryClient.LastEventNonceByAddr(ctx, &types.QueryLastEventNonceByAddrRequest{
+	daemonResp, err := s.daemonQueryClient.LastEventByAddr(ctx, &types.QueryLastEventByAddrRequest{
 		Address: validatorAccountAddress.String(),
 	})
 	if err != nil {
 		metrics.ReportFuncError(s.svcTags)
-		err = errors.Wrap(err, "failed to query LastEventNonceByAddr from daemon")
-		return 0, err
+		err = errors.Wrap(err, "failed to query LastEventByAddr from daemon")
+		return nil, err
 	} else if daemonResp == nil {
-		return 0, ErrNotFound
+		return nil, ErrNotFound
 	}
 
-	return daemonResp.EventNonce, nil
+	return daemonResp.LastClaimEvent, nil
 }
