@@ -9,7 +9,6 @@ import "./@openzeppelin/contracts/utils/Initializable.sol";
 import "./@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./CosmosToken.sol";
 
-
 contract Peggy is Initializable, ReentrancyGuard {
 	using SafeERC20 for IERC20;
 
@@ -157,7 +156,7 @@ contract Peggy is Initializable, ReentrancyGuard {
 		uint8[] memory _v,
 		bytes32[] memory _r,
 		bytes32[] memory _s
-	) public {
+	) external {
 		// CHECKS
 
 		// Check that the valset nonce is greater than the old one
@@ -239,7 +238,7 @@ contract Peggy is Initializable, ReentrancyGuard {
 		// a block height beyond which this batch is not valid
 		// used to provide a fee-free timeout
 		uint256 _batchTimeout
-	) nonReentrant public {
+	) nonReentrant external {
 		// CHECKS scoped to reduce stack depth
 		{
 			// Check that the batch nonce is higher than the last nonce for this token
@@ -317,8 +316,10 @@ contract Peggy is Initializable, ReentrancyGuard {
 					totalFee = totalFee + _fees[i];
 				}
 
-				// Send transaction fees to msg.sender
-				IERC20(_tokenContract).safeTransfer(msg.sender, totalFee);
+                if (totalFee > 0) {
+                    // Send transaction fees to msg.sender
+				    IERC20(_tokenContract).safeTransfer(msg.sender, totalFee);
+                }
 			}
 		}
 
@@ -333,7 +334,7 @@ contract Peggy is Initializable, ReentrancyGuard {
 		address _tokenContract,
 		bytes32 _destination,
 		uint256 _amount
-	) public nonReentrant {
+	) external nonReentrant {
 		IERC20(_tokenContract).safeTransferFrom(msg.sender, address(this), _amount);
 		state_lastEventNonce = state_lastEventNonce + 1;
 		emit SendToCosmosEvent(
@@ -346,11 +347,11 @@ contract Peggy is Initializable, ReentrancyGuard {
 	}
 
 	function deployERC20(
-		string memory _cosmosDenom,
-		string memory _name,
-		string memory _symbol,
+		string calldata _cosmosDenom,
+		string calldata _name,
+		string calldata _symbol,
 		uint8 _decimals
-	) public {
+	) external {
 		// Deploy an ERC20 with entire supply granted to Peggy.sol
 		CosmosERC20 erc20 = new CosmosERC20(address(this), _name, _symbol, _decimals);
 
@@ -372,9 +373,9 @@ contract Peggy is Initializable, ReentrancyGuard {
 		// How much voting power is needed to approve operations
 		uint256 _powerThreshold,
 		// The validator set
-		address[] memory _validators,
-		uint256[] memory _powers
-	) public initializer {
+		address[] calldata _validators,
+		uint256[] calldata _powers
+	) external initializer {
 		// CHECKS
 
 		// Check that validators, powers, and signatures (v,r,s) set is well-formed
@@ -408,4 +409,3 @@ contract Peggy is Initializable, ReentrancyGuard {
 		emit ValsetUpdatedEvent(0, _validators, _powers);
 	}
 }
-
