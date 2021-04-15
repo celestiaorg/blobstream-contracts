@@ -14,4 +14,5 @@ var (
 	ErrOutdated                = sdkerrors.Register(ModuleName, 7, "outdated")
 	ErrUnsupported             = sdkerrors.Register(ModuleName, 8, "unsupported")
 	ErrNonContiguousEventNonce = sdkerrors.Register(ModuleName, 9, "non contiguous event nonce")
+	ErrNoUnbatchedTxsFound     = sdkerrors.Register(ModuleName, 10, "no unbatched txs found")
 )

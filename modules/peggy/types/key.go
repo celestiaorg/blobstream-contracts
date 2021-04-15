@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -68,7 +69,10 @@ var (
 	SecondIndexNonceByClaimKey = []byte{0xf}
 
 	// LastEventNonceByValidatorKey indexes lateset event nonce by validator
-	LastEventNonceByValidatorKey = []byte{0xf1}
+	LastEventNonceByValidatorKey = []byte{0xe2}
+
+	// LastEventByValidatorKey indexes lateset claim event by validator
+	LastEventByValidatorKey = []byte{0xf1}
 
 	// LastObservedEventNonceKey indexes the latest event nonce
 	LastObservedEventNonceKey = []byte{0xf2}
@@ -84,12 +88,6 @@ var (
 
 	// KeyOrchestratorAddress indexes the validator keys for an orchestrator
 	KeyOrchestratorAddress = []byte{0xe8}
-
-	// KeyOutgoingLogicCall indexes the outgoing logic calls
-	KeyOutgoingLogicCall = []byte{0xde}
-
-	// KeyOutgoingLogicConfirm indexes the outgoing logic confirms
-	KeyOutgoingLogicConfirm = []byte{0xae}
 
 	// LastObservedEthereumBlockHeightKey indexes the latest Ethereum block height
 	LastObservedEthereumBlockHeightKey = []byte{0xf9}
@@ -200,14 +198,23 @@ func GetAttestationKeyWithHash(eventNonce uint64, claimHash []byte) []byte {
 // prefix     id
 // [0x6][0 0 0 0 0 0 0 1]
 func GetOutgoingTxPoolKey(id uint64) []byte {
-	return append(OutgoingTXPoolKey, sdk.Uint64ToBigEndian(id)...)
+	buf := make([]byte, 0, len(OutgoingTXPoolKey)+8)
+	buf = append(buf, OutgoingTXPoolKey...)
+	buf = append(buf, sdk.Uint64ToBigEndian(id)...)
+
+	return buf
 }
 
 // GetOutgoingTxBatchKey returns the following key format
 // prefix     nonce                     eth-contract-address
 // [0xa][0 0 0 0 0 0 0 1][0xc783df8a850f42e7F7e57013759C285caa701eB6]
-func GetOutgoingTxBatchKey(tokenContract string, nonce uint64) []byte {
-	return append(append(OutgoingTXBatchKey, []byte(tokenContract)...), UInt64Bytes(nonce)...)
+func GetOutgoingTxBatchKey(tokenContract common.Address, nonce uint64) []byte {
+	buf := make([]byte, 0, len(OutgoingTXBatchKey)+8+ETHContractAddressLen)
+	buf = append(buf, OutgoingTXBatchKey...)
+	buf = append(buf, UInt64Bytes(nonce)...)
+	buf = append(buf, tokenContract.Bytes()...)
+
+	return buf
 }
 
 // GetOutgoingTxBatchBlockKey returns the following key format
@@ -221,27 +228,30 @@ func GetOutgoingTxBatchBlockKey(block uint64) []byte {
 // prefix           eth-contract-address                BatchNonce                       Validator-address
 // [0xe1][0xc783df8a850f42e7F7e57013759C285caa701eB6][0 0 0 0 0 0 0 1][cosmosvaloper1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 // TODO this should be a sdk.ValAddress
-func GetBatchConfirmKey(tokenContract string, batchNonce uint64, validator sdk.AccAddress) []byte {
-	a := append(UInt64Bytes(batchNonce), validator.Bytes()...)
-	b := append([]byte(tokenContract), a...)
-	c := append(BatchConfirmKey, b...)
-	return c
+func GetBatchConfirmKey(tokenContract common.Address, batchNonce uint64, validator sdk.AccAddress) []byte {
+	buf := make([]byte, 0, len(BatchConfirmKey)+ETHContractAddressLen+8+len(validator))
+	buf = append(buf, BatchConfirmKey...)
+	buf = append(buf, tokenContract.Bytes()...)
+	buf = append(buf, UInt64Bytes(batchNonce)...)
+	buf = append(buf, validator.Bytes()...)
+
+	return buf
 }
 
 // GetFeeSecondIndexKey returns the following key format
-// prefix            eth-contract-address            fee_amount
-// [0x9][0xc783df8a850f42e7F7e57013759C285caa701eB6][1000000000]
-func GetFeeSecondIndexKey(tokenContract string, fee sdk.Coin) []byte {
-	r := make([]byte, 1+ETHContractAddressLen+32)
-	// sdkInts have a size limit of 255 bits or 32 bytes
-	// therefore this will never panic and is always safe
+// prefix            eth-contract-address            					fee_amount
+// [0x9][0xc783df8a850f42e7F7e57013759C285caa701eB6][0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]
+func GetFeeSecondIndexKey(tokenContract common.Address, fee ERC20Token) []byte {
+	buf := make([]byte, 0, len(SecondIndexOutgoingTXFeeKey)+ETHContractAddressLen+32)
+	buf = append(buf, SecondIndexOutgoingTXFeeKey...)
+	buf = append(buf, tokenContract.Bytes()...)
+
+	// sdk.BigInt represented as a zero-extended big-endian byte slice (32 bytes)
 	amount := make([]byte, 32)
 	amount = fee.Amount.BigInt().FillBytes(amount)
-	// TODO this won't ever work fix it
-	copy(r[0:], SecondIndexOutgoingTXFeeKey)
-	copy(r[len(SecondIndexOutgoingTXFeeKey):], []byte(tokenContract))
-	copy(r[len(SecondIndexOutgoingTXFeeKey)+len(tokenContract):], amount)
-	return r
+	buf = append(buf, amount...)
+
+	return buf
 }
 
 // GetLastEventNonceByValidatorKey indexes lateset event nonce by validator
@@ -249,24 +259,37 @@ func GetFeeSecondIndexKey(tokenContract string, fee sdk.Coin) []byte {
 // prefix              cosmos-validator
 // [0x0][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
 func GetLastEventNonceByValidatorKey(validator sdk.ValAddress) []byte {
-	return append(LastEventNonceByValidatorKey, validator.Bytes()...)
+	buf := make([]byte, 0, len(LastEventNonceByValidatorKey)+len(validator))
+	buf = append(buf, LastEventNonceByValidatorKey...)
+	buf = append(buf, validator.Bytes()...)
+
+	return buf
 }
 
-func GetDenomToERC20Key(denom string) []byte {
-	return append(DenomToERC20Key, []byte(denom)...)
+// GetLastEventByValidatorKey indexes lateset event by validator
+// GetLastEventByValidatorKey returns the following key format
+// prefix              cosmos-validator
+// [0x0][cosmos1ahx7f8wyertuus9r20284ej0asrs085case3kn]
+func GetLastEventByValidatorKey(validator sdk.ValAddress) []byte {
+	buf := make([]byte, 0, len(LastEventByValidatorKey)+len(validator))
+	buf = append(buf, LastEventByValidatorKey...)
+	buf = append(buf, validator.Bytes()...)
+
+	return buf
 }
 
-func GetERC20ToDenomKey(erc20 string) []byte {
-	return append(ERC20ToDenomKey, []byte(erc20)...)
+func GetCosmosDenomToERC20Key(denom string) []byte {
+	buf := make([]byte, 0, len(DenomToERC20Key)+len(denom))
+	buf = append(buf, DenomToERC20Key...)
+	buf = append(buf, denom...)
+
+	return buf
 }
 
-func GetOutgoingLogicCallKey(invalidationId []byte, invalidationNonce uint64) []byte {
-	a := append(KeyOutgoingLogicCall, invalidationId...)
-	return append(a, UInt64Bytes(invalidationNonce)...)
-}
+func GetERC20ToCosmosDenomKey(tokenContract common.Address) []byte {
+	buf := make([]byte, 0, len(ERC20ToDenomKey)+ETHContractAddressLen)
+	buf = append(buf, ERC20ToDenomKey...)
+	buf = append(buf, tokenContract.Bytes()...)
 
-func GetLogicConfirmKey(invalidationId []byte, invalidationNonce uint64, validator sdk.AccAddress) []byte {
-	interm := append(KeyOutgoingLogicConfirm, invalidationId...)
-	interm = append(interm, UInt64Bytes(invalidationNonce)...)
-	return append(interm, validator.Bytes()...)
+	return buf
 }

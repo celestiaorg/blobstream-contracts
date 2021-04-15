@@ -34,6 +34,9 @@ var (
 	// ParamsStoreKeyBridgeContractAddress stores the contract address
 	ParamsStoreKeyBridgeContractAddress = []byte("BridgeContractAddress")
 
+	// ParamsStoreKeyBridgeContractStartHeight stores the bridge contract deployed height
+	ParamsStoreKeyBridgeContractStartHeight = []byte("BridgeContractChainHeight")
+
 	// ParamsStoreKeyBridgeContractChainID stores the bridge chain id
 	ParamsStoreKeyBridgeContractChainID = []byte("BridgeChainID")
 
@@ -76,6 +79,9 @@ var (
 	//  ParamStoreUnbondSlashingValsetsWindow stores unbond slashing valset window
 	ParamStoreUnbondSlashingValsetsWindow = []byte("UnbondSlashingValsetsWindow")
 
+	// ParamStoreClaimSlashingEnabled stores ClaimSlashing is enabled or not
+	ParamStoreClaimSlashingEnabled = []byte("ClaimSlashingEnabled")
+
 	// Ensure that params implements the proper interface
 	_ paramtypes.ParamSet = &Params{}
 )
@@ -113,6 +119,7 @@ func DefaultParams() *Params {
 		SlashFractionConflictingClaim: sdk.NewDec(1).Quo(sdk.NewDec(1000)),
 		CosmosCoinDenom:               "inj",
 		UnbondSlashingValsetsWindow:   10000,
+		ClaimSlashingEnabled:          false,
 	}
 }
 
@@ -126,6 +133,9 @@ func (p Params) ValidateBasic() error {
 	}
 	if err := validateBridgeContractAddress(p.BridgeEthereumAddress); err != nil {
 		return sdkerrors.Wrap(err, "bridge contract address")
+	}
+	if err := validateBridgeContractStartHeight(p.BridgeContractStartHeight); err != nil {
+		return sdkerrors.Wrap(err, "bridge contract start height")
 	}
 	if err := validateBridgeChainID(p.BridgeChainId); err != nil {
 		return sdkerrors.Wrap(err, "bridge chain id")
@@ -169,6 +179,9 @@ func (p Params) ValidateBasic() error {
 	if err := validateUnbondSlashingValsetsWindow(p.UnbondSlashingValsetsWindow); err != nil {
 		return sdkerrors.Wrap(err, "unbond Slashing valset window")
 	}
+	if err := validateClaimSlashingEnabled(p.ClaimSlashingEnabled); err != nil {
+		return sdkerrors.Wrap(err, "claim slashing enabled")
+	}
 
 	return nil
 }
@@ -199,6 +212,8 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionClaim, &p.SlashFractionClaim, validateSlashFractionClaim),
 		paramtypes.NewParamSetPair(ParamsStoreSlashFractionConflictingClaim, &p.SlashFractionConflictingClaim, validateSlashFractionConflictingClaim),
 		paramtypes.NewParamSetPair(ParamStoreUnbondSlashingValsetsWindow, &p.UnbondSlashingValsetsWindow, validateUnbondSlashingValsetsWindow),
+		paramtypes.NewParamSetPair(ParamStoreClaimSlashingEnabled, &p.ClaimSlashingEnabled, validateClaimSlashingEnabled),
+		paramtypes.NewParamSetPair(ParamsStoreKeyBridgeContractStartHeight, &p.BridgeContractStartHeight, validateBridgeContractStartHeight),
 	}
 }
 
@@ -238,6 +253,13 @@ func validateStartThreshold(i interface{}) error {
 }
 
 func validateBridgeChainID(i interface{}) error {
+	if _, ok := i.(uint64); !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return nil
+}
+
+func validateBridgeContractStartHeight(i interface{}) error {
 	if _, ok := i.(uint64); !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
@@ -385,4 +407,12 @@ func validateCosmosCoinErc20Contract(i interface{}) error {
 	}
 
 	return ValidateEthAddress(v)
+}
+
+func validateClaimSlashingEnabled(i interface{}) error {
+	_, ok := i.(bool)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+	return nil
 }

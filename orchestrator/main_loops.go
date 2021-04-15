@@ -301,7 +301,7 @@ func (s *peggyOrchestrator) BatchRequesterLoop(ctx context.Context) (err error) 
 						}
 
 						// send batch request only if fee is > 0. Add a threshold amount later through flags
-						if unbatchedToken.TopOneHundred.GT(cosmtypes.NewInt(0)) {
+						if unbatchedToken.TotalFees.GT(cosmtypes.NewInt(0)) {
 							logger.WithFields(log.Fields{"tokenContract": tokenAddr, "denom": denom}).Infoln("sending batch request")
 							_ = s.peggyBroadcastClient.SendRequestBatch(ctx, denom)
 						}

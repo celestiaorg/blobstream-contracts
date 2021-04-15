@@ -3,7 +3,7 @@ package types
 import (
 	"encoding/binary"
 	"fmt"
-	math "math"
+	"math"
 	"math/big"
 	"sort"
 	"strconv"
@@ -12,6 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -67,11 +68,9 @@ func (b BridgeValidators) Sort() {
 // TODO: this needs to be potentially refactored
 func (b BridgeValidators) PowerDiff(c BridgeValidators) float64 {
 	powers := map[string]int64{}
-	var totalB int64
 	// loop over b and initialize the map with their powers
 	for _, bv := range b {
 		powers[bv.EthereumAddress] = int64(bv.Power)
-		totalB += int64(bv.Power)
 	}
 
 	// subtract c powers from powers in the map, initializing
@@ -90,7 +89,7 @@ func (b BridgeValidators) PowerDiff(c BridgeValidators) float64 {
 		delta += math.Abs(float64(v))
 	}
 
-	return math.Abs(delta / float64(totalB))
+	return math.Abs(delta / float64(math.MaxUint32))
 }
 
 // TotalPower returns the total power in the bridge validator set
@@ -139,15 +138,15 @@ func (b BridgeValidators) ValidateBasic() error {
 // NewValset returns a new valset
 func NewValset(nonce, height uint64, members BridgeValidators) *Valset {
 	members.Sort()
-	var mem []*BridgeValidator
+	mem := make([]*BridgeValidator, 0)
 	for _, val := range members {
 		mem = append(mem, val)
 	}
 	return &Valset{Nonce: uint64(nonce), Members: mem, Height: height}
 }
 
-// GetCheckpoint returns the checkpoint
-func (v Valset) GetCheckpoint(peggyIDstring string) []byte {
+// GetCheckpoint returns the checkpoint hash
+func (v Valset) GetCheckpoint(peggyIDstring string) common.Hash {
 	// TODO replace hardcoded "foo" here with a getter to retrieve the correct PeggyID from the store
 	// this will work for now because 'foo' is the test Peggy ID we are using
 	// var peggyIDString = "foo"
@@ -192,7 +191,7 @@ func (v Valset) GetCheckpoint(peggyIDstring string) []byte {
 	// method name 'checkpoint'. If you where to replace the checkpoint constant in this code you would
 	// then need to adjust how many bytes you truncate off the front to get the output of abi.encode()
 	hash := crypto.Keccak256Hash(bytes[4:])
-	return hash.Bytes()
+	return hash
 }
 
 // WithoutEmptyMembers returns a new Valset without member that have 0 power or an empty Ethereum address.
@@ -222,4 +221,13 @@ func (v Valsets) Less(i, j int) bool {
 
 func (v Valsets) Swap(i, j int) {
 	v[i], v[j] = v[j], v[i]
+}
+
+// GetFees returns the total fees contained within a given batch
+func (b OutgoingTxBatch) GetFees() sdk.Int {
+	sum := sdk.ZeroInt()
+	for _, t := range b.Transactions {
+		sum.Add(t.Erc20Fee.Amount)
+	}
+	return sum
 }
