@@ -2,11 +2,10 @@ package types
 
 import (
 	"bytes"
-	"encoding/hex"
 	mrand "math/rand"
 	"testing"
 
-	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,23 +31,22 @@ func TestValsetConfirmHash(t *testing.T) {
 	v := Valset{Members: mem}
 	// TODO: this is hardcoded to foo, replace?
 	hash := v.GetCheckpoint("foo")
-	hexHash := hex.EncodeToString(hash)
-	correctHash := "88165860d955aee7dc3e83d9d1156a5864b708841965585d206dbef6e9e1a499"
-	assert.Equal(t, correctHash, hexHash)
+	correctHash := common.HexToHash("0x88165860d955aee7dc3e83d9d1156a5864b708841965585d206dbef6e9e1a499")
+	assert.Equal(t, correctHash, hash)
 }
 
 func TestValsetCheckpointGold1(t *testing.T) {
 	src := NewValset(0xc, 0xc, BridgeValidators{{
 		Power:           0xffffffff,
-		EthereumAddress: gethcommon.Address{0xb4, 0x62, 0x86, 0x4e, 0x39, 0x5d, 0x88, 0xd6, 0xbc, 0x7c, 0x5d, 0xd5, 0xf3, 0xf5, 0xeb, 0x4c, 0xc2, 0x59, 0x92, 0x55}.String(),
+		EthereumAddress: common.Address{0xb4, 0x62, 0x86, 0x4e, 0x39, 0x5d, 0x88, 0xd6, 0xbc, 0x7c, 0x5d, 0xd5, 0xf3, 0xf5, 0xeb, 0x4c, 0xc2, 0x59, 0x92, 0x55}.String(),
 	}})
 
 	// TODO: this is hardcoded to foo, replace
 	ourHash := src.GetCheckpoint("foo")
 
 	// hash from bridge contract
-	goldHash := "0xf024ab7404464494d3919e5a7f0d8ac40804fb9bd39ad5d16cdb3e66aa219b64"[2:]
-	assert.Equal(t, goldHash, hex.EncodeToString(ourHash))
+	goldHash := common.HexToHash("0xf024ab7404464494d3919e5a7f0d8ac40804fb9bd39ad5d16cdb3e66aa219b64")
+	assert.Equal(t, goldHash, ourHash)
 }
 
 func TestValsetPowerDiff(t *testing.T) {
@@ -72,16 +70,16 @@ func TestValsetPowerDiff(t *testing.T) {
 		},
 		"one": {
 			start: BridgeValidators{
-				{Power: 1, EthereumAddress: "0x479FFc856Cdfa0f5D1AE6Fa61915b01351A7773D"},
-				{Power: 1, EthereumAddress: "0x8E91960d704Df3fF24ECAb78AB9df1B5D9144140"},
-				{Power: 2, EthereumAddress: "0xF14879a175A2F1cEFC7c616f35b6d9c2b0Fd8326"},
+				{Power: 1073741823, EthereumAddress: "0x479FFc856Cdfa0f5D1AE6Fa61915b01351A7773D"},
+				{Power: 1073741823, EthereumAddress: "0x8E91960d704Df3fF24ECAb78AB9df1B5D9144140"},
+				{Power: 2147483646, EthereumAddress: "0xF14879a175A2F1cEFC7c616f35b6d9c2b0Fd8326"},
 			},
 			diff: BridgeValidators{
-				{Power: 1, EthereumAddress: "0x479FFc856Cdfa0f5D1AE6Fa61915b01351A7773D"},
-				{Power: 1, EthereumAddress: "0x8E91960d704Df3fF24ECAb78AB9df1B5D9144140"},
-				{Power: 3, EthereumAddress: "0xF14879a175A2F1cEFC7c616f35b6d9c2b0Fd8326"},
+				{Power: 858993459, EthereumAddress: "0x479FFc856Cdfa0f5D1AE6Fa61915b01351A7773D"},
+				{Power: 858993459, EthereumAddress: "0x8E91960d704Df3fF24ECAb78AB9df1B5D9144140"},
+				{Power: 2576980377, EthereumAddress: "0xF14879a175A2F1cEFC7c616f35b6d9c2b0Fd8326"},
 			},
-			exp: 0.25,
+			exp: 0.2,
 		},
 		"real world": {
 			start: BridgeValidators{
@@ -104,7 +102,7 @@ func TestValsetPowerDiff(t *testing.T) {
 				{Power: 291759231, EthereumAddress: "0xF14879a175A2F1cEFC7c616f35b6d9c2b0Fd8326"},
 				{Power: 6785098, EthereumAddress: "0x37A0603dA2ff6377E5C7f75698dabA8EE4Ba97B8"},
 			},
-			exp: 0.010000000023283065,
+			exp: 0.010000000011641532,
 		},
 	}
 	for msg, spec := range specs {
@@ -121,26 +119,26 @@ func TestValsetSort(t *testing.T) {
 	}{
 		"by power desc": {
 			src: BridgeValidators{
-				{Power: 1, EthereumAddress: gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(3)}, 20)).String()},
-				{Power: 2, EthereumAddress: gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(1)}, 20)).String()},
-				{Power: 3, EthereumAddress: gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(2)}, 20)).String()},
+				{Power: 1, EthereumAddress: common.BytesToAddress(bytes.Repeat([]byte{byte(3)}, 20)).String()},
+				{Power: 2, EthereumAddress: common.BytesToAddress(bytes.Repeat([]byte{byte(1)}, 20)).String()},
+				{Power: 3, EthereumAddress: common.BytesToAddress(bytes.Repeat([]byte{byte(2)}, 20)).String()},
 			},
 			exp: BridgeValidators{
-				{Power: 3, EthereumAddress: gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(2)}, 20)).String()},
-				{Power: 2, EthereumAddress: gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(1)}, 20)).String()},
-				{Power: 1, EthereumAddress: gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(3)}, 20)).String()},
+				{Power: 3, EthereumAddress: common.BytesToAddress(bytes.Repeat([]byte{byte(2)}, 20)).String()},
+				{Power: 2, EthereumAddress: common.BytesToAddress(bytes.Repeat([]byte{byte(1)}, 20)).String()},
+				{Power: 1, EthereumAddress: common.BytesToAddress(bytes.Repeat([]byte{byte(3)}, 20)).String()},
 			},
 		},
 		"by eth addr on same power": {
 			src: BridgeValidators{
-				{Power: 1, EthereumAddress: gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(2)}, 20)).String()},
-				{Power: 1, EthereumAddress: gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(1)}, 20)).String()},
-				{Power: 1, EthereumAddress: gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(3)}, 20)).String()},
+				{Power: 1, EthereumAddress: common.BytesToAddress(bytes.Repeat([]byte{byte(2)}, 20)).String()},
+				{Power: 1, EthereumAddress: common.BytesToAddress(bytes.Repeat([]byte{byte(1)}, 20)).String()},
+				{Power: 1, EthereumAddress: common.BytesToAddress(bytes.Repeat([]byte{byte(3)}, 20)).String()},
 			},
 			exp: BridgeValidators{
-				{Power: 1, EthereumAddress: gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(1)}, 20)).String()},
-				{Power: 1, EthereumAddress: gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(2)}, 20)).String()},
-				{Power: 1, EthereumAddress: gethcommon.BytesToAddress(bytes.Repeat([]byte{byte(3)}, 20)).String()},
+				{Power: 1, EthereumAddress: common.BytesToAddress(bytes.Repeat([]byte{byte(1)}, 20)).String()},
+				{Power: 1, EthereumAddress: common.BytesToAddress(bytes.Repeat([]byte{byte(2)}, 20)).String()},
+				{Power: 1, EthereumAddress: common.BytesToAddress(bytes.Repeat([]byte{byte(3)}, 20)).String()},
 			},
 		},
 		// if you're thinking about changing this due to a change in the sorting algorithm

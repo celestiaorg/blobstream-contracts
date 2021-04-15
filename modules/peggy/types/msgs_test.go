@@ -51,7 +51,7 @@ func TestValidateMsgSetOrchestratorAddresses(t *testing.T) {
 	}
 	for msg, spec := range specs {
 		t.Run(msg, func(t *testing.T) {
-			msg := NewMsgSetOrchestratorAddresses(spec.srcValAddr, spec.srcCosmosAddr, spec.srcETHAddr)
+			msg := NewMsgSetOrchestratorAddress(spec.srcValAddr, spec.srcCosmosAddr, spec.srcETHAddr)
 			// when
 			err := msg.ValidateBasic()
 			if spec.expErr {
