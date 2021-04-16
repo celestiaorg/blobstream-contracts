@@ -26,6 +26,10 @@ func (s *peggyOrchestrator) CheckForEvents(
 	// add delay to ensure miminum confirmations are received and block is finalised
 	currentBlock = latestHeader.Number.Uint64() - uint64(6)
 
+	if currentBlock < startingBlock {
+		return currentBlock, nil
+	}
+
 	if (currentBlock - startingBlock) > defaultBlocksToSearch {
 		currentBlock = startingBlock + defaultBlocksToSearch
 	}
