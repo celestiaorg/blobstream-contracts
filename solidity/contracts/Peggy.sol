@@ -6,10 +6,13 @@ import "./@openzeppelin/contracts/IERC20.sol";
 import "./@openzeppelin/contracts/SafeERC20.sol";
 import "./@openzeppelin/contracts/utils/Address.sol";
 import "./@openzeppelin/contracts/utils/Initializable.sol";
+import "./@openzeppelin/contracts/utils/Pausable.sol";
 import "./@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./CosmosToken.sol";
 
-contract Peggy is Initializable, ReentrancyGuard {
+import "./CosmosToken.sol";
+import "./Ownable.sol";
+
+contract Peggy is Initializable, Ownable, Pausable, ReentrancyGuard {
 	using SafeERC20 for IERC20;
 
 	// These are updated often
@@ -156,7 +159,7 @@ contract Peggy is Initializable, ReentrancyGuard {
 		uint8[] memory _v,
 		bytes32[] memory _r,
 		bytes32[] memory _s
-	) external {
+	) external whenNotPaused {
 		// CHECKS
 
 		// Check that the valset nonce is greater than the old one
@@ -238,7 +241,7 @@ contract Peggy is Initializable, ReentrancyGuard {
 		// a block height beyond which this batch is not valid
 		// used to provide a fee-free timeout
 		uint256 _batchTimeout
-	) nonReentrant external {
+	) nonReentrant external whenNotPaused {
 		// CHECKS scoped to reduce stack depth
 		{
 			// Check that the batch nonce is higher than the last nonce for this token
@@ -334,7 +337,7 @@ contract Peggy is Initializable, ReentrancyGuard {
 		address _tokenContract,
 		bytes32 _destination,
 		uint256 _amount
-	) external nonReentrant {
+	) external whenNotPaused nonReentrant {
 		IERC20(_tokenContract).safeTransferFrom(msg.sender, address(this), _amount);
 		state_lastEventNonce = state_lastEventNonce + 1;
 		emit SendToCosmosEvent(
@@ -408,4 +411,12 @@ contract Peggy is Initializable, ReentrancyGuard {
 
 		emit ValsetUpdatedEvent(0, _validators, _powers);
 	}
+
+	function emergencyPause() external onlyOwner {
+        _pause();
+    }
+
+	function emergencyUnpause() external onlyOwner {
+        _unpause();
+    }
 }
