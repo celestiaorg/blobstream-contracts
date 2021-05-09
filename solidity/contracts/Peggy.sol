@@ -10,7 +10,7 @@ import "./@openzeppelin/contracts/utils/Pausable.sol";
 import "./@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "./CosmosToken.sol";
-import "./Ownable.sol";
+import "./@openzeppelin/contracts/Ownable.sol";
 
 contract Peggy is Initializable, Ownable, Pausable, ReentrancyGuard {
 	using SafeERC20 for IERC20;
@@ -55,6 +55,7 @@ contract Peggy is Initializable, Ownable, Pausable, ReentrancyGuard {
 	);
 	event ValsetUpdatedEvent(
 		uint256 indexed _newValsetNonce,
+		uint256 _eventNonce,
 		address[] _validators,
 		uint256[] _powers
 	);
@@ -215,8 +216,8 @@ contract Peggy is Initializable, Ownable, Pausable, ReentrancyGuard {
 		state_lastValsetNonce = _newValsetNonce;
 
 		// LOGS
-
-		emit ValsetUpdatedEvent(_newValsetNonce, _newValidators, _newPowers);
+		state_lastEventNonce = state_lastEventNonce + 1;
+		emit ValsetUpdatedEvent(_newValsetNonce, state_lastEventNonce, _newValidators, _newPowers);
 	}
 
 	// submitBatch processes a batch of Cosmos -> Ethereum transactions by sending the tokens in the transactions
@@ -409,7 +410,7 @@ contract Peggy is Initializable, Ownable, Pausable, ReentrancyGuard {
 
 		// LOGS
 
-		emit ValsetUpdatedEvent(0, _validators, _powers);
+		emit ValsetUpdatedEvent(0, state_lastEventNonce,_validators, _powers);
 	}
 
 	function emergencyPause() external onlyOwner {
