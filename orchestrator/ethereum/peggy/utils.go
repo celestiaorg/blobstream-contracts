@@ -2,11 +2,12 @@ package peggy
 
 import (
 	"context"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	"math/big"
 )
 
 // Gets the latest transaction batch nonce

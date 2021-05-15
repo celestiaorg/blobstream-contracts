@@ -104,16 +104,14 @@ contract Peggy is Initializable, Ownable, Pausable, ReentrancyGuard {
 	// The validator powers must be decreasing or equal. This is important for checking the signatures on the
 	// next valset, since it allows the caller to stop verifying signatures once a quorum of signatures have been verified.
 	function makeCheckpoint(
-		address[] memory _validators,
-		uint256[] memory _powers,
-		uint256 _valsetNonce,
+		ValsetArgs memory _valsetArgs,
 		bytes32 _peggyId
 	) private pure returns (bytes32) {
 		// bytes32 encoding of the string "checkpoint"
 		bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
 		bytes32 checkpoint =
-			keccak256(abi.encode(_gravityId, methodName, _valsetArgs.valsetNonce, _valsetArgs.validators, _valsetArgs.powers, _valsetArgs.rewardAmount, _valsetArgs.rewardToken));
+			keccak256(abi.encode(_peggyId, methodName, _valsetArgs.valsetNonce, _valsetArgs.validators, _valsetArgs.powers, _valsetArgs.rewardAmount, _valsetArgs.rewardToken));
 		return checkpoint;
 	}
 
@@ -205,7 +203,7 @@ contract Peggy is Initializable, Ownable, Pausable, ReentrancyGuard {
 
 		// Check that enough current validators have signed off on the new validator set
 		bytes32 newCheckpoint =			
-			makeCheckpoint(_newValset, state_gravityId);
+			makeCheckpoint(_newValset, state_peggyId);
 		checkValidatorSignatures(
 			_currentValset.validators,
 			_currentValset.powers,
@@ -223,7 +221,7 @@ contract Peggy is Initializable, Ownable, Pausable, ReentrancyGuard {
 		state_lastValsetCheckpoint = newCheckpoint;
 
 		// Store new nonce
-		state_lastValsetNonce = _newValsetNonce;
+		state_lastValsetNonce = _newValset.valsetNonce;
 		
 		// Send submission reward to msg.sender if reward token is a valid value
 		if (_newValset.rewardToken != address(0) && _newValset.rewardAmount != 0) {
@@ -415,7 +413,7 @@ contract Peggy is Initializable, Ownable, Pausable, ReentrancyGuard {
 		ValsetArgs memory _valset;
 		_valset = ValsetArgs(_validators, _powers, 0, 0, address(0));
 
-		bytes32 newCheckpoint = makeCheckpoint(_valset, _gravityId);
+		bytes32 newCheckpoint = makeCheckpoint(_valset, _peggyId);
 
 		// ACTIONS
 

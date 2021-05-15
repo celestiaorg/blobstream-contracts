@@ -53,10 +53,17 @@ func (s *peggyContract) SendTransactionBatch(
 	// 		uint256 _batchNonce,
 	// 		address _tokenContract
 	// )
+
+	currentValsetArs := types.ValsetArgs{
+		Validators:   validators,
+		Powers:       powers,
+		ValsetNonce:  currentValsetNonce,
+		RewardAmount: currentValset.RewardAmount.BigInt(),
+		RewardToken:  currentValset.RewardToken,
+	}
+
 	txData, err := peggyABI.Pack("submitBatch",
-		validators,
-		powers,
-		currentValsetNonce,
+		currentValsetArs,
 		sigV, sigR, sigS,
 		amounts,
 		destinations,

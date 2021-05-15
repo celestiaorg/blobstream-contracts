@@ -136,21 +136,17 @@ func (b BridgeValidators) ValidateBasic() error {
 }
 
 // NewValset returns a new valset
-func NewValset(nonce, height uint64, members BridgeValidators) *Valset {
+func NewValset(nonce, height uint64, members BridgeValidators, rewardAmount sdk.Int, rewardToken common.Address) *Valset {
 	members.Sort()
 	mem := make([]*BridgeValidator, 0)
 	for _, val := range members {
 		mem = append(mem, val)
 	}
-	return &Valset{Nonce: uint64(nonce), Members: mem, Height: height}
+	return &Valset{Nonce: uint64(nonce), Members: mem, Height: height, RewardAmount: rewardAmount, RewardToken: rewardToken.Hex()}
 }
 
 // GetCheckpoint returns the checkpoint hash
 func (v Valset) GetCheckpoint(peggyIDstring string) common.Hash {
-	// TODO replace hardcoded "foo" here with a getter to retrieve the correct PeggyID from the store
-	// this will work for now because 'foo' is the test Peggy ID we are using
-	// var peggyIDString = "foo"
-
 	// error case here should not occur outside of testing since the above is a constant
 	contractAbi, abiErr := abi.JSON(strings.NewReader(ValsetCheckpointABIJSON))
 	if abiErr != nil {
@@ -166,6 +162,19 @@ func (v Valset) GetCheckpoint(peggyIDstring string) common.Hash {
 		panic(err)
 	}
 
+	// this should never happen, unless an invalid paramater value has been set by the chain
+	err = ValidateEthAddress(v.RewardToken)
+	if err != nil {
+		panic(err)
+	}
+	rewardToken := gethcommon.HexToAddress(v.RewardToken)
+
+	if v.RewardAmount.BigInt() == nil {
+		// this must be programmer error
+		panic("Invalid reward amount passed in valset GetCheckpoint!")
+	}
+	rewardAmount := v.RewardAmount.BigInt()
+
 	checkpointBytes := []uint8("checkpoint")
 	var checkpoint [32]uint8
 	copy(checkpoint[:], checkpointBytes[:])
@@ -179,8 +188,7 @@ func (v Valset) GetCheckpoint(peggyIDstring string) common.Hash {
 	// the word 'checkpoint' needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	bytes, packErr := contractAbi.Pack("checkpoint", peggyID, checkpoint, big.NewInt(int64(v.Nonce)), memberAddresses, convertedPowers)
-
+	bytes, packErr := contractAbi.Pack("checkpoint", peggyID, checkpoint, big.NewInt(int64(v.Nonce)), memberAddresses, convertedPowers, rewardAmount, rewardToken)
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.
 	if packErr != nil {
@@ -192,6 +200,13 @@ func (v Valset) GetCheckpoint(peggyIDstring string) common.Hash {
 	// then need to adjust how many bytes you truncate off the front to get the output of abi.encode()
 	hash := crypto.Keccak256Hash(bytes[4:])
 	return hash
+}
+
+// This interface is implemented by all the types that are used
+// to create transactions on Ethereum that are signed by validators.
+// The naming here could be improved.
+type EthereumSigned interface {
+	GetCheckpoint(peggyIDstring string) common.Hash
 }
 
 // WithoutEmptyMembers returns a new Valset without member that have 0 power or an empty Ethereum address.
@@ -230,4 +245,13 @@ func (b OutgoingTxBatch) GetFees() sdk.Int {
 		sum.Add(t.Erc20Fee.Amount)
 	}
 	return sum
+}
+
+type ValsetArgs struct {
+	Validators   []common.Address `protobuf:"bytes,2,rep,name=validators,proto3" json:"validators,omitempty"`
+	Powers       []*big.Int       `protobuf:"varint,1,opt,name=powers,proto3" json:"powers,omitempty"`
+	ValsetNonce  *big.Int         `protobuf:"varint,3,opt,name=valsetNonce,proto3" json:"valsetNonce,omitempty"`
+	RewardAmount *big.Int         `protobuf:"bytes,4,opt,name=rewardAmount,json=rewardAmount,proto3" json:"rewardAmount"`
+	// the reward token in it's Ethereum hex address representation
+	RewardToken string `protobuf:"bytes,5,opt,name=rewardToken,json=rewardToken,proto3" json:"rewardToken,omitempty"`
 }
