@@ -300,11 +300,13 @@ func (s *peggyBroadcastClient) sendValsetUpdateClaims(
 ) error {
 
 	log.WithFields(log.Fields{
-		"EventNonce":  valsetUpdate.EventNonce.Uint64(),
-		"ValsetNonce": valsetUpdate.NewValsetNonce.Uint64(),
-		"_validators": valsetUpdate.Validators,
-		"_powers":     valsetUpdate.Powers,
-	}).Infoln("Oracle observed a withdraw batch event. Sending MsgWithdrawClaim")
+		"EventNonce":   valsetUpdate.EventNonce.Uint64(),
+		"ValsetNonce":  valsetUpdate.NewValsetNonce.Uint64(),
+		"_validators":  valsetUpdate.Validators,
+		"_powers":      valsetUpdate.Powers,
+		"rewardAmount": valsetUpdate.RewardAmount,
+		"rewardToken":  valsetUpdate.RewardToken.Hex(),
+	}).Infoln("Oracle observed a valsetUpdate event. Sending MsgValsetUpdatedClaim")
 
 	members := make([]*types.BridgeValidator, len(valsetUpdate.Validators))
 	for i, val := range valsetUpdate.Validators {
@@ -319,6 +321,8 @@ func (s *peggyBroadcastClient) sendValsetUpdateClaims(
 		EventNonce:   valsetUpdate.EventNonce.Uint64(),
 		ValsetNonce:  valsetUpdate.NewValsetNonce.Uint64(),
 		BlockHeight:  valsetUpdate.Raw.BlockNumber,
+		RewardAmount: sdk.NewIntFromBigInt(valsetUpdate.RewardAmount),
+		RewardToken:  valsetUpdate.RewardToken.Hex(),
 		Members:      members,
 		Orchestrator: s.AccFromAddress().String(),
 	}
