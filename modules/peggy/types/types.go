@@ -188,7 +188,16 @@ func (v Valset) GetCheckpoint(peggyIDstring string) common.Hash {
 	// the word 'checkpoint' needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
-	bytes, packErr := contractAbi.Pack("checkpoint", peggyID, checkpoint, big.NewInt(int64(v.Nonce)), memberAddresses, convertedPowers, rewardAmount, rewardToken)
+	bytes, packErr := contractAbi.Pack(
+		"checkpoint",
+		peggyID,
+		checkpoint,
+		big.NewInt(int64(v.Nonce)),
+		memberAddresses,
+		convertedPowers,
+		rewardAmount,
+		rewardToken,
+	)
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.
 	if packErr != nil {
