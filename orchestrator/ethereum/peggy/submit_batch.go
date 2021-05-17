@@ -59,7 +59,7 @@ func (s *peggyContract) SendTransactionBatch(
 		Powers:       powers,
 		ValsetNonce:  currentValsetNonce,
 		RewardAmount: currentValset.RewardAmount.BigInt(),
-		RewardToken:  currentValset.RewardToken,
+		RewardToken:  common.HexToAddress(currentValset.RewardToken),
 	}
 
 	txData, err := peggyABI.Pack("submitBatch",

@@ -36,7 +36,7 @@ contract Peggy is Initializable, Ownable, Pausable, ReentrancyGuard {
 	mapping(address => uint256) public state_lastBatchNonces;
 	mapping(bytes32 => uint256) public state_invalidationMapping;
 	uint256 public state_lastValsetNonce = 0;
-	uint256 public state_lastEventNonce = 1;
+	uint256 public state_lastEventNonce = 0;
 
 	// These are set once at initialization
 	bytes32 public state_peggyId;
@@ -420,7 +420,7 @@ contract Peggy is Initializable, Ownable, Pausable, ReentrancyGuard {
 		state_peggyId = _peggyId;
 		state_powerThreshold = _powerThreshold;
 		state_lastValsetCheckpoint = newCheckpoint;
-
+        state_lastEventNonce = state_lastEventNonce + 1;       
 		// LOGS
 		
 		emit ValsetUpdatedEvent(state_lastValsetNonce, state_lastEventNonce, 0, address(0), _validators, _powers);

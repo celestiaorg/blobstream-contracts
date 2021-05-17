@@ -156,7 +156,6 @@ func (s *peggyBroadcastClient) SendValsetConfirm(
 		err = errors.New("failed to sign validator address")
 		return err
 	}
-
 	// MsgValsetConfirm
 	// this is the message sent by the validators when they wish to submit their
 	// signatures over the validator set at a given block height. A validator must
@@ -310,11 +309,10 @@ func (s *peggyBroadcastClient) sendValsetUpdateClaims(
 
 	members := make([]*types.BridgeValidator, len(valsetUpdate.Validators))
 	for i, val := range valsetUpdate.Validators {
-		member := &types.BridgeValidator{
+		members[i] = &types.BridgeValidator{
 			EthereumAddress: val.Hex(),
 			Power:           valsetUpdate.Powers[i].Uint64(),
 		}
-		members = append(members, member)
 	}
 
 	msg := &types.MsgValsetUpdatedClaim{
@@ -326,6 +324,7 @@ func (s *peggyBroadcastClient) sendValsetUpdateClaims(
 		Members:      members,
 		Orchestrator: s.AccFromAddress().String(),
 	}
+
 	if err := s.broadcastClient.QueueBroadcastMsg(msg); err != nil {
 		metrics.ReportFuncError(s.svcTags)
 		log.WithError(err).Errorln("broadcasting MsgValsetUpdatedClaim failed")
@@ -345,7 +344,7 @@ func (s *peggyBroadcastClient) SendEthereumClaims(
 	metrics.ReportFuncCall(s.svcTags)
 	doneFn := metrics.ReportFuncTiming(s.svcTags)
 	defer doneFn()
-	totalClaimEvents := len(deposits) + len(withdraws)
+	totalClaimEvents := len(deposits) + len(withdraws) + len(valsetUpdates)
 	var count, i, j, k int
 	for count < totalClaimEvents {
 		if i < len(deposits) && deposits[i].EventNonce.Uint64() == lastClaimEvent+1 {

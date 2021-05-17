@@ -35,7 +35,7 @@ func (s *peggyContract) SendEthValsetUpdate(
 		Powers:       newPowers,
 		ValsetNonce:  newValsetNonce,
 		RewardAmount: newValset.RewardAmount.BigInt(),
-		RewardToken:  newValset.RewardToken,
+		RewardToken:  common.HexToAddress(newValset.RewardToken),
 	}
 
 	// we need to use the old valset here because our signatures need to match the current
@@ -51,7 +51,7 @@ func (s *peggyContract) SendEthValsetUpdate(
 		Powers:       currentPowers,
 		ValsetNonce:  currentValsetNonce,
 		RewardAmount: oldValset.RewardAmount.BigInt(),
-		RewardToken:  oldValset.RewardToken,
+		RewardToken:  common.HexToAddress(oldValset.RewardToken),
 	}
 	// Solidity function signature
 	// function updateValset(
@@ -191,7 +191,6 @@ func checkValsetSigsAndRepack(
 			s = append(s, [32]byte{})
 		}
 	}
-
 	if peggyPowerToPercent(powerOfGoodSigs) < 66 {
 		err = ErrInsufficientVotingPowerToPass
 		return
