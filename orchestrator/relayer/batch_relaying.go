@@ -55,14 +55,26 @@ func (s *peggyRelayer) RelayBatches(ctx context.Context) error {
 	log.WithFields(log.Fields{"oldestSignedBatchNonce": oldestSignedBatch.BatchNonce, "latestEthereumBatchNonce": latestEthereumBatch.Uint64()}).Debugln("Found Latest valsets")
 
 	if oldestSignedBatch.BatchNonce > latestEthereumBatch.Uint64() {
-		log.Infof("We have detected latest batch %d but latest on Ethereum is %d sending an update!", oldestSignedBatch.BatchNonce, latestEthereumBatch)
 
-		txHash, err := s.peggyContract.SendTransactionBatch(ctx, currentValset, oldestSignedBatch, oldestSigs)
+		latestEthereumBatch, err := s.peggyContract.GetTxBatchNonce(
+			ctx,
+			common.HexToAddress(oldestSignedBatch.TokenContract),
+			s.peggyContract.FromAddress(),
+		)
 		if err != nil {
 			return err
 		}
+		// Check if oldestSignedBatch already submitted by other validators in mean time
+		if oldestSignedBatch.BatchNonce > latestEthereumBatch.Uint64() {
+			log.Infof("We have detected latest batch %d but latest on Ethereum is %d sending an update!", oldestSignedBatch.BatchNonce, latestEthereumBatch)
 
-		log.WithField("tx_hash", txHash.Hex()).Infoln("Sent Ethereum Tx (TransactionBatch)")
+			// Send SendTransactionBatch to Ethereum
+			txHash, err := s.peggyContract.SendTransactionBatch(ctx, currentValset, oldestSignedBatch, oldestSigs)
+			if err != nil {
+				return err
+			}
+			log.WithField("tx_hash", txHash.Hex()).Infoln("Sent Ethereum Tx (TransactionBatch)")
+		}
 	}
 
 	return nil
