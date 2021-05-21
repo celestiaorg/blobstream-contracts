@@ -248,3 +248,24 @@ func initStatsdOptions(
 		Value:  "true",
 	})
 }
+
+// initRelayerOption sets options for relayer.
+func initRelayerOptions(
+	cmd *cli.Cmd,
+	relayValsets **bool,
+	relayBatches **bool,
+) {
+	*relayValsets = cmd.Bool(cli.BoolOpt{
+		Name:   "relay_valsets",
+		Desc:   "If enabled, relayer will relay valsets to ethereum",
+		EnvVar: "PEGGO_RELAY_VALSETS",
+		Value:  false,
+	})
+
+	*relayBatches = cmd.Bool(cli.BoolOpt{
+		Name:   "relay_batches",
+		Desc:   "If enabled, relayer will relay batches to ethereum",
+		EnvVar: "PEGGO_RELAY_BATCHES",
+		Value:  false,
+	})
+}

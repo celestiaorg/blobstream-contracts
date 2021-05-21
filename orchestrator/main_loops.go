@@ -2,6 +2,7 @@ package orchestrator
 
 import (
 	"context"
+	"errors"
 	"math"
 	"math/big"
 	"time"
@@ -13,7 +14,6 @@ import (
 	"github.com/InjectiveLabs/peggo/modules/peggy/types"
 	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
 	"github.com/InjectiveLabs/peggo/orchestrator/loops"
-	"github.com/InjectiveLabs/peggo/orchestrator/relayer"
 
 	cosmtypes "github.com/cosmos/cosmos-sdk/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
@@ -321,8 +321,11 @@ func (s *peggyOrchestrator) BatchRequesterLoop(ctx context.Context) (err error) 
 }
 
 func (s *peggyOrchestrator) RelayerMainLoop(ctx context.Context) (err error) {
-	r := relayer.NewPeggyRelayer(s.cosmosQueryClient, s.peggyContract)
-	return r.Start(ctx)
+	if s.relayer != nil {
+		return s.relayer.Start(ctx)
+	} else {
+		return errors.New("relayer is nil")
+	}
 }
 
 // valPowerDiff returns the difference in power between two bridge validator sets

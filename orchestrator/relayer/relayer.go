@@ -21,20 +21,25 @@ type PeggyRelayer interface {
 type peggyRelayer struct {
 	svcTags metrics.Tags
 
-	cosmosQueryClient cosmos.PeggyQueryClient
-	peggyContract     peggy.PeggyContract
-	ethProvider       provider.EVMProvider
+	cosmosQueryClient  cosmos.PeggyQueryClient
+	peggyContract      peggy.PeggyContract
+	ethProvider        provider.EVMProvider
+	valsetRelayEnabled bool
+	batchRelayEnabled  bool
 }
 
 func NewPeggyRelayer(
 	cosmosQueryClient cosmos.PeggyQueryClient,
 	peggyContract peggy.PeggyContract,
+	valsetRelayEnabled bool,
+	batchRelayEnabled bool,
 ) PeggyRelayer {
 	return &peggyRelayer{
-		cosmosQueryClient: cosmosQueryClient,
-		peggyContract:     peggyContract,
-		ethProvider:       peggyContract.Provider(),
-
+		cosmosQueryClient:  cosmosQueryClient,
+		peggyContract:      peggyContract,
+		ethProvider:        peggyContract.Provider(),
+		valsetRelayEnabled: valsetRelayEnabled,
+		batchRelayEnabled:  batchRelayEnabled,
 		svcTags: metrics.Tags{
 			"svc": "peggy_relayer",
 		},
