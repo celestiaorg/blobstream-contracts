@@ -69,8 +69,12 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		statsdMocking  *string
 		statsdDisabled *string
 
+		// Relayer config
 		relayValsets *bool
 		relayBatches *bool
+
+		// Batch requester config
+		minBatchFeeUSD *float64
 	)
 
 	initCosmosOptions(
@@ -121,6 +125,11 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		cmd,
 		&relayValsets,
 		&relayBatches,
+	)
+
+	initBatchRequesterOptions(
+		cmd,
+		&minBatchFeeUSD,
 	)
 
 	erc20ContractMapping = cmd.StringsArg("ERC20_MAPPING", []string{}, "Mapping between contract_address:cosmos_denom for ERC20 tokens")
@@ -234,6 +243,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 			personalSignFn,
 			parseERC20ContractMapping(*erc20ContractMapping),
 			relayer,
+			*minBatchFeeUSD,
 		)
 
 		ctx, cancelFn := context.WithCancel(context.Background())

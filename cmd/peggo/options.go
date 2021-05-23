@@ -269,3 +269,16 @@ func initRelayerOptions(
 		Value:  false,
 	})
 }
+
+// initBatchRequesterOptions sets options for batch requester.
+func initBatchRequesterOptions(
+	cmd *cli.Cmd,
+	minBatchFeeUSD **float64,
+) {
+	*minBatchFeeUSD = cmd.Float64(cli.Float64Opt{
+		Name:   "min_batch_fee_usd",
+		Desc:   "If set, batch request will create batches only if fee threshold exceeds",
+		EnvVar: "PEGGO_MIN_BATCH_FEE_USD",
+		Value:  float64(23.3),
+	})
+}

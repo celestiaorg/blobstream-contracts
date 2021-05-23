@@ -39,6 +39,7 @@ type peggyOrchestrator struct {
 	ethPersonalSignFn    keystore.PersonalSignFn
 	erc20ContractMapping map[ethcmn.Address]string
 	relayer              relayer.PeggyRelayer
+	minBatchFeeUSD       float64
 }
 
 func NewPeggyOrchestrator(
@@ -51,6 +52,7 @@ func NewPeggyOrchestrator(
 	ethPersonalSignFn keystore.PersonalSignFn,
 	erc20ContractMapping map[ethcmn.Address]string,
 	relayer relayer.PeggyRelayer,
+	minBatchFeeUSD float64,
 ) PeggyOrchestrator {
 	return &peggyOrchestrator{
 		tmClient:             tmClient,
@@ -63,6 +65,7 @@ func NewPeggyOrchestrator(
 		ethPersonalSignFn:    ethPersonalSignFn,
 		erc20ContractMapping: erc20ContractMapping,
 		relayer:              relayer,
+		minBatchFeeUSD:       minBatchFeeUSD,
 		svcTags: metrics.Tags{
 			"svc": "peggy_orchestrator",
 		},

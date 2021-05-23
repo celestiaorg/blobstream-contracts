@@ -12,10 +12,10 @@ import (
 	log "github.com/xlab/suplog"
 
 	"github.com/InjectiveLabs/peggo/modules/peggy/types"
+	"github.com/InjectiveLabs/peggo/orchestrator/coingecko"
 	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
 	"github.com/InjectiveLabs/peggo/orchestrator/loops"
 
-	cosmtypes "github.com/cosmos/cosmos-sdk/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 )
 
@@ -261,7 +261,6 @@ func (s *peggyOrchestrator) ValsetRequesterLoop(ctx context.Context) (err error)
 
 func (s *peggyOrchestrator) BatchRequesterLoop(ctx context.Context) (err error) {
 	logger := log.WithField("loop", "BatchRequesterLoop")
-
 	return loops.RunLoop(ctx, defaultLoopDur, func() error {
 		// get All the denominations
 		// check if threshold is met
@@ -300,8 +299,8 @@ func (s *peggyOrchestrator) BatchRequesterLoop(ctx context.Context) (err error) 
 							denom = types.PeggyDenom(tokenAddr.Hex())
 						}
 
-						// send batch request only if fee is > 0. Add a threshold amount later through flags
-						if unbatchedToken.TotalFees.GT(cosmtypes.NewInt(0)) {
+						// send batch request only if fee threshold is met.
+						if coingecko.CheckFeeThreshod(tokenAddr, unbatchedToken.TotalFees, s.minBatchFeeUSD) {
 							logger.WithFields(log.Fields{"tokenContract": tokenAddr, "denom": denom}).Infoln("sending batch request")
 							_ = s.peggyBroadcastClient.SendRequestBatch(ctx, denom)
 						}
