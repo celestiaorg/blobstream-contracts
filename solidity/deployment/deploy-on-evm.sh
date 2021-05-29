@@ -14,7 +14,7 @@ if [[ ! -f .env ]]; then
 	exit 1
 fi
 
-peggy_impl_address=`evm-deploy-contract \
+peggy_impl_address=`etherman \
 	--name Peggy \
 	--source ../contracts/Peggy.sol \
 	deploy`
@@ -22,7 +22,7 @@ peggy_impl_address=`evm-deploy-contract \
 echo "Deployed Peggy implementation contract: $peggy_impl_address"
 echo -e "===\n"
 
-peggy_init_data=`evm-deploy-contract \
+peggy_init_data=`etherman \
 	--name Peggy \
 	--source ../contracts/Peggy.sol \
 	tx --bytecode $peggy_impl_address initialize \
@@ -39,7 +39,7 @@ echo -e "===\n"
 echo "Peggy Init data: $peggy_init_data"
 echo -e "===\n"
 
-proxy_admin_address=`evm-deploy-contract \
+proxy_admin_address=`etherman \
 	--name ProxyAdmin \
 	--source ../contracts/@openzeppelin/contracts/ProxyAdmin.sol \
 	deploy`
@@ -47,7 +47,7 @@ proxy_admin_address=`evm-deploy-contract \
 echo "Deployed ProxyAdmin contract: $proxy_admin_address"
 echo -e "===\n"
 
-peggy_proxy_address=`evm-deploy-contract \
+peggy_proxy_address=`etherman \
 	--name TransparentUpgradeableProxy \
 	--source ../contracts/@openzeppelin/contracts/TransparentUpgradeableProxy.sol \
 	deploy $peggy_impl_address $proxy_admin_address $peggy_init_data`

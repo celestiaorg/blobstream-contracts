@@ -16,12 +16,12 @@ if [[ "$PEGGY_ADDRESS" == "" ]]; then
 	exit 1
 fi
 
-deploy_erc20_txhash=`evm-deploy-contract \
+deploy_erc20_txhash=`etherman \
 	--name Peggy \
 	--source ../contracts/Peggy.sol \
 	tx $PEGGY_ADDRESS deployERC20 inj INJ INJ 18`
 
-deploy_erc20_log=`evm-deploy-contract \
+deploy_erc20_log=`etherman \
 	--name Peggy \
 	--source ../contracts/Peggy.sol \
 	logs $PEGGY_ADDRESS $deploy_erc20_txhash ERC20DeployedEvent`
