@@ -11,8 +11,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/InjectiveLabs/evm-deploy-contract/deployer"
-	"github.com/InjectiveLabs/evm-deploy-contract/sol"
+	"github.com/InjectiveLabs/etherman/deployer"
+	"github.com/InjectiveLabs/etherman/sol"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
 )
 

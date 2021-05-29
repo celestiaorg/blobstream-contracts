@@ -10,7 +10,7 @@ import "./@openzeppelin/contracts/utils/Pausable.sol";
 import "./@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "./CosmosToken.sol";
-import "./@openzeppelin/contracts/Ownable.sol";
+import "./@openzeppelin/contracts/OwnableUpgradeable.sol";
 
 // This is used purely to avoid stack too deep errors
 // represents everything about a given validator set
@@ -28,7 +28,7 @@ struct ValsetArgs {
 	address rewardToken;
 }
 
-contract Peggy is Initializable, Ownable, Pausable, ReentrancyGuard {
+contract Peggy is Initializable, OwnableUpgradeable, Pausable, ReentrancyGuard {
 	using SafeERC20 for IERC20;
 
 	// These are updated often
