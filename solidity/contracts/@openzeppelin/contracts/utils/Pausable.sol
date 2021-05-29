@@ -2,7 +2,7 @@
 
 pragma solidity >=0.6.0 <0.9.0;
 
-import "./Context.sol";
+import "./ContextUpgradeable.sol";
 
 /**
  * @dev Contract module which allows children to implement an emergency stop
@@ -13,7 +13,7 @@ import "./Context.sol";
  * the functions of your contract. Note that they will not be pausable by
  * simply including this module, only once the modifiers are put in place.
  */
-abstract contract Pausable is Context {
+abstract contract Pausable is ContextUpgradeable {
   /**
    * @dev Emitted when the pause is triggered by `account`.
    */

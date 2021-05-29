@@ -10,9 +10,9 @@ import "./@openzeppelin/contracts/utils/Pausable.sol";
 import "./@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "./CosmosToken.sol";
-import "./@openzeppelin/contracts/Ownable.sol";
+import "./@openzeppelin/contracts/OwnableUpgradeable.sol";
 
-contract Peggy is Initializable, Ownable, Pausable, ReentrancyGuard {
+contract Peggy is Initializable, OwnableUpgradeable, Pausable, ReentrancyGuard {
   using SafeERC20 for IERC20;
 
   // These are updated often
@@ -396,6 +396,9 @@ contract Peggy is Initializable, Ownable, Pausable, ReentrancyGuard {
     address[] calldata _validators,
     uint256[] calldata _powers
   ) external initializer {
+    __Context_init_unchained();
+    __Ownable_init_unchained();
+
     // CHECKS
 
     // Check that validators, powers, and signatures (v,r,s) set is well-formed
