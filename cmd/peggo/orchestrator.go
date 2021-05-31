@@ -1,13 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"os"
 	"time"
 
 	ethcmn "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/rpc"
 	cli "github.com/jawher/mow.cli"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 	"github.com/xlab/closer"
@@ -24,6 +22,9 @@ import (
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/provider"
 	"github.com/InjectiveLabs/peggo/orchestrator/relayer"
+
+	ctypes "github.com/InjectiveLabs/sdk-go/chain/types"
+	"github.com/ethereum/go-ethereum/rpc"
 )
 
 // startOrchestrator action runs an infinite loop,
@@ -50,9 +51,8 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		cosmosUseLedger     *bool
 
 		// Ethereum params
-		ethChainID       *int
-		ethNodeRPC       *string
-		ethPeggyContract *string
+		ethChainID *int
+		ethNodeRPC *string
 
 		// Ethereum Key Management
 		ethKeystoreDir *string
@@ -102,7 +102,6 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		cmd,
 		&ethChainID,
 		&ethNodeRPC,
-		&ethPeggyContract,
 	)
 
 	initEthereumKeyOptions(
@@ -151,19 +150,6 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		if *cosmosUseLedger || *ethUseLedger {
 			log.Fatalln("cannot really use Ledger for orchestrator, since signatures msut be realtime")
 		}
-
-		peggyAddress := ethcmn.HexToAddress(*ethPeggyContract)
-		if bytes.Equal(peggyAddress.Bytes(), ethcmn.Address{}.Bytes()) {
-			log.Fatalln("no Peggy contract address specified, use --contract-address or PEGGO_ETH_CONTRACT_ADDRESS env")
-		}
-
-		evmRPC, err := rpc.Dial(*ethNodeRPC)
-		if err != nil {
-			log.WithField("endpoint", *ethNodeRPC).WithError(err).Fatalln("Failed to connect to Ethereum RPC")
-			return
-		}
-		ethProvider := provider.NewEVMProvider(evmRPC)
-		log.Infoln("Connected to Ethereum RPC at", *ethNodeRPC)
 
 		valAddress, cosmosKeyring, err := initCosmosKeyring(
 			cosmosKeyringDir,
@@ -226,13 +212,35 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		)
 		cancelWait()
 
+		// Query peggy params
+		cosmosQueryClient := cosmos.NewPeggyQueryClient(peggyQuerier)
+		ctx, cancelFn := context.WithCancel(context.Background())
+		closer.Bind(cancelFn)
+
+		peggyParams, err := cosmosQueryClient.PeggyParams(ctx)
+		if err != nil {
+			log.WithError(err).Fatalln("failed to query peggy params, is injectived running?")
+		}
+
+		peggyAddress := ethcmn.HexToAddress(peggyParams.BridgeEthereumAddress)
+		injAddress := ethcmn.HexToAddress(peggyParams.CosmosCoinErc20Contract)
+
+		erc20ContractMapping := parseERC20ContractMapping(*erc20ContractMapping)
+		erc20ContractMapping[injAddress] = ctypes.InjectiveCoin
+
+		evmRPC, err := rpc.Dial(*ethNodeRPC)
+		if err != nil {
+			log.WithField("endpoint", *ethNodeRPC).WithError(err).Fatalln("Failed to connect to Ethereum RPC")
+			return
+		}
+		ethProvider := provider.NewEVMProvider(evmRPC)
+		log.Infoln("Connected to Ethereum RPC at", *ethNodeRPC)
+
 		ethCommitter, err := committer.NewEthCommitter(ethKeyFromAddress, signerFn, ethProvider)
 		orShutdown(err)
 
 		peggyContract, err := peggy.NewPeggyContract(ethCommitter, peggyAddress)
 		orShutdown(err)
-
-		cosmosQueryClient := cosmos.NewPeggyQueryClient(peggyQuerier)
 
 		relayer := relayer.NewPeggyRelayer(cosmosQueryClient, peggyContract, *relayValsets, *relayBatches)
 		coingeckoFeed := coingecko.NewCoingeckoPriceFeed(100, &coingecko.Config{})
@@ -244,14 +252,11 @@ func orchestratorCmd(cmd *cli.Cmd) {
 			ethKeyFromAddress,
 			signerFn,
 			personalSignFn,
-			parseERC20ContractMapping(*erc20ContractMapping),
+			erc20ContractMapping,
 			relayer,
 			*minBatchFeeUSD,
 			coingeckoFeed,
 		)
-
-		ctx, cancelFn := context.WithCancel(context.Background())
-		closer.Bind(cancelFn)
 
 		go func() {
 			if err := svc.Start(ctx); err != nil {

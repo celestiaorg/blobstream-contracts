@@ -141,7 +141,6 @@ func initEthereumOptions(
 	cmd *cli.Cmd,
 	ethChainID **int,
 	ethNodeRPC **string,
-	ethPeggyContract **string,
 ) {
 	*ethChainID = cmd.Int(cli.IntOpt{
 		Name:   "eth-chain-id",
@@ -155,12 +154,6 @@ func initEthereumOptions(
 		Desc:   "Specify HTTP endpoint for an Ethereum node.",
 		EnvVar: "PEGGO_ETH_RPC",
 		Value:  "http://localhost:1317",
-	})
-
-	*ethPeggyContract = cmd.String(cli.StringOpt{
-		Name:   "A contract-address",
-		Desc:   "Peggy root contract deployment address on Ethereum network.",
-		EnvVar: "PEGGO_ETH_CONTRACT_ADDRESS",
 	})
 }
 
