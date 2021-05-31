@@ -17,7 +17,6 @@ func (s *peggyRelayer) RelayBatches(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
 	var oldestSignedBatch *types.OutgoingTxBatch
 	var oldestSigs []*types.MsgConfirmBatch
 	for _, batch := range latestBatches {
