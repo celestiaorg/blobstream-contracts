@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/peggo/modules/peggy/types"
+	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 )
 
 func (s *peggyContract) SendTransactionBatch(
@@ -54,7 +54,7 @@ func (s *peggyContract) SendTransactionBatch(
 	// 		address _tokenContract
 	// )
 
-	currentValsetArs := types.ValsetArgs{
+	currentValsetArs := ValsetArgs{
 		Validators:   validators,
 		Powers:       powers,
 		ValsetNonce:  currentValsetNonce,

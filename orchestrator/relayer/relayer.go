@@ -3,7 +3,7 @@ package relayer
 import (
 	"context"
 
-	"github.com/InjectiveLabs/peggo/modules/peggy/types"
+	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/provider"

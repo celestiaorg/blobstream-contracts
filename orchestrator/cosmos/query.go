@@ -7,7 +7,7 @@ import (
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 
-	"github.com/InjectiveLabs/peggo/modules/peggy/types"
+	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
 )
 

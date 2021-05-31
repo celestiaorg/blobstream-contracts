@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 
-	"github.com/InjectiveLabs/peggo/modules/peggy/types"
+	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/committer"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/provider"
 	"github.com/InjectiveLabs/peggo/orchestrator/metrics"

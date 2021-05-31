@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/peggo/modules/peggy/types"
+	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 )
 
 // RelayBatches checks the last validator set on Ethereum, if it's lower than our latest valida

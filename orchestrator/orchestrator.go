@@ -5,8 +5,9 @@ import (
 
 	ethcmn "github.com/ethereum/go-ethereum/common"
 
-	sidechain "github.com/InjectiveLabs/peggo/orchestrator/cosmos"
 	"github.com/InjectiveLabs/peggo/orchestrator/cosmos/tmclient"
+
+	sidechain "github.com/InjectiveLabs/peggo/orchestrator/cosmos"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/keystore"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/provider"

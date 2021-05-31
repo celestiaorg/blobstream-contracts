@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/peggo/modules/peggy/types"
+	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/util"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 

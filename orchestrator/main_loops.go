@@ -7,11 +7,12 @@ import (
 	"math/big"
 	"time"
 
-	retry "github.com/avast/retry-go"
+	"github.com/avast/retry-go"
 	"github.com/ethereum/go-ethereum/common"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/peggo/modules/peggy/types"
+	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
+
 	"github.com/InjectiveLabs/peggo/orchestrator/coingecko"
 	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
 	"github.com/InjectiveLabs/peggo/orchestrator/loops"
@@ -296,7 +297,8 @@ func (s *peggyOrchestrator) BatchRequesterLoop(ctx context.Context) (err error) 
 							denom = cosmosDenom
 						} else {
 							// peggy denom
-							denom = types.PeggyDenom(tokenAddr.Hex())
+							// TODO: @venkatesh check
+							denom = tokenAddr.Hex()
 						}
 
 						// send batch request only if fee threshold is met.
