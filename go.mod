@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/InjectiveLabs/etherman v1.7.0
-	github.com/InjectiveLabs/sdk-go v1.20.11
+	github.com/InjectiveLabs/sdk-go v1.20.12
 	github.com/alexcesaro/statsd v2.0.0+incompatible
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/cosmos/cosmos-sdk v0.42.5
