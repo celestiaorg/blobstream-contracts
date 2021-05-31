@@ -41,6 +41,10 @@ func (p *ParanoidGroup) Go(fn func() error) {
 	}()
 }
 
+func (p *ParanoidGroup) Initialized() bool {
+	return p.wg != nil
+}
+
 // Wait returns an error if one or more tasks failed, otherwise all tasks exited
 // with no errors.
 func (p *ParanoidGroup) Wait() error {

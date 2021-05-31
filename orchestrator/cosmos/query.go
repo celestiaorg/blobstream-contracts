@@ -7,8 +7,8 @@ import (
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 
-	"github.com/InjectiveLabs/peggo/modules/peggy/types"
 	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
+	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 )
 
 type PeggyQueryClient interface {
@@ -23,6 +23,8 @@ type PeggyQueryClient interface {
 
 	TransactionBatchSignatures(ctx context.Context, nonce uint64, tokenContract ethcmn.Address) ([]*types.MsgConfirmBatch, error)
 	LastClaimEventByAddr(ctx context.Context, validatorAccountAddress sdk.AccAddress) (*types.LastClaimEvent, error)
+
+	PeggyParams(ctx context.Context) (*types.Params, error)
 }
 
 func NewPeggyQueryClient(client types.QueryClient) PeggyQueryClient {
@@ -224,4 +226,21 @@ func (s *peggyQueryClient) LastClaimEventByAddr(ctx context.Context, validatorAc
 	}
 
 	return daemonResp.LastClaimEvent, nil
+}
+
+func (s *peggyQueryClient) PeggyParams(ctx context.Context) (*types.Params, error) {
+	metrics.ReportFuncCall(s.svcTags)
+	doneFn := metrics.ReportFuncTiming(s.svcTags)
+	defer doneFn()
+
+	daemonResp, err := s.daemonQueryClient.Params(ctx, &types.QueryParamsRequest{})
+	if err != nil {
+		metrics.ReportFuncError(s.svcTags)
+		err = errors.Wrap(err, "failed to query PeggyParams from daemon")
+		return nil, err
+	} else if daemonResp == nil {
+		return nil, ErrNotFound
+	}
+
+	return &daemonResp.Params, nil
 }

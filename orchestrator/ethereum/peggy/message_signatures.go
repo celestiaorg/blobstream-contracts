@@ -1,6 +1,7 @@
 package peggy
 
 import (
+	"fmt"
 	"math/big"
 	"strings"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/InjectiveLabs/peggo/modules/peggy/types"
+	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 )
 
 /// EncodeValsetConfirm takes the required input data and produces the required signature to confirm a validator
@@ -18,7 +19,7 @@ import (
 /// submitted to Cosmos, verified, and then relayed to Ethereum
 func EncodeValsetConfirm(peggyID common.Hash, valset *types.Valset) common.Hash {
 	// error case here should not occur outside of testing since the above is a constant
-	contractAbi, abiErr := abi.JSON(strings.NewReader(ValsetConfirmABIJSON))
+	contractAbi, abiErr := abi.JSON(strings.NewReader(ValsetCheckpointABIJSON))
 	if abiErr != nil {
 		log.Fatalln("bad ABI constant")
 	}
@@ -33,6 +34,15 @@ func EncodeValsetConfirm(peggyID common.Hash, valset *types.Valset) common.Hash 
 		memberAddresses[i] = common.HexToAddress(m.EthereumAddress)
 		convertedPowers[i] = big.NewInt(int64(m.Power))
 	}
+
+	rewardToken := common.HexToAddress(valset.RewardToken)
+
+	if valset.RewardAmount.BigInt() == nil {
+		// this must be programmer error
+		panic("Invalid reward amount passed in valset GetCheckpoint!")
+	}
+	rewardAmount := valset.RewardAmount.BigInt()
+
 	// the word 'checkpoint' needs to be the same as the 'name' above in the checkpointAbiJson
 	// but other than that it's a constant that has no impact on the output. This is because
 	// it gets encoded as a function name which we must then discard.
@@ -43,20 +53,20 @@ func EncodeValsetConfirm(peggyID common.Hash, valset *types.Valset) common.Hash 
 		big.NewInt(int64(valset.Nonce)),
 		memberAddresses,
 		convertedPowers,
+		rewardAmount,
+		rewardToken,
 	)
-
 	// this should never happen outside of test since any case that could crash on encoding
 	// should be filtered above.
 	if packErr != nil {
-		log.WithError(packErr).Errorln("Error packing checkpoint!")
-		return common.Hash{}
+		panic(fmt.Sprintf("Error packing checkpoint! %s/n", packErr))
 	}
 
 	// we hash the resulting encoded bytes discarding the first 4 bytes these 4 bytes are the constant
 	// method name 'checkpoint'. If you where to replace the checkpoint constant in this code you would
 	// then need to adjust how many bytes you truncate off the front to get the output of abi.encode()
 	hash := crypto.Keccak256Hash(bytes[4:])
-	return common.BytesToHash(hash.Bytes())
+	return hash
 }
 
 // EncodeTxBatchConfirm takes the required input data and produces the required signature to confirm a transaction
@@ -110,18 +120,37 @@ func EncodeTxBatchConfirm(peggyID common.Hash, batch *types.OutgoingTxBatch) com
 }
 
 const (
-	ValsetConfirmABIJSON = `[{
-        "name": "checkpoint",
-        "stateMutability": "pure",
-        "type": "function",
-        "inputs": [
-            { "internalType": "bytes32",   "name": "_peggyId",     "type": "bytes32" },
-            { "internalType": "bytes32",   "name": "_checkpoint",  "type": "bytes32" },
-            { "internalType": "uint256",   "name": "_valsetNonce", "type": "uint256" },
-            { "internalType": "address[]", "name": "_validators",  "type": "address[]" },
-            { "internalType": "uint256[]", "name": "_powers",      "type": "uint256[]" }
-        ]
-    }]`
+	// ValsetConfirmABIJSON = `[{
+	//     "name": "checkpoint",
+	//     "stateMutability": "pure",
+	//     "type": "function",
+	//     "inputs": [
+	//         { "internalType": "bytes32",   "name": "_peggyId",     "type": "bytes32" },
+	//         { "internalType": "bytes32",   "name": "_checkpoint",  "type": "bytes32" },
+	//         { "internalType": "uint256",   "name": "_valsetNonce", "type": "uint256" },
+	//         { "internalType": "address[]", "name": "_validators",  "type": "address[]" },
+	//         { "internalType": "uint256[]", "name": "_powers",      "type": "uint256[]" }
+	//     ]
+	// }]`
+
+	// ValsetCheckpointABIJSON checks the ETH ABI for compatability of the Valset update message
+	ValsetCheckpointABIJSON = `[{
+		"name": "checkpoint",
+		"stateMutability": "pure",
+		"type": "function",
+		"inputs": [
+			{ "internalType": "bytes32",   "name": "_peggyId",   "type": "bytes32"   },
+			{ "internalType": "bytes32",   "name": "_checkpoint",  "type": "bytes32"   },
+			{ "internalType": "uint256",   "name": "_valsetNonce", "type": "uint256"   },
+			{ "internalType": "address[]", "name": "_validators",  "type": "address[]" },
+			{ "internalType": "uint256[]", "name": "_powers",      "type": "uint256[]" },
+			{ "internalType": "uint256",   "name": "_rewardAmount","type": "uint256"   },
+			{ "internalType": "address",   "name": "_rewardToken", "type": "address"   }
+		],
+		"outputs": [
+			{ "internalType": "bytes32", "name": "", "type": "bytes32" }
+		]
+	}]`
 
 	OutgoingBatchTxConfirmABIJSON = `[{
         "name": "transactionBatch",

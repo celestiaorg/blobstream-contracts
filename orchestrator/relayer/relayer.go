@@ -3,7 +3,7 @@ package relayer
 import (
 	"context"
 
-	"github.com/InjectiveLabs/peggo/modules/peggy/types"
+	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/provider"
@@ -21,20 +21,25 @@ type PeggyRelayer interface {
 type peggyRelayer struct {
 	svcTags metrics.Tags
 
-	cosmosQueryClient cosmos.PeggyQueryClient
-	peggyContract     peggy.PeggyContract
-	ethProvider       provider.EVMProvider
+	cosmosQueryClient  cosmos.PeggyQueryClient
+	peggyContract      peggy.PeggyContract
+	ethProvider        provider.EVMProvider
+	valsetRelayEnabled bool
+	batchRelayEnabled  bool
 }
 
 func NewPeggyRelayer(
 	cosmosQueryClient cosmos.PeggyQueryClient,
 	peggyContract peggy.PeggyContract,
+	valsetRelayEnabled bool,
+	batchRelayEnabled bool,
 ) PeggyRelayer {
 	return &peggyRelayer{
-		cosmosQueryClient: cosmosQueryClient,
-		peggyContract:     peggyContract,
-		ethProvider:       peggyContract.Provider(),
-
+		cosmosQueryClient:  cosmosQueryClient,
+		peggyContract:      peggyContract,
+		ethProvider:        peggyContract.Provider(),
+		valsetRelayEnabled: valsetRelayEnabled,
+		batchRelayEnabled:  batchRelayEnabled,
 		svcTags: metrics.Tags{
 			"svc": "peggy_relayer",
 		},

@@ -8,8 +8,17 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/peggo/modules/peggy/types"
+	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 )
+
+type ValsetArgs struct {
+	Validators   []common.Address `protobuf:"bytes,2,rep,name=validators,proto3" json:"validators,omitempty"`
+	Powers       []*big.Int       `protobuf:"varint,1,opt,name=powers,proto3" json:"powers,omitempty"`
+	ValsetNonce  *big.Int         `protobuf:"varint,3,opt,name=valsetNonce,proto3" json:"valsetNonce,omitempty"`
+	RewardAmount *big.Int         `protobuf:"bytes,4,opt,name=rewardAmount,json=rewardAmount,proto3" json:"rewardAmount"`
+	// the reward token in it's Ethereum hex address representation
+	RewardToken common.Address `protobuf:"bytes,5,opt,name=rewardToken,json=rewardToken,proto3" json:"rewardToken,omitempty"`
+}
 
 func (s *peggyContract) SendEthValsetUpdate(
 	ctx context.Context,
@@ -30,6 +39,14 @@ func (s *peggyContract) SendEthValsetUpdate(
 	newValidators, newPowers := validatorsAndPowers(newValset)
 	newValsetNonce := new(big.Int).SetUint64(newValset.Nonce)
 
+	newValsetArgs := ValsetArgs{
+		Validators:   newValidators,
+		Powers:       newPowers,
+		ValsetNonce:  newValsetNonce,
+		RewardAmount: newValset.RewardAmount.BigInt(),
+		RewardToken:  common.HexToAddress(newValset.RewardToken),
+	}
+
 	// we need to use the old valset here because our signatures need to match the current
 	// members of the validator set in the contract.
 	currentValidators, currentPowers, sigV, sigR, sigS, err := checkValsetSigsAndRepack(oldValset, confirms)
@@ -38,7 +55,13 @@ func (s *peggyContract) SendEthValsetUpdate(
 		return nil, err
 	}
 	currentValsetNonce := new(big.Int).SetUint64(oldValset.Nonce)
-
+	currentValsetArgs := ValsetArgs{
+		Validators:   currentValidators,
+		Powers:       currentPowers,
+		ValsetNonce:  currentValsetNonce,
+		RewardAmount: oldValset.RewardAmount.BigInt(),
+		RewardToken:  common.HexToAddress(oldValset.RewardToken),
+	}
 	// Solidity function signature
 	// function updateValset(
 	// 		// The new version of the validator set
@@ -58,12 +81,8 @@ func (s *peggyContract) SendEthValsetUpdate(
 	// )
 	log.Debugln("Sending updateValset Ethereum tx", "currentValidators", currentValidators, "currentPowers", currentPowers, "currentValsetNonce", currentValsetNonce)
 	txData, err := peggyABI.Pack("updateValset",
-		newValidators,
-		newPowers,
-		newValsetNonce,
-		currentValidators,
-		currentPowers,
-		currentValsetNonce,
+		newValsetArgs,
+		currentValsetArgs,
 		sigV,
 		sigR,
 		sigS,
@@ -181,7 +200,6 @@ func checkValsetSigsAndRepack(
 			s = append(s, [32]byte{})
 		}
 	}
-
 	if peggyPowerToPercent(powerOfGoodSigs) < 66 {
 		err = ErrInsufficientVotingPowerToPass
 		return

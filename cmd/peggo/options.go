@@ -141,7 +141,6 @@ func initEthereumOptions(
 	cmd *cli.Cmd,
 	ethChainID **int,
 	ethNodeRPC **string,
-	ethPeggyContract **string,
 ) {
 	*ethChainID = cmd.Int(cli.IntOpt{
 		Name:   "eth-chain-id",
@@ -155,12 +154,6 @@ func initEthereumOptions(
 		Desc:   "Specify HTTP endpoint for an Ethereum node.",
 		EnvVar: "PEGGO_ETH_RPC",
 		Value:  "http://localhost:1317",
-	})
-
-	*ethPeggyContract = cmd.String(cli.StringOpt{
-		Name:   "A contract-address",
-		Desc:   "Peggy root contract deployment address on Ethereum network.",
-		EnvVar: "PEGGO_ETH_CONTRACT_ADDRESS",
 	})
 }
 
@@ -246,5 +239,39 @@ func initStatsdOptions(
 		Desc:   "Force disabling statsd reporting completely.",
 		EnvVar: "PEGGO_STATSD_DISABLED",
 		Value:  "true",
+	})
+}
+
+// initRelayerOption sets options for relayer.
+func initRelayerOptions(
+	cmd *cli.Cmd,
+	relayValsets **bool,
+	relayBatches **bool,
+) {
+	*relayValsets = cmd.Bool(cli.BoolOpt{
+		Name:   "relay_valsets",
+		Desc:   "If enabled, relayer will relay valsets to ethereum",
+		EnvVar: "PEGGO_RELAY_VALSETS",
+		Value:  false,
+	})
+
+	*relayBatches = cmd.Bool(cli.BoolOpt{
+		Name:   "relay_batches",
+		Desc:   "If enabled, relayer will relay batches to ethereum",
+		EnvVar: "PEGGO_RELAY_BATCHES",
+		Value:  false,
+	})
+}
+
+// initBatchRequesterOptions sets options for batch requester.
+func initBatchRequesterOptions(
+	cmd *cli.Cmd,
+	minBatchFeeUSD **float64,
+) {
+	*minBatchFeeUSD = cmd.Float64(cli.Float64Opt{
+		Name:   "min_batch_fee_usd",
+		Desc:   "If set, batch request will create batches only if fee threshold exceeds",
+		EnvVar: "PEGGO_MIN_BATCH_FEE_USD",
+		Value:  float64(23.3),
 	})
 }

@@ -5,12 +5,15 @@ import (
 
 	ethcmn "github.com/ethereum/go-ethereum/common"
 
-	sidechain "github.com/InjectiveLabs/peggo/orchestrator/cosmos"
+	"github.com/InjectiveLabs/peggo/orchestrator/coingecko"
 	"github.com/InjectiveLabs/peggo/orchestrator/cosmos/tmclient"
+
+	sidechain "github.com/InjectiveLabs/peggo/orchestrator/cosmos"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/keystore"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/provider"
 	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
+	"github.com/InjectiveLabs/peggo/orchestrator/relayer"
 )
 
 type PeggyOrchestrator interface {
@@ -37,6 +40,9 @@ type peggyOrchestrator struct {
 	ethSignerFn          keystore.SignerFn
 	ethPersonalSignFn    keystore.PersonalSignFn
 	erc20ContractMapping map[ethcmn.Address]string
+	relayer              relayer.PeggyRelayer
+	minBatchFeeUSD       float64
+	priceFeeder          *coingecko.CoingeckoPriceFeed
 }
 
 func NewPeggyOrchestrator(
@@ -48,6 +54,10 @@ func NewPeggyOrchestrator(
 	ethSignerFn keystore.SignerFn,
 	ethPersonalSignFn keystore.PersonalSignFn,
 	erc20ContractMapping map[ethcmn.Address]string,
+	relayer relayer.PeggyRelayer,
+	minBatchFeeUSD float64,
+	priceFeeder *coingecko.CoingeckoPriceFeed,
+
 ) PeggyOrchestrator {
 	return &peggyOrchestrator{
 		tmClient:             tmClient,
@@ -59,7 +69,9 @@ func NewPeggyOrchestrator(
 		ethSignerFn:          ethSignerFn,
 		ethPersonalSignFn:    ethPersonalSignFn,
 		erc20ContractMapping: erc20ContractMapping,
-
+		relayer:              relayer,
+		minBatchFeeUSD:       minBatchFeeUSD,
+		priceFeeder:          priceFeeder,
 		svcTags: metrics.Tags{
 			"svc": "peggy_orchestrator",
 		},

@@ -106,6 +106,39 @@ func (s *peggyOrchestrator) CheckForEvents(
 		"Withdraws": transactionBatchExecutedEvents,
 	}).Debugln("Scanned TransactionBatchExecuted events from Ethereum")
 
+	var valsetUpdatedEvents []*wrappers.PeggyValsetUpdatedEvent
+	{
+		iter, err := peggyFilterer.FilterValsetUpdatedEvent(&bind.FilterOpts{
+			Start: startingBlock,
+			End:   &currentBlock,
+		}, nil)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"start": startingBlock,
+				"end":   currentBlock,
+			}).Errorln("failed to scan past ValsetUpdatedEvent events from Ethereum")
+
+			if !isUnknownBlockErr(err) {
+				err = errors.Wrap(err, "failed to scan past ValsetUpdatedEvent events from Ethereum")
+				return 0, err
+			} else if iter == nil {
+				return 0, errors.New("no iterator returned")
+			}
+		}
+
+		for iter.Next() {
+			valsetUpdatedEvents = append(valsetUpdatedEvents, iter.Event)
+		}
+
+		iter.Close()
+	}
+
+	log.WithFields(log.Fields{
+		"start":         startingBlock,
+		"end":           currentBlock,
+		"valsetUpdates": valsetUpdatedEvents,
+	}).Debugln("Scanned ValsetUpdatedEvents events from Ethereum")
+
 	// note that starting block overlaps with our last che	cked block, because we have to deal with
 	// the possibility that the relayer was killed after relaying only one of multiple events in a single
 	// block, so we also need this routine so make sure we don't send in the first event in this hypothetical
@@ -119,10 +152,11 @@ func (s *peggyOrchestrator) CheckForEvents(
 
 	deposits := filterSendToCosmosEventsByNonce(sendToCosmosEvents, lastClaimEvent.EthereumEventNonce)
 	withdraws := filterTransactionBatchExecutedEventsByNonce(transactionBatchExecutedEvents, lastClaimEvent.EthereumEventNonce)
+	valsetUpdates := filterValsetUpdateEventsByNonce(valsetUpdatedEvents, lastClaimEvent.EthereumEventNonce)
 
-	if len(deposits) > 0 || len(withdraws) > 0 {
+	if len(deposits) > 0 || len(withdraws) > 0 || len(valsetUpdates) > 0 {
 		// todo get eth chain id from the chain
-		if err := s.peggyBroadcastClient.SendEthereumClaims(ctx, deposits, withdraws); err != nil {
+		if err := s.peggyBroadcastClient.SendEthereumClaims(ctx, lastClaimEvent.EthereumEventNonce, deposits, withdraws, valsetUpdates); err != nil {
 			err = errors.Wrap(err, "failed to send ethereum claims to Cosmos chain")
 			return 0, err
 		}
@@ -158,6 +192,20 @@ func filterTransactionBatchExecutedEventsByNonce(
 		}
 	}
 
+	return res
+}
+
+func filterValsetUpdateEventsByNonce(
+	events []*wrappers.PeggyValsetUpdatedEvent,
+	nonce uint64,
+) []*wrappers.PeggyValsetUpdatedEvent {
+	res := make([]*wrappers.PeggyValsetUpdatedEvent, 0, len(events))
+
+	for _, ev := range events {
+		if ev.EventNonce.Uint64() > nonce {
+			res = append(res, ev)
+		}
+	}
 	return res
 }
 

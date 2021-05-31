@@ -8,8 +8,9 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/peggo/modules/peggy/types"
-	"github.com/InjectiveLabs/peggo/orchestrator/cosmos/client"
+	"github.com/InjectiveLabs/sdk-go/chain/client"
+	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
+
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/keystore"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
 	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
@@ -48,8 +49,10 @@ type PeggyBroadcastClient interface {
 
 	SendEthereumClaims(
 		ctx context.Context,
+		lastClaimEvent uint64,
 		deposits []*wrappers.PeggySendToCosmosEvent,
 		withdraws []*wrappers.PeggyTransactionBatchExecutedEvent,
+		valsetUpdates []*wrappers.PeggyValsetUpdatedEvent,
 	) error
 
 	// SendToEth broadcasts a Tx that tokens from Cosmos to Ethereum.
@@ -154,7 +157,6 @@ func (s *peggyBroadcastClient) SendValsetConfirm(
 		err = errors.New("failed to sign validator address")
 		return err
 	}
-
 	// MsgValsetConfirm
 	// this is the message sent by the validators when they wish to submit their
 	// signatures over the validator set at a given block height. A validator must
@@ -292,51 +294,90 @@ func (s *peggyBroadcastClient) sendWithdrawClaims(
 	return nil
 }
 
+func (s *peggyBroadcastClient) sendValsetUpdateClaims(
+	ctx context.Context,
+	valsetUpdate *wrappers.PeggyValsetUpdatedEvent,
+) error {
+
+	log.WithFields(log.Fields{
+		"EventNonce":   valsetUpdate.EventNonce.Uint64(),
+		"ValsetNonce":  valsetUpdate.NewValsetNonce.Uint64(),
+		"_validators":  valsetUpdate.Validators,
+		"_powers":      valsetUpdate.Powers,
+		"rewardAmount": valsetUpdate.RewardAmount,
+		"rewardToken":  valsetUpdate.RewardToken.Hex(),
+	}).Infoln("Oracle observed a valsetUpdate event. Sending MsgValsetUpdatedClaim")
+
+	members := make([]*types.BridgeValidator, len(valsetUpdate.Validators))
+	for i, val := range valsetUpdate.Validators {
+		members[i] = &types.BridgeValidator{
+			EthereumAddress: val.Hex(),
+			Power:           valsetUpdate.Powers[i].Uint64(),
+		}
+	}
+
+	msg := &types.MsgValsetUpdatedClaim{
+		EventNonce:   valsetUpdate.EventNonce.Uint64(),
+		ValsetNonce:  valsetUpdate.NewValsetNonce.Uint64(),
+		BlockHeight:  valsetUpdate.Raw.BlockNumber,
+		RewardAmount: sdk.NewIntFromBigInt(valsetUpdate.RewardAmount),
+		RewardToken:  valsetUpdate.RewardToken.Hex(),
+		Members:      members,
+		Orchestrator: s.AccFromAddress().String(),
+	}
+
+	if err := s.broadcastClient.QueueBroadcastMsg(msg); err != nil {
+		metrics.ReportFuncError(s.svcTags)
+		log.WithError(err).Errorln("broadcasting MsgValsetUpdatedClaim failed")
+		return err
+	}
+
+	return nil
+}
+
 func (s *peggyBroadcastClient) SendEthereumClaims(
 	ctx context.Context,
+	lastClaimEvent uint64,
 	deposits []*wrappers.PeggySendToCosmosEvent,
 	withdraws []*wrappers.PeggyTransactionBatchExecutedEvent,
+	valsetUpdates []*wrappers.PeggyValsetUpdatedEvent,
 ) error {
 	metrics.ReportFuncCall(s.svcTags)
 	doneFn := metrics.ReportFuncTiming(s.svcTags)
 	defer doneFn()
+	totalClaimEvents := len(deposits) + len(withdraws) + len(valsetUpdates)
+	var count, i, j, k int
 
-	// Merge sort deposits, withdraws by nonce
-	i, j := 0, 0
-	for i < len(deposits) && j < len(withdraws) {
-		if deposits[i].EventNonce.Uint64() < withdraws[j].EventNonce.Uint64() {
+	// Individual arrays (deposits, withdraws, valsetUpdates) are sorted.
+	// Broadcast claim events sequentially starting with eventNonce = lastClaimEvent + 1.
+	for count < totalClaimEvents {
+		if i < len(deposits) && deposits[i].EventNonce.Uint64() == lastClaimEvent+1 {
+			// send deposit
 			if err := s.sendDepositClaims(ctx, deposits[i]); err != nil {
 				metrics.ReportFuncError(s.svcTags)
 				log.WithError(err).Errorln("broadcasting MsgDepositClaim failed")
 				return err
 			}
 			i++
-		} else {
+		} else if j < len(withdraws) && withdraws[j].EventNonce.Uint64() == lastClaimEvent+1 {
+			// send withdraw claim
 			if err := s.sendWithdrawClaims(ctx, withdraws[j]); err != nil {
 				metrics.ReportFuncError(s.svcTags)
-				log.WithError(err).Errorln("broadcasting MsgDepositClaim failed")
+				log.WithError(err).Errorln("broadcasting MsgWithdrawClaim failed")
 				return err
 			}
 			j++
+		} else if k < len(valsetUpdates) && valsetUpdates[k].EventNonce.Uint64() == lastClaimEvent+1 {
+			// send valset update claim
+			if err := s.sendValsetUpdateClaims(ctx, valsetUpdates[k]); err != nil {
+				metrics.ReportFuncError(s.svcTags)
+				log.WithError(err).Errorln("broadcasting MsgValsetUpdateClaim failed")
+				return err
+			}
+			k++
 		}
-	}
-
-	for i < len(deposits) {
-		if err := s.sendDepositClaims(ctx, deposits[i]); err != nil {
-			metrics.ReportFuncError(s.svcTags)
-			log.WithError(err).Errorln("broadcasting MsgDepositClaim failed")
-			return err
-		}
-		i++
-	}
-
-	for j < len(withdraws) {
-		if err := s.sendWithdrawClaims(ctx, withdraws[j]); err != nil {
-			metrics.ReportFuncError(s.svcTags)
-			log.WithError(err).Errorln("broadcasting MsgDepositClaim failed")
-			return err
-		}
-		j++
+		count = count + 1
+		lastClaimEvent = lastClaimEvent + 1
 	}
 	return nil
 }
