@@ -184,10 +184,8 @@ func checkValsetSigsAndRepack(
 		mPower := big.NewInt(0).SetUint64(m.Power)
 		if sig, ok := signerToSig[m.EthereumAddress]; ok && sig.EthAddress == m.EthereumAddress {
 			powerOfGoodSigs.Add(powerOfGoodSigs, mPower)
-
 			validators = append(validators, common.HexToAddress(m.EthereumAddress))
 			powers = append(powers, mPower)
-
 			sigV, sigR, sigS := sigToVRS(sig.Signature)
 			v = append(v, sigV)
 			r = append(r, sigR)

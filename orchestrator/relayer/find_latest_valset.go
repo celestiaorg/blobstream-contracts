@@ -8,8 +8,8 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/util"
+	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
@@ -89,7 +89,7 @@ func (s *peggyRelayer) FindLatestValset(ctx context.Context) (*types.Valset, err
 			valset := &types.Valset{
 				Nonce:        event.NewValsetNonce.Uint64(),
 				Members:      make([]*types.BridgeValidator, 0, len(event.Powers)),
-				RewardAmount: sdk.NewIntFromBigInt(event.NewValsetNonce),
+				RewardAmount: sdk.NewIntFromBigInt(event.RewardAmount),
 				RewardToken:  event.RewardToken.Hex(),
 			}
 

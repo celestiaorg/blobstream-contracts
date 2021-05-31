@@ -9,9 +9,9 @@ import (
 	"github.com/xlab/closer"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
 	"github.com/InjectiveLabs/sdk-go/chain/client"
+	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 )
 
 // txCmdSubset contains actions that can sign and send messages to Cosmos module
@@ -142,7 +142,6 @@ func registerEthKeyCmd(cmd *cli.Cmd) {
 
 		clientCtx = clientCtx.WithClient(tmRPC)
 		daemonClient, err := client.NewCosmosClient(clientCtx, *cosmosGRPC, client.OptionGasPrices(*cosmosGasPrices))
-
 		if err != nil {
 			log.WithError(err).WithFields(log.Fields{
 				"endpoint": *cosmosGRPC,

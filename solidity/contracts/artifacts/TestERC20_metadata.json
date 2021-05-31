@@ -1,6 +1,6 @@
 {
 	"compiler": {
-		"version": "0.8.2+commit.661d1103"
+		"version": "0.8.4+commit.c7e474f2"
 	},
 	"language": "Solidity",
 	"output": {
@@ -375,10 +375,10 @@
 			]
 		},
 		"localhost/contracts/TestERC20.sol": {
-			"keccak256": "0xb6c69d58ace126556c9f5b6618df746f0ca1f87819cc927a8af839509efe4035",
+			"keccak256": "0x3ba6e260e8e328198fe217eb561bb8d06d5010b58d91f06b5cc4354620822885",
 			"urls": [
-				"bzz-raw://427dbe77f5542971828848d638ee35e75a81844e0096e5251d9a4587a7c28296",
-				"dweb:/ipfs/QmdKq7ebU4LrTXrLajh5GFiqzGxM3WKTuEDGRLGqCMmNfo"
+				"bzz-raw://eb95b701938469effe593108a03e345358af6917d21829f04890de9bff502908",
+				"dweb:/ipfs/QmPrDpUQg5jSSXnyPCNxNVaT5Mw1Lpm7vwWNM7DW4guP1y"
 			]
 		}
 	},

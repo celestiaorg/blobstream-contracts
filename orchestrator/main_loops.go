@@ -322,6 +322,10 @@ func (s *peggyOrchestrator) BatchRequesterLoop(ctx context.Context) (err error) 
 }
 
 func (s *peggyOrchestrator) CheckFeeThreshod(erc20Contract common.Address, totalFee cosmtypes.Int, minFeeInUSD float64) bool {
+	if minFeeInUSD == 0 {
+		return true
+	}
+
 	tokenPriceInUSD, err := s.priceFeeder.QueryUSDPrice(erc20Contract)
 	if err != nil {
 		return false

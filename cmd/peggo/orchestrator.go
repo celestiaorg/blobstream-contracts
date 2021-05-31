@@ -61,9 +61,6 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		ethPrivKey     *string
 		ethUseLedger   *bool
 
-		// ERC20 Contract Mapping
-		erc20ContractMapping *[]string
-
 		// Metrics
 		statsdPrefix   *string
 		statsdAddr     *string
@@ -132,8 +129,6 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		cmd,
 		&minBatchFeeUSD,
 	)
-
-	erc20ContractMapping = cmd.StringsArg("ERC20_MAPPING", []string{}, "Mapping between contract_address:cosmos_denom for ERC20 tokens")
 
 	cmd.Action = func() {
 		// ensure a clean exit
@@ -225,7 +220,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		peggyAddress := ethcmn.HexToAddress(peggyParams.BridgeEthereumAddress)
 		injAddress := ethcmn.HexToAddress(peggyParams.CosmosCoinErc20Contract)
 
-		erc20ContractMapping := parseERC20ContractMapping(*erc20ContractMapping)
+		erc20ContractMapping := make(map[ethcmn.Address]string)
 		erc20ContractMapping[injAddress] = ctypes.InjectiveCoin
 
 		evmRPC, err := rpc.Dial(*ethNodeRPC)
@@ -244,6 +239,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 
 		relayer := relayer.NewPeggyRelayer(cosmosQueryClient, peggyContract, *relayValsets, *relayBatches)
 		coingeckoFeed := coingecko.NewCoingeckoPriceFeed(100, &coingecko.Config{})
+
 		svc := orchestrator.NewPeggyOrchestrator(
 			cosmosQueryClient,
 			peggyBroadcaster,
