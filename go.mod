@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/InjectiveLabs/etherman v1.7.0
-	github.com/InjectiveLabs/sdk-go v1.20.13-alpha
+	github.com/InjectiveLabs/sdk-go v1.21.0
 	github.com/alexcesaro/statsd v2.0.0+incompatible
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/cosmos/cosmos-sdk v0.43.0-beta1
@@ -30,5 +30,3 @@ require (
 )
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-
-//replace github.com/InjectiveLabs/sdk-go => /Users/achon/go/src/github.com/InjectiveLabs/sdk-go
