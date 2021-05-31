@@ -297,8 +297,7 @@ func (s *peggyOrchestrator) BatchRequesterLoop(ctx context.Context) (err error) 
 							denom = cosmosDenom
 						} else {
 							// peggy denom
-							// TODO: @venkatesh check
-							denom = tokenAddr.Hex()
+							denom = types.PeggyDenomString(tokenAddr)
 						}
 
 						// send batch request only if fee threshold is met.
