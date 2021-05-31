@@ -17,6 +17,7 @@ import (
 	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 
 	"github.com/InjectiveLabs/peggo/orchestrator"
+	"github.com/InjectiveLabs/peggo/orchestrator/coingecko"
 	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
 	"github.com/InjectiveLabs/peggo/orchestrator/cosmos/tmclient"
 	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/committer"
@@ -234,6 +235,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		cosmosQueryClient := cosmos.NewPeggyQueryClient(peggyQuerier)
 
 		relayer := relayer.NewPeggyRelayer(cosmosQueryClient, peggyContract, *relayValsets, *relayBatches)
+		coingeckoFeed := coingecko.NewCoingeckoPriceFeed(100, &coingecko.Config{})
 		svc := orchestrator.NewPeggyOrchestrator(
 			cosmosQueryClient,
 			peggyBroadcaster,
@@ -245,6 +247,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 			parseERC20ContractMapping(*erc20ContractMapping),
 			relayer,
 			*minBatchFeeUSD,
+			coingeckoFeed,
 		)
 
 		ctx, cancelFn := context.WithCancel(context.Background())

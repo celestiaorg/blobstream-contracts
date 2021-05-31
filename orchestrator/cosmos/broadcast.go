@@ -347,6 +347,9 @@ func (s *peggyBroadcastClient) SendEthereumClaims(
 	defer doneFn()
 	totalClaimEvents := len(deposits) + len(withdraws) + len(valsetUpdates)
 	var count, i, j, k int
+
+	// Individual arrays (deposits, withdraws, valsetUpdates) are sorted.
+	// Broadcast claim events sequentially starting with eventNonce = lastClaimEvent + 1.
 	for count < totalClaimEvents {
 		if i < len(deposits) && deposits[i].EventNonce.Uint64() == lastClaimEvent+1 {
 			// send deposit

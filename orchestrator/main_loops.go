@@ -9,14 +9,15 @@ import (
 
 	"github.com/avast/retry-go"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/shopspring/decimal"
 	log "github.com/xlab/suplog"
 
 	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 
-	"github.com/InjectiveLabs/peggo/orchestrator/coingecko"
 	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
 	"github.com/InjectiveLabs/peggo/orchestrator/loops"
 
+	cosmtypes "github.com/cosmos/cosmos-sdk/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 )
 
@@ -301,7 +302,7 @@ func (s *peggyOrchestrator) BatchRequesterLoop(ctx context.Context) (err error) 
 						}
 
 						// send batch request only if fee threshold is met.
-						if coingecko.CheckFeeThreshod(tokenAddr, unbatchedToken.TotalFees, s.minBatchFeeUSD) {
+						if s.CheckFeeThreshod(tokenAddr, unbatchedToken.TotalFees, s.minBatchFeeUSD) {
 							logger.WithFields(log.Fields{"tokenContract": tokenAddr, "denom": denom}).Infoln("sending batch request")
 							_ = s.peggyBroadcastClient.SendRequestBatch(ctx, denom)
 						}
@@ -318,6 +319,22 @@ func (s *peggyOrchestrator) BatchRequesterLoop(ctx context.Context) (err error) 
 		})
 		return pg.Wait()
 	})
+}
+
+func (s *peggyOrchestrator) CheckFeeThreshod(erc20Contract common.Address, totalFee cosmtypes.Int, minFeeInUSD float64) bool {
+	tokenPriceInUSD, err := s.priceFeeder.QueryUSDPrice(erc20Contract)
+	if err != nil {
+		return false
+	}
+
+	tokenPriceInUSDDec := decimal.NewFromFloat(tokenPriceInUSD)
+	totalFeeInUSDDec := decimal.NewFromBigInt(totalFee.BigInt(), -18).Mul(tokenPriceInUSDDec)
+	minFeeInUSDDec := decimal.NewFromFloat(minFeeInUSD)
+
+	if totalFeeInUSDDec.GreaterThan(minFeeInUSDDec) {
+		return true
+	}
+	return false
 }
 
 func (s *peggyOrchestrator) RelayerMainLoop(ctx context.Context) (err error) {
