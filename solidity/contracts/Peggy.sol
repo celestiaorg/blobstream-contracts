@@ -416,6 +416,8 @@ contract Peggy is Initializable, OwnableUpgradeable, Pausable, ReentrancyGuard {
     address[] calldata _validators,
     uint256[] memory _powers
   ) external initializer {
+    __Context_init_unchained();
+    __Ownable_init_unchained();
     // CHECKS
 
     // Check that validators, powers, and signatures (v,r,s) set is well-formed
