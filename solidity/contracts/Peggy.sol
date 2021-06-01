@@ -78,6 +78,64 @@ contract Peggy is Initializable, OwnableUpgradeable, Pausable, ReentrancyGuard {
     uint256[] _powers
   );
 
+  function initialize(
+    // A unique identifier for this peggy instance to use in signatures
+    bytes32 _peggyId,
+    // How much voting power is needed to approve operations
+    uint256 _powerThreshold,
+    // The validator set, not in valset args format since many of it's
+    // arguments would never be used in this case
+    address[] calldata _validators,
+    uint256[] memory _powers
+  ) external initializer {
+    __Context_init_unchained();
+    __Ownable_init_unchained();
+    // CHECKS
+
+    // Check that validators, powers, and signatures (v,r,s) set is well-formed
+    require(
+      _validators.length == _powers.length,
+      "Malformed current validator set"
+    );
+
+    // Check cumulative power to ensure the contract has sufficient power to actually
+    // pass a vote
+    uint256 cumulativePower = 0;
+    for (uint256 i = 0; i < _powers.length; i++) {
+      cumulativePower = cumulativePower + _powers[i];
+      if (cumulativePower > _powerThreshold) {
+        break;
+      }
+    }
+
+    require(
+      cumulativePower > _powerThreshold,
+      "Submitted validator set signatures do not have enough power."
+    );
+
+    ValsetArgs memory _valset;
+    _valset = ValsetArgs(_validators, _powers, 0, 0, address(0));
+
+    bytes32 newCheckpoint = makeCheckpoint(_valset, _peggyId);
+
+    // ACTIONS
+
+    state_peggyId = _peggyId;
+    state_powerThreshold = _powerThreshold;
+    state_lastValsetCheckpoint = newCheckpoint;
+    state_lastEventNonce = state_lastEventNonce + 1;
+    // LOGS
+
+    emit ValsetUpdatedEvent(
+      state_lastValsetNonce,
+      state_lastEventNonce,
+      0,
+      address(0),
+      _validators,
+      _powers
+    );
+  }
+
   function lastBatchNonce(address _erc20Address) public view returns (uint256) {
     return state_lastBatchNonces[_erc20Address];
   }
@@ -403,64 +461,6 @@ contract Peggy is Initializable, OwnableUpgradeable, Pausable, ReentrancyGuard {
       _symbol,
       _decimals,
       state_lastEventNonce
-    );
-  }
-
-  function initialize(
-    // A unique identifier for this peggy instance to use in signatures
-    bytes32 _peggyId,
-    // How much voting power is needed to approve operations
-    uint256 _powerThreshold,
-    // The validator set, not in valset args format since many of it's
-    // arguments would never be used in this case
-    address[] calldata _validators,
-    uint256[] memory _powers
-  ) external initializer {
-    __Context_init_unchained();
-    __Ownable_init_unchained();
-    // CHECKS
-
-    // Check that validators, powers, and signatures (v,r,s) set is well-formed
-    require(
-      _validators.length == _powers.length,
-      "Malformed current validator set"
-    );
-
-    // Check cumulative power to ensure the contract has sufficient power to actually
-    // pass a vote
-    uint256 cumulativePower = 0;
-    for (uint256 i = 0; i < _powers.length; i++) {
-      cumulativePower = cumulativePower + _powers[i];
-      if (cumulativePower > _powerThreshold) {
-        break;
-      }
-    }
-
-    require(
-      cumulativePower > _powerThreshold,
-      "Submitted validator set signatures do not have enough power."
-    );
-
-    ValsetArgs memory _valset;
-    _valset = ValsetArgs(_validators, _powers, 0, 0, address(0));
-
-    bytes32 newCheckpoint = makeCheckpoint(_valset, _peggyId);
-
-    // ACTIONS
-
-    state_peggyId = _peggyId;
-    state_powerThreshold = _powerThreshold;
-    state_lastValsetCheckpoint = newCheckpoint;
-    state_lastEventNonce = state_lastEventNonce + 1;
-    // LOGS
-
-    emit ValsetUpdatedEvent(
-      state_lastValsetNonce,
-      state_lastEventNonce,
-      0,
-      address(0),
-      _validators,
-      _powers
     );
   }
 
