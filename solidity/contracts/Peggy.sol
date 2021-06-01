@@ -28,6 +28,10 @@ struct ValsetArgs {
   address rewardToken;
 }
 
+// Don't change the order of state for working upgrades.
+// AND BE AWARE OF INHERITANCE VARIABLES!
+// Inherited contracts contain storage slots and must be accounted for in any upgrades
+// always test an exact upgrade on testnet and localhost before mainnet upgrades.
 contract Peggy is Initializable, OwnableUpgradeable, Pausable, ReentrancyGuard {
   using SafeERC20 for IERC20;
 
