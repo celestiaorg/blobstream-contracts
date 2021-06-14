@@ -2,6 +2,7 @@ package cosmos
 
 import (
 	"context"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
@@ -131,12 +132,14 @@ func (s *peggyBroadcastClient) UpdatePeggyOrchestratorAddresses(
 		Orchestrator: orchestratorAddr.String(),
 	}
 
-	_, err := s.broadcastClient.SyncBroadcastMsg(msg)
+	res, err := s.broadcastClient.SyncBroadcastMsg(msg)
+	fmt.Println("Response of set eth address", "res", res)
 	if err != nil {
 		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "broadcasting MsgSetOrchestratorAddresses failed")
 		return err
 	}
+
 	return nil
 }
 
