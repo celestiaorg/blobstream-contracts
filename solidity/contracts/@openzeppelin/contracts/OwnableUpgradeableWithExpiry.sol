@@ -16,7 +16,7 @@ import "./utils/Initializable.sol";
  * `onlyOwner`, which can be applied to your functions to restrict their use to
  * the owner.
  */
-abstract contract OwnableUpgradeable is Initializable, ContextUpgradeable {
+abstract contract OwnableUpgradeableWithExpiry is Initializable, ContextUpgradeable {
     address private _owner;
     uint256 private _deployTimestamp;
 

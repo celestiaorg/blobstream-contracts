@@ -10,7 +10,7 @@ import "./@openzeppelin/contracts/utils/Pausable.sol";
 import "./@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "./CosmosToken.sol";
-import "./@openzeppelin/contracts/OwnableUpgradeable.sol";
+import "./@openzeppelin/contracts/OwnableUpgradeableWithExpiry.sol";
 
 // This is used purely to avoid stack too deep errors
 // represents everything about a given validator set
@@ -32,7 +32,7 @@ struct ValsetArgs {
 // AND BE AWARE OF INHERITANCE VARIABLES!
 // Inherited contracts contain storage slots and must be accounted for in any upgrades
 // always test an exact upgrade on testnet and localhost before mainnet upgrades.
-contract Peggy is Initializable, OwnableUpgradeable, Pausable, ReentrancyGuard {
+contract Peggy is Initializable, OwnableUpgradeableWithExpiry, Pausable, ReentrancyGuard {
   using SafeERC20 for IERC20;
 
   // These are updated often

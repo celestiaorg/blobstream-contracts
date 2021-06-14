@@ -15,7 +15,7 @@ import "./utils/Context.sol";
  * `onlyOwner`, which can be applied to your functions to restrict their use to
  * the owner.
  */
-abstract contract Ownable is Context {
+abstract contract OwnableWithExpiry is Context {
     address private _owner;
     uint256 private _deployTimestamp;
 
