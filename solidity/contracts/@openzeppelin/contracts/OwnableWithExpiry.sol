@@ -15,8 +15,9 @@ import "./utils/Context.sol";
  * `onlyOwner`, which can be applied to your functions to restrict their use to
  * the owner.
  */
-abstract contract Ownable is Context {
+abstract contract OwnableWithExpiry is Context {
     address private _owner;
+    uint256 private _deployTimestamp;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
@@ -26,6 +27,7 @@ abstract contract Ownable is Context {
     constructor () {
         address msgSender = _msgSender();
         _owner = msgSender;
+        _deployTimestamp = block.timestamp;
         emit OwnershipTransferred(address(0), msgSender);
     }
 
@@ -51,18 +53,47 @@ abstract contract Ownable is Context {
      * NOTE: Renouncing ownership will leave the contract without an owner,
      * thereby removing any functionality that is only available to the owner.
      */
-    function renounceOwnership() public virtual onlyOwner {
-        emit OwnershipTransferred(_owner, address(0));
-        _owner = address(0);
+    function renounceOwnership() external virtual onlyOwner {
+        _renounceOwnership();
+    }
+
+    /**
+     * @dev Get the timestamp of ownership expiry.
+     * @return The timestamp of ownership expiry.
+     */
+    function getOwnershipExpiryTimestamp() public view returns (uint256) {
+       return _deployTimestamp + 52 weeks;
+    }
+
+    /**
+     * @dev Check if the contract ownership is expired.
+     * @return True if the contract ownership is expired.
+     */
+    function isOwnershipExpired() public view returns (bool) {
+       return block.timestamp > getOwnershipExpiryTimestamp();
+    }
+
+     /**
+     * @dev Leaves the contract without owner. It will not be possible to call
+     * `onlyOwner` functions anymore. Can only be called after ownership is expired.
+     */
+    function renounceOwnershipAfterExpiry() external {
+        require(isOwnershipExpired(), "Ownership not yet expired");
+        _renounceOwnership();
     }
 
     /**
      * @dev Transfers ownership of the contract to a new account (`newOwner`).
      * Can only be called by the current owner.
      */
-    function transferOwnership(address newOwner) public virtual onlyOwner {
+    function transferOwnership(address newOwner) external virtual onlyOwner {
         require(newOwner != address(0), "Ownable: new owner is the zero address");
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
+    }
+
+    function _renounceOwnership() private {
+        emit OwnershipTransferred(_owner, address(0));
+        _owner = address(0);
     }
 }
