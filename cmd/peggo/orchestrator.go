@@ -74,6 +74,8 @@ func orchestratorCmd(cmd *cli.Cmd) {
 
 		// Batch requester config
 		minBatchFeeUSD *float64
+
+		coingeckoApi *string
 	)
 
 	initCosmosOptions(
@@ -128,6 +130,11 @@ func orchestratorCmd(cmd *cli.Cmd) {
 	initBatchRequesterOptions(
 		cmd,
 		&minBatchFeeUSD,
+	)
+
+	initCoingeckoOptions(
+		cmd,
+		&coingeckoApi,
 	)
 
 	cmd.Action = func() {
@@ -238,7 +245,11 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		orShutdown(err)
 
 		relayer := relayer.NewPeggyRelayer(cosmosQueryClient, peggyContract, *relayValsets, *relayBatches)
-		coingeckoFeed := coingecko.NewCoingeckoPriceFeed(100, &coingecko.Config{})
+
+		coingeckoConfig := coingecko.Config{
+			BaseURL: *coingeckoApi,
+		}
+		coingeckoFeed := coingecko.NewCoingeckoPriceFeed(100, &coingeckoConfig)
 
 		svc := orchestrator.NewPeggyOrchestrator(
 			cosmosQueryClient,

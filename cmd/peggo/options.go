@@ -275,3 +275,16 @@ func initBatchRequesterOptions(
 		Value:  float64(23.3),
 	})
 }
+
+// initCoingeckoOptions sets options for coingecko.
+func initCoingeckoOptions(
+	cmd *cli.Cmd,
+	baseUrl **string,
+) {
+	*baseUrl = cmd.String(cli.StringOpt{
+		Name:   "coingecko_api",
+		Desc:   "Specify HTTP endpoint for coingecko api.",
+		EnvVar: "PEGGO_COINGECKO_API",
+		Value:  "https://api.coingecko.com/api/v3",
+	})
+}
