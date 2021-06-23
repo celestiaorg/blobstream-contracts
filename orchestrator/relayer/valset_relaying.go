@@ -58,7 +58,7 @@ func (s *peggyRelayer) RelayValsets(ctx context.Context) error {
 
 		// Check if latestCosmosConfirmed already submitted by other validators in mean time
 		if latestCosmosConfirmed.Nonce > latestEthereumValsetNonce.Uint64() {
-			log.Infoln("Detected latest cosmos valset nonce %d, but latest valset on Ethereum is %d. Sending update to Ethereum",
+			log.Infof("Detected latest cosmos valset nonce %d, but latest valset on Ethereum is %d. Sending update to Ethereum\n",
 				latestCosmosConfirmed.Nonce, latestEthereumValsetNonce.Uint64())
 
 			// Send Valset Update to Ethereum
