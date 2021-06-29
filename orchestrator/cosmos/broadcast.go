@@ -3,6 +3,7 @@ package cosmos
 import (
 	"context"
 	"fmt"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
@@ -354,6 +355,7 @@ func (s *peggyBroadcastClient) SendEthereumClaims(
 	// Individual arrays (deposits, withdraws, valsetUpdates) are sorted.
 	// Broadcast claim events sequentially starting with eventNonce = lastClaimEvent + 1.
 	for count < totalClaimEvents {
+		time.Sleep(100 * time.Millisecond)
 		if i < len(deposits) && deposits[i].EventNonce.Uint64() == lastClaimEvent+1 {
 			// send deposit
 			if err := s.sendDepositClaims(ctx, deposits[i]); err != nil {

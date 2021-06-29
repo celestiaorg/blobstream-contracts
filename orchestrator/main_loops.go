@@ -21,7 +21,7 @@ import (
 	ethcmn "github.com/ethereum/go-ethereum/common"
 )
 
-const defaultLoopDur = 30 * time.Second
+const defaultLoopDur = 60 * time.Second
 
 // Start combines the all major roles required to make
 // up the Orchestrator, all of these are async loops.
