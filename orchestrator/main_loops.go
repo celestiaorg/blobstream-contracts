@@ -55,6 +55,13 @@ func (s *peggyOrchestrator) EthOracleMainLoop(ctx context.Context) (err error) {
 
 	if err := retry.Do(func() (err error) {
 		lastCheckedBlock, err = s.GetLastCheckedBlock(ctx)
+		if lastCheckedBlock == 0 {
+			peggyParams, err := s.cosmosQueryClient.PeggyParams(ctx)
+			if err != nil {
+				log.WithError(err).Fatalln("failed to query peggy params, is injectived running?")
+			}
+			lastCheckedBlock = peggyParams.BridgeContractStartHeight
+		}
 		return
 	}, retry.Context(ctx), retry.OnRetry(func(n uint, err error) {
 		logger.WithError(err).Warningf("failed to get last checked block, will retry (%d)", n)
