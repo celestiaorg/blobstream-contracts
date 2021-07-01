@@ -4,8 +4,6 @@ import (
 	"context"
 )
 
-const defaultBlocksToSearch = 2000
-
 // GetLastCheckedBlock retrieves the last claim event this oracle has relayed to Cosmos.
 func (s *peggyOrchestrator) GetLastCheckedBlock(ctx context.Context) (uint64, error) {
 	lastClaimEvent, err := s.cosmosQueryClient.LastClaimEventByAddr(ctx, s.peggyBroadcastClient.AccFromAddress())
