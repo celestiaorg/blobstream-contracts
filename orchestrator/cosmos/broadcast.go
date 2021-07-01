@@ -267,7 +267,7 @@ func (s *peggyBroadcastClient) sendDepositClaims(
 	} else {
 		log.WithFields(log.Fields{
 			"event_nonce": deposit.EventNonce.String(),
-			"txResponse":  txResponse,
+			"txHash":      txResponse.TxHash,
 		}).Infoln("Oracle sent deposit event succesfully")
 	}
 
@@ -302,7 +302,7 @@ func (s *peggyBroadcastClient) sendWithdrawClaims(
 	} else {
 		log.WithFields(log.Fields{
 			"event_nonce": withdraw.EventNonce.String(),
-			"txResponse":  txResponse,
+			"txHash":      txResponse.TxHash,
 		}).Infoln("Oracle sent Withdraw event succesfully")
 	}
 
@@ -348,7 +348,7 @@ func (s *peggyBroadcastClient) sendValsetUpdateClaims(
 	} else {
 		log.WithFields(log.Fields{
 			"event_nonce": valsetUpdate.EventNonce.String(),
-			"txResponse":  txResponse,
+			"txHash":      txResponse.TxHash,
 		}).Infoln("Oracle sent ValsetUpdate event succesfully")
 	}
 
