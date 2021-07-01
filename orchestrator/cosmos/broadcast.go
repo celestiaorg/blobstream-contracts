@@ -260,10 +260,15 @@ func (s *peggyBroadcastClient) sendDepositClaims(
 		Orchestrator:   s.broadcastClient.FromAddress().String(),
 	}
 
-	if err := s.broadcastClient.QueueBroadcastMsg(msg); err != nil {
+	if txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg); err != nil {
 		metrics.ReportFuncError(s.svcTags)
 		log.WithError(err).Errorln("broadcasting MsgDepositClaim failed")
 		return err
+	} else {
+		log.WithFields(log.Fields{
+			"event_nonce": deposit.EventNonce.String(),
+			"txHash":      txResponse.TxHash,
+		}).Infoln("Oracle sent deposit event succesfully")
 	}
 
 	return nil
@@ -289,10 +294,16 @@ func (s *peggyBroadcastClient) sendWithdrawClaims(
 		TokenContract: withdraw.Token.Hex(),
 		Orchestrator:  s.AccFromAddress().String(),
 	}
-	if err := s.broadcastClient.QueueBroadcastMsg(msg); err != nil {
+
+	if txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg); err != nil {
 		metrics.ReportFuncError(s.svcTags)
 		log.WithError(err).Errorln("broadcasting MsgWithdrawClaim failed")
 		return err
+	} else {
+		log.WithFields(log.Fields{
+			"event_nonce": withdraw.EventNonce.String(),
+			"txHash":      txResponse.TxHash,
+		}).Infoln("Oracle sent Withdraw event succesfully")
 	}
 
 	return nil
@@ -330,10 +341,15 @@ func (s *peggyBroadcastClient) sendValsetUpdateClaims(
 		Orchestrator: s.AccFromAddress().String(),
 	}
 
-	if err := s.broadcastClient.QueueBroadcastMsg(msg); err != nil {
+	if txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg); err != nil {
 		metrics.ReportFuncError(s.svcTags)
 		log.WithError(err).Errorln("broadcasting MsgValsetUpdatedClaim failed")
 		return err
+	} else {
+		log.WithFields(log.Fields{
+			"event_nonce": valsetUpdate.EventNonce.String(),
+			"txHash":      txResponse.TxHash,
+		}).Infoln("Oracle sent ValsetUpdate event succesfully")
 	}
 
 	return nil
@@ -355,7 +371,6 @@ func (s *peggyBroadcastClient) SendEthereumClaims(
 	// Individual arrays (deposits, withdraws, valsetUpdates) are sorted.
 	// Broadcast claim events sequentially starting with eventNonce = lastClaimEvent + 1.
 	for count < totalClaimEvents {
-		time.Sleep(100 * time.Millisecond)
 		if i < len(deposits) && deposits[i].EventNonce.Uint64() == lastClaimEvent+1 {
 			// send deposit
 			if err := s.sendDepositClaims(ctx, deposits[i]); err != nil {
@@ -383,6 +398,11 @@ func (s *peggyBroadcastClient) SendEthereumClaims(
 		}
 		count = count + 1
 		lastClaimEvent = lastClaimEvent + 1
+
+		// Considering blockTime=2.8s on Injective chain, Adding Sleep to make sure new event is
+		// sent only after previous event is executed successfully.
+		// Otherwise it will through `non contiguous event nonce` failing CheckTx.
+		time.Sleep(3 * time.Second)
 	}
 	return nil
 }

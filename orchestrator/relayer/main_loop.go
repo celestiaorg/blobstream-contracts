@@ -10,7 +10,7 @@ import (
 	"github.com/InjectiveLabs/peggo/orchestrator/loops"
 )
 
-const defaultLoopDur = 1 * time.Minute
+const defaultLoopDur = 5 * time.Minute
 
 func (s *peggyRelayer) Start(ctx context.Context) error {
 	logger := log.WithField("loop", "RelayerMainLoop")

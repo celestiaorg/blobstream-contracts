@@ -94,7 +94,7 @@ func (s *peggyOrchestrator) EthOracleMainLoop(ctx context.Context) (err error) {
 				2. if validator was in UnBonding state, the claims broadcasted in last iteration are failed.
 				3. if infura call failed while filtering events, the peggo missed to broadcast claim events occured in last iteration.
 		**/
-		if time.Since(lastResync) >= 6*time.Hour {
+		if time.Since(lastResync) >= 10*time.Hour {
 			if err := retry.Do(func() (err error) {
 				lastCheckedBlock, err = s.GetLastCheckedBlock(ctx)
 				return
