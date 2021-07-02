@@ -20,6 +20,7 @@ import (
 // can be used to submit txns into Ethereum, Matic, and other EVM-compatible networks.
 func NewEthCommitter(
 	fromAddress common.Address,
+	ethGasPriceAdjustment float64,
 	fromSigner bind.SignerFn,
 	evmProvider provider.EVMProviderWithRet,
 	committerOpts ...EVMCommitterOption,
@@ -29,6 +30,8 @@ func NewEthCommitter(
 		svcTags: metrics.Tags{
 			"module": "eth_committer",
 		},
+
+		ethGasPriceAdjustment: ethGasPriceAdjustment,
 
 		fromAddress: fromAddress,
 		fromSigner:  fromSigner,
@@ -54,8 +57,9 @@ type ethCommitter struct {
 	fromAddress common.Address
 	fromSigner  bind.SignerFn
 
-	evmProvider provider.EVMProviderWithRet
-	nonceCache  util.NonceCache
+	ethGasPriceAdjustment float64
+	evmProvider           provider.EVMProviderWithRet
+	nonceCache            util.NonceCache
 
 	svcTags metrics.Tags
 }
@@ -92,8 +96,8 @@ func (e *ethCommitter) SendTx(
 		return common.Hash{}, errors.Errorf("failed to suggest gas price: %v", err)
 	}
 
-	// Suggested gas price is not accurate. Increment by multiplying with factor for 1.3
-	incrementedPrice := big.NewFloat(0).Mul(new(big.Float).SetInt(suggestedGasPrice), big.NewFloat(1.3))
+	// Suggested gas price is not accurate. Increment by multiplying with gasprice adjustment factor
+	incrementedPrice := big.NewFloat(0).Mul(new(big.Float).SetInt(suggestedGasPrice), big.NewFloat(e.ethGasPriceAdjustment))
 
 	// set gasprice to incremented gas price.
 	gasPrice := new(big.Int)
