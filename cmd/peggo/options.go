@@ -161,7 +161,7 @@ func initEthereumOptions(
 		Name:   "eth_gas_price_adjustment",
 		Desc:   "gas price adjustment for Ethereum transactions",
 		EnvVar: "PEGGO_ETH_GAS_PRICE_ADJUSTMENT",
-		Value:  float64(23.3),
+		Value:  float64(1.3),
 	})
 }
 
