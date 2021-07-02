@@ -51,8 +51,9 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		cosmosUseLedger     *bool
 
 		// Ethereum params
-		ethChainID *int
-		ethNodeRPC *string
+		ethChainID            *int
+		ethNodeRPC            *string
+		ethGasPriceAdjustment *float64
 
 		// Ethereum Key Management
 		ethKeystoreDir *string
@@ -101,6 +102,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		cmd,
 		&ethChainID,
 		&ethNodeRPC,
+		&ethGasPriceAdjustment,
 	)
 
 	initEthereumKeyOptions(
@@ -238,7 +240,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		ethProvider := provider.NewEVMProvider(evmRPC)
 		log.Infoln("Connected to Ethereum RPC at", *ethNodeRPC)
 
-		ethCommitter, err := committer.NewEthCommitter(ethKeyFromAddress, signerFn, ethProvider)
+		ethCommitter, err := committer.NewEthCommitter(ethKeyFromAddress, *ethGasPriceAdjustment, signerFn, ethProvider)
 		orShutdown(err)
 
 		peggyContract, err := peggy.NewPeggyContract(ethCommitter, peggyAddress)
