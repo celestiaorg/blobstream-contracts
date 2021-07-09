@@ -11,9 +11,12 @@ import (
 	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
 )
 
-// Considering blocktime=3s approx on injective-chain, and oracle loop duration = 1 minute, we can broadcast only 20 events in each iteration.
-// So better to search only 20 blocks to ensure all the events gets broadcasted to injective chain without missing.
+// Considering blocktime of up to 3 seconds approx on the Injective Chain and an oracle loop duration = 1 minute,
+// we broadcast only 20 events in each iteration.
+// So better to search only 20 blocks to ensure all the events are broadcast to Injective Chain without misses.
 const defaultBlocksToSearch = 20
+
+const ethBlockConfirmationDelay = 12
 
 // CheckForEvents checks for events such as a deposit to the Peggy Ethereum contract or a validator set update
 // or a transaction batch update. It then responds to these events by performing actions on the Cosmos chain if required
@@ -27,8 +30,8 @@ func (s *peggyOrchestrator) CheckForEvents(
 		return 0, err
 	}
 
-	// add delay to ensure miminum confirmations are received and block is finalised
-	currentBlock = latestHeader.Number.Uint64() - uint64(6)
+	// add delay to ensure minimum confirmations are received and block is finalised
+	currentBlock = latestHeader.Number.Uint64() - uint64(ethBlockConfirmationDelay)
 
 	if currentBlock < startingBlock {
 		return currentBlock, nil
