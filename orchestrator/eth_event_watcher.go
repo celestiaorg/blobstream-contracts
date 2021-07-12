@@ -150,7 +150,7 @@ func (s *peggyOrchestrator) CheckForEvents(
 	// the possibility that the relayer was killed after relaying only one of multiple events in a single
 	// block, so we also need this routine so make sure we don't send in the first event in this hypothetical
 	// multi event block again. In theory we only send all events for every block and that will pass of fail
-	// atomicly but lets not take that risk.
+	// atomically but lets not take that risk.
 	lastClaimEvent, err := s.cosmosQueryClient.LastClaimEventByAddr(ctx, s.peggyBroadcastClient.AccFromAddress())
 	if err != nil {
 		err = errors.New("failed to query last claim event from backend")
