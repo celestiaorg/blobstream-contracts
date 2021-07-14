@@ -25,7 +25,7 @@ func (s *peggyRelayer) RelayValsets(ctx context.Context) error {
 	for _, set := range latestValsets {
 		sigs, err := s.cosmosQueryClient.AllValsetConfirms(ctx, set.Nonce)
 		if err != nil {
-			err = errors.Wrapf(err, "failed to get valset confims at nonce %d", set.Nonce)
+			err = errors.Wrapf(err, "failed to get valset confirms at nonce %d", set.Nonce)
 			return err
 		} else if len(sigs) == 0 {
 			continue
