@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFeeThreshodTwoDecimals(t *testing.T) {
+func TestFeeThresholdTwoDecimals(t *testing.T) {
 	// https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=0xe28b3b32b6c345a34ff64674606124dd5aceca30&vs_currencies=usd
 
 	injTokenContract := common.HexToAddress("0xe28b3b32b6c345a34ff64674606124dd5aceca30")
@@ -22,16 +22,16 @@ func TestFeeThreshodTwoDecimals(t *testing.T) {
 
 	// FeeAccumulated is greater than ExpectedFee
 	totalFeeInINJ := cosmtypes.NewInt(int64(minInj) + 1).Mul(DecimalReduction)
-	isFeeLimitExceeded := coingeckoFeed.CheckFeeThreshod(injTokenContract, totalFeeInINJ, minFeeInUSD)
+	isFeeLimitExceeded := coingeckoFeed.CheckFeeThreshold(injTokenContract, totalFeeInINJ, minFeeInUSD)
 	assert.True(t, isFeeLimitExceeded, "FeeAccumulated is less than ExpectedFee")
 
 	// FeeAccumulated is less than ExpectedFee
 	totalFeeInINJ = cosmtypes.NewInt(int64(minInj) - 1).Mul(DecimalReduction)
-	isFeeLimitExceeded = coingeckoFeed.CheckFeeThreshod(injTokenContract, totalFeeInINJ, minFeeInUSD)
+	isFeeLimitExceeded = coingeckoFeed.CheckFeeThreshold(injTokenContract, totalFeeInINJ, minFeeInUSD)
 	assert.False(t, isFeeLimitExceeded, "FeeAccumulated is greater than ExpectedFee")
 }
 
-func TestFeeThreshodNineDecimals(t *testing.T) {
+func TestFeeThresholdNineDecimals(t *testing.T) {
 	// https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce&vs_currencies=usd
 	shibTokenContract := common.HexToAddress("0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce")
 	coingeckoFeed := NewCoingeckoPriceFeed(100, &Config{})
@@ -43,11 +43,11 @@ func TestFeeThreshodNineDecimals(t *testing.T) {
 
 	// FeeAccumulated is greater than ExpectedFee
 	totalFeeInSHIB := cosmtypes.NewInt(int64(minShib) + 1).Mul(DecimalReduction)
-	isFeeLimitExceeded := coingeckoFeed.CheckFeeThreshod(shibTokenContract, totalFeeInSHIB, minFeeInUSD)
+	isFeeLimitExceeded := coingeckoFeed.CheckFeeThreshold(shibTokenContract, totalFeeInSHIB, minFeeInUSD)
 	assert.True(t, isFeeLimitExceeded, "FeeAccumulated is less than ExpectedFee")
 
 	// FeeAccumulated is less than ExpectedFee
 	totalFeeInSHIB = cosmtypes.NewInt(int64(minShib) - 1).Mul(DecimalReduction)
-	isFeeLimitExceeded = coingeckoFeed.CheckFeeThreshod(shibTokenContract, totalFeeInSHIB, minFeeInUSD)
+	isFeeLimitExceeded = coingeckoFeed.CheckFeeThreshold(shibTokenContract, totalFeeInSHIB, minFeeInUSD)
 	assert.False(t, isFeeLimitExceeded, "FeeAccumulated is greater than ExpectedFee")
 }
