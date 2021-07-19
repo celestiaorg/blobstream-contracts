@@ -309,7 +309,7 @@ func (s *peggyOrchestrator) BatchRequesterLoop(ctx context.Context) (err error) 
 						}
 
 						// send batch request only if fee threshold is met.
-						if s.CheckFeeThreshod(tokenAddr, unbatchedToken.TotalFees, s.minBatchFeeUSD) {
+						if s.CheckFeeThreshold(tokenAddr, unbatchedToken.TotalFees, s.minBatchFeeUSD) {
 							logger.WithFields(log.Fields{"tokenContract": tokenAddr, "denom": denom}).Infoln("sending batch request")
 							_ = s.peggyBroadcastClient.SendRequestBatch(ctx, denom)
 						}
@@ -320,7 +320,7 @@ func (s *peggyOrchestrator) BatchRequesterLoop(ctx context.Context) (err error) 
 					}))
 				}
 			} else {
-				logger.Debugln("No outgoing withdraw tx or  Unbatched token fee less than threshold")
+				logger.Debugln("No outgoing withdraw tx or Unbatched token fee less than threshold")
 			}
 			return nil
 		})
@@ -328,7 +328,7 @@ func (s *peggyOrchestrator) BatchRequesterLoop(ctx context.Context) (err error) 
 	})
 }
 
-func (s *peggyOrchestrator) CheckFeeThreshod(erc20Contract common.Address, totalFee cosmtypes.Int, minFeeInUSD float64) bool {
+func (s *peggyOrchestrator) CheckFeeThreshold(erc20Contract common.Address, totalFee cosmtypes.Int, minFeeInUSD float64) bool {
 	if minFeeInUSD == 0 {
 		return true
 	}

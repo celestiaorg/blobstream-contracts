@@ -131,7 +131,7 @@ func checkCoingeckoConfig(cfg *Config) *Config {
 	return cfg
 }
 
-func (cp *CoingeckoPriceFeed) CheckFeeThreshod(erc20Contract common.Address, totalFee cosmtypes.Int, minFeeInUSD float64) bool {
+func (cp *CoingeckoPriceFeed) CheckFeeThreshold(erc20Contract common.Address, totalFee cosmtypes.Int, minFeeInUSD float64) bool {
 	tokenPriceInUSD, err := cp.QueryUSDPrice(erc20Contract)
 	if err != nil {
 		return false

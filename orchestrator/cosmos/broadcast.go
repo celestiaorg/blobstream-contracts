@@ -66,6 +66,7 @@ type PeggyBroadcastClient interface {
 		amount, fee sdk.Coin,
 	) error
 
+	// SendRequestBatch broadcasts a requests a batch of withdrawal transactions to be generated on the chain.
 	SendRequestBatch(
 		ctx context.Context,
 		denom string,
