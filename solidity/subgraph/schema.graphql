@@ -1,0 +1,34 @@
+type DeployedERC20 @entity {
+  id: ID!
+  cosmosDenom: String!
+  tokenContract: Bytes!
+  name: String!
+  symbol: String!
+  decimals: Int!
+}
+
+type Deposit @entity {
+  id: ID!
+  tokenContract: Bytes!
+  sender: Bytes!
+  destination: Bytes!
+  amount: BigInt!
+}
+
+type Withdrawal @entity {
+  id: ID!
+  amounts: [BigInt!]!
+  destinations: [Bytes!]!
+  fees: [BigInt!]!
+  batchNonce: BigInt!
+  tokenContract: Bytes!
+}
+
+type Valset @entity {
+  id: ID!
+  validators: [Bytes!]!
+  powers: [BigInt!]!
+  valsetNonce: BigInt!
+  rewardAmount: BigInt!
+  rewardToken: Bytes!
+}
