@@ -119,7 +119,7 @@ $ yarn deploy-local
 
 ## Injective Subgraph deployment
 
-Optional: Deploy Peggy contracts if required.
+Optional: Deploy Peggy contracts if required. Make sure to update the hard-coded peggy state id inside `mapping.ts`.
 
 1. Update Subgraph
 

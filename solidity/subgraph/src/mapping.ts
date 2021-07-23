@@ -90,9 +90,6 @@ function getCheckpoint(
   return checkpoint;
 }
 
-// TODO tracking the up-to-date state variables for convenience
-// state_lastEventNonce, state_lastValsetNonce, state_lastBatchNonces, state_lastValsetCheckpoint
-
 function updateState(
   validators: Address[],
   powers: BigInt[],
