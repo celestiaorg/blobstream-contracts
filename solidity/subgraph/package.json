@@ -8,10 +8,12 @@
     "codegen:development": "yarn graph codegen subgraph.development.yaml",
     "codegen:kovan": "yarn graph codegen subgraph.kovan.yaml",
     "codegen:mainnet": "yarn graph codegen subgraph.mainnet.yaml",
-    "create:development": "yarn graph create InjectiveLabs/injectivePeggo --node http://127.0.0.1:8020",
-    "deploy:development": "yarn graph deploy InjectiveLabs/injectivePeggo --ipfs http://localhost:5001 --node http://127.0.0.1:8020",
+    "create:development": "yarn graph create gorgos/injectivePeggo --node http://127.0.0.1:8020",
+    "deploy:development": "yarn graph deploy gorgos/injectivePeggo --ipfs http://localhost:5001 --node http://127.0.0.1:8020",
     "deploy:kovan": "graph deploy --product hosted-service gorgos/injective-peggo-kovan subgraph.kovan.yaml",
-    "deploy:mainnet": "graph deploy --product hosted-service gorgos/injectivePeggo subgraph.mainnet.yaml"
+    "deploy:kovan:local": "graph deploy --product hosted-service gorgos/injectivePeggo --node http://127.0.0.1:8020 subgraph.kovan.yaml",
+    "deploy:mainnet": "graph deploy --product hosted-service gorgos/injectivePeggo subgraph.mainnet.yaml",
+    "deploy:mainnet:local": "graph deploy --product hosted-service gorgos/injectivePeggo --node http://127.0.0.1:8020 subgraph.mainnet.yaml"
   },
   "devDependencies": {
     "@graphprotocol/graph-cli": "^0.21.1",
@@ -25,6 +27,8 @@
     "@truffle/hdwallet-provider": "^1.0.43",
     "babel-polyfill": "^6.26.0",
     "babel-register": "^6.26.0",
+    "bech32": "^2.0.0",
+    "ethereumjs-util": "^7.1.0",
     "truffle": "^5.0.4"
   }
 }

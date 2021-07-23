@@ -11,17 +11,29 @@ type Deposit @entity {
   id: ID!
   tokenContract: Bytes!
   sender: Bytes!
-  destination: Bytes!
+  destination: String!
   amount: BigInt!
+}
+
+type BatchWithdrawal @entity {
+  id: ID!
+  amounts: [BigInt!]!
+  destinations: [String!]!
+  fees: [BigInt!]!
+  totalFee: BigInt!
+  sender: Bytes!
+  batchNonce: BigInt!
+  tokenContract: Bytes!
 }
 
 type Withdrawal @entity {
   id: ID!
-  amounts: [BigInt!]!
-  destinations: [Bytes!]!
-  fees: [BigInt!]!
-  batchNonce: BigInt!
+  amount: BigInt!
+  destination: String!
+  fee: BigInt!
   tokenContract: Bytes!
+  timestamp: Int!
+  blockHeight: Int!
 }
 
 type Valset @entity {
@@ -31,4 +43,17 @@ type Valset @entity {
   valsetNonce: BigInt!
   rewardAmount: BigInt!
   rewardToken: Bytes!
+}
+
+type State @entity {
+  id: ID!
+  peggyId: Bytes!
+  lastEventNonce: Int!
+  lastValsetNonce: Int!
+  lastValsetCheckpoint: Bytes!
+}
+
+type StateLastBatchNonces @entity {
+  id: ID!
+  nonce: Int!
 }
