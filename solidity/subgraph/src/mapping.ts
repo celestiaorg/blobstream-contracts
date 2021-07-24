@@ -166,6 +166,8 @@ export function handleSendToCosmosEvent(event: SendToCosmosEvent): void {
   deposit.amount = event.params._amount;
   deposit.destination = getInjectiveAddress(event.params._destination);
   deposit.sender = event.params._sender;
+  deposit.timestamp = event.block.timestamp.toI32();
+  deposit.blockHeight = event.block.number.toI32();
 
   deposit.save();
 
@@ -201,6 +203,8 @@ export function handleUpdateValset(event: ValsetUpdatedEvent): void {
     powers[i] = bigIntTypePowers[i] as BigInt;
   }
   valset.powers = powers;
+  valset.timestamp = event.block.timestamp.toI32();
+  valset.blockHeight = event.block.number.toI32();
 
   valset.save();
 
@@ -252,6 +256,8 @@ export function handleSubmitBatch(call: SubmitBatchCall): void {
     totalFee = totalFee.plus(fees[i]);
   }
   batchWithdrawal.totalFee = totalFee;
+  batchWithdrawal.timestamp = call.block.timestamp.toI32();
+  batchWithdrawal.blockHeight = call.block.number.toI32();
 
   batchWithdrawal.save();
 

@@ -13,6 +13,8 @@ type Deposit @entity {
   sender: Bytes!
   destination: String!
   amount: BigInt!
+  timestamp: Int!
+  blockHeight: Int!
 }
 
 type BatchWithdrawal @entity {
@@ -24,6 +26,8 @@ type BatchWithdrawal @entity {
   sender: Bytes!
   batchNonce: BigInt!
   tokenContract: Bytes!
+  timestamp: Int!
+  blockHeight: Int!
 }
 
 type Withdrawal @entity {
@@ -43,6 +47,8 @@ type Valset @entity {
   valsetNonce: BigInt!
   rewardAmount: BigInt!
   rewardToken: Bytes!
+  timestamp: Int!
+  blockHeight: Int!
 }
 
 type State @entity {
