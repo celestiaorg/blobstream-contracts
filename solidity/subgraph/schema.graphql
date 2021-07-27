@@ -56,7 +56,7 @@ type State @entity {
   peggyId: Bytes!
   lastEventNonce: Int!
   lastValsetNonce: Int!
-  lastValsetCheckpoint: Bytes!
+  # lastValsetCheckpoint: Bytes!
 }
 
 type StateLastBatchNonces @entity {

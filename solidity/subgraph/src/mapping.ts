@@ -43,52 +43,44 @@ let STATE_STORE_ID = "1";
 function getInjectiveAddress(address: Bytes): string {
   return address.toHexString();
 
-  // TODO not working in assembly script
+  // not working in assembly script
   // const addressBuffer = EthereumJSAddress.fromString(
   //   address.toHexString()
   // ).toBuffer();
   // return bech32.encode("inj", bech32.toWords(addressBuffer));
 }
 
-function getCheckpoint(
-  peggyId: Bytes,
-  valsetNonce: BigInt,
-  validators: Address[],
-  powers: BigInt[],
-  rewardAmount: BigInt,
-  rewardToken: Address
-): ByteArray {
-  // bytes32 encoding of the string "checkpoint"
-  let methodName = Bytes.fromHexString(
-    "0x636865636b706f696e7400000000000000000000000000000000000000000000"
-  );
+// below code not working, creating different checkpoints than Peggy contract for unknown reason
+// function getCheckpoint(
+//   peggyId: Bytes,
+//   valsetNonce: BigInt,
+//   validators: Address[],
+//   powers: BigInt[],
+//   rewardAmount: BigInt,
+//   rewardToken: Address
+// ): ByteArray {
+//   // bytes32 encoding of the string "checkpoint"
+//   let methodName = Bytes.fromHexString(
+//     "0x636865636b706f696e7400000000000000000000000000000000000000000000"
+//   ) as Bytes;
 
-  log.info("getCheckpoint: peggyId {} {} {} {}", [
-    peggyId.toString(),
-    valsetNonce.toHexString(),
-    rewardAmount.toHexString(),
-    rewardToken.toHexString(),
-  ]);
-  log.info("first validator {}", [validators[0].toHexString()]);
-  log.info("first power {}", [powers[0].toString()]);
+//   let tupleArray: Array<ethereum.Value> = [
+//     ethereum.Value.fromBytes(peggyId),
+//     ethereum.Value.fromBytes(methodName),
+//     ethereum.Value.fromUnsignedBigInt(valsetNonce),
+//     ethereum.Value.fromAddressArray(validators),
+//     ethereum.Value.fromUnsignedBigIntArray(powers),
+//     ethereum.Value.fromUnsignedBigInt(rewardAmount),
+//     ethereum.Value.fromAddress(rewardToken),
+//   ];
 
-  let tupleArray: Array<ethereum.Value> = [
-    ethereum.Value.fromBytes(peggyId),
-    ethereum.Value.fromBytes(methodName as Bytes),
-    ethereum.Value.fromUnsignedBigInt(valsetNonce),
-    ethereum.Value.fromFixedBytesArray(validators as Bytes[]),
-    ethereum.Value.fromUnsignedBigIntArray(powers),
-    ethereum.Value.fromUnsignedBigInt(rewardAmount),
-    ethereum.Value.fromAddress(rewardToken),
-  ];
+//   let encodedCheckpointData = ethereum.encode(
+//     ethereum.Value.fromTuple(tupleArray as ethereum.Tuple)
+//   )!;
+//   let checkpoint = crypto.keccak256(encodedCheckpointData);
 
-  let encodedCheckpointData = ethereum.encode(
-    ethereum.Value.fromTuple(tupleArray as ethereum.Tuple)
-  )!;
-  let checkpoint = crypto.keccak256(encodedCheckpointData);
-
-  return checkpoint;
-}
+//   return checkpoint;
+// }
 
 function updateState(
   validators: Address[],
@@ -104,18 +96,18 @@ function updateState(
       ? (STATE_PEGGY_ID_MAINNET as Bytes)
       : (STATE_PEGGY_ID_KOVAN as Bytes);
 
-  let checkpoint = getCheckpoint(
-    state.peggyId,
-    lastValsetNonce,
-    validators,
-    powers,
-    rewardAmount,
-    rewardToken
-  );
+  // let checkpoint = getCheckpoint(
+  //   state.peggyId,
+  //   lastValsetNonce,
+  //   validators,
+  //   powers,
+  //   rewardAmount,
+  //   rewardToken
+  // );
+  // state.lastValsetCheckpoint = checkpoint as Bytes;
 
   state.lastEventNonce = lastEventNonce.toI32();
   state.lastValsetNonce = lastValsetNonce.toI32();
-  state.lastValsetCheckpoint = checkpoint as Bytes;
 
   state.save();
 }
