@@ -1,0 +1,35 @@
+specVersion: 0.0.2
+description: InjectiveLabs Peggo
+repository: https://github.com/InjectiveLabs/peggo
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: Peggy
+    network: "kovan"
+    source:
+      address: "0x9752fce6cfb4e6802e5093dbabb09a91c644b5be"
+      startBlock: 23973488
+      abi: Peggy
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Test
+      abis:
+        - name: Peggy
+          file: ../../test/ethereum/artifacts/solidity/contracts/Peggy.sol/Peggy.json
+      eventHandlers:
+        - event: ERC20DeployedEvent(string,indexed address,string,string,uint8,uint256)
+          handler: handleNewERC20Deployed
+        - event: SendToCosmosEvent(indexed address,indexed address,indexed bytes32,uint256,uint256)
+          handler: handleSendToCosmosEvent
+        - event: ValsetUpdatedEvent(indexed uint256,uint256,uint256,address,address[],uint256[])
+          handler: handleUpdateValset
+        - event: TransactionBatchExecutedEvent(indexed uint256,indexed address,uint256)
+          handler: handleSubmitBatchEvent
+      callHandlers:
+        - function: submitBatch((address[],uint256[],uint256,uint256,address),uint8[],bytes32[],bytes32[],uint256[],address[],uint256[],uint256,address,uint256)
+          handler: handleSubmitBatch
+      file: ./src/mapping.ts

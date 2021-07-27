@@ -35,16 +35,16 @@ struct ValsetArgs {
 contract Peggy is Initializable, OwnableUpgradeableWithExpiry, Pausable, ReentrancyGuard {
   using SafeERC20 for IERC20;
 
-  // These are updated often
-  bytes32 public state_lastValsetCheckpoint;
-  mapping(address => uint256) public state_lastBatchNonces;
-  mapping(bytes32 => uint256) public state_invalidationMapping;
-  uint256 public state_lastValsetNonce = 0;
-  uint256 public state_lastEventNonce = 0;
+// These are updated often
+bytes32 public state_lastValsetCheckpoint;
+mapping(address => uint256) public state_lastBatchNonces;
+mapping(bytes32 => uint256) public state_invalidationMapping;
+uint256 public state_lastValsetNonce = 0;
+uint256 public state_lastEventNonce = 0;
 
-  // These are set once at initialization
-  bytes32 public state_peggyId;
-  uint256 public state_powerThreshold;
+// These are set once at initialization
+bytes32 public state_peggyId;
+uint256 public state_powerThreshold;
 
   // TransactionBatchExecutedEvent and SendToCosmosEvent both include the field _eventNonce.
   // This is incremented every time one of these events is emitted. It is checked by the
