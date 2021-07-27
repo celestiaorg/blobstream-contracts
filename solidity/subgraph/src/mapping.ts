@@ -5,11 +5,8 @@
 import {
   Address,
   BigInt,
-  ByteArray,
   Bytes,
-  crypto,
   dataSource,
-  ethereum,
   log,
 } from "@graphprotocol/graph-ts";
 
