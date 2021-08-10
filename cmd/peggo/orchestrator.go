@@ -139,6 +139,10 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		&coingeckoApi,
 	)
 
+	cmd.Before = func() {
+		initMetrics(cmd)
+	}
+
 	cmd.Action = func() {
 		// ensure a clean exit
 		defer closer.Close()
