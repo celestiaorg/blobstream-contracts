@@ -14,6 +14,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
+
+	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
 )
 
 type EVMProvider interface {
@@ -38,24 +40,33 @@ type EVMProviderWithRet interface {
 
 type evmProviderWithRet struct {
 	*ethclient.Client
-
 	rc *rpc.Client
+	svcTags metrics.Tags
 }
 
 func NewEVMProvider(rc *rpc.Client) EVMProviderWithRet {
 	return &evmProviderWithRet{
 		Client: ethclient.NewClient(rc),
 		rc:     rc,
+		svcTags: metrics.Tags{
+			"svc": string("eth_provider"),
+		},
 	}
 }
 
 func (p *evmProviderWithRet) SendTransactionWithRet(ctx context.Context, tx *types.Transaction) (txHash common.Hash, err error) {
+	metrics.ReportFuncCall(p.svcTags)
+	doneFn := metrics.ReportFuncTiming(p.svcTags)
+	defer doneFn()
+
 	data, err := rlp.EncodeToBytes(tx)
 	if err != nil {
+		metrics.ReportFuncError(p.svcTags)
 		return common.Hash{}, err
 	}
 
 	if err := p.rc.CallContext(ctx, &txHash, "eth_sendRawTransaction", hexutil.Encode(data)); err != nil {
+		metrics.ReportFuncError(p.svcTags)
 		return common.Hash{}, err
 	}
 

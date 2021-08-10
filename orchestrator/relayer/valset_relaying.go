@@ -6,16 +6,22 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
+	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
 	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 )
 
 // RelayValsets checks the last validator set on Ethereum, if it's lower than our latest validator
 // set then we should package and submit the update as an Ethereum transaction
 func (s *peggyRelayer) RelayValsets(ctx context.Context) error {
+	metrics.ReportFuncCall(s.svcTags)
+	doneFn := metrics.ReportFuncTiming(s.svcTags)
+	defer doneFn()
+
 	// we should determine if we need to relay one
 	// to Ethereum for that we will find the latest confirmed valset and compare it to the ethereum chain
 	latestValsets, err := s.cosmosQueryClient.LatestValsets(ctx)
 	if err != nil {
+		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to fetch latest valsets from cosmos")
 		return err
 	}
@@ -25,6 +31,7 @@ func (s *peggyRelayer) RelayValsets(ctx context.Context) error {
 	for _, set := range latestValsets {
 		sigs, err := s.cosmosQueryClient.AllValsetConfirms(ctx, set.Nonce)
 		if err != nil {
+			metrics.ReportFuncError(s.svcTags)
 			err = errors.Wrapf(err, "failed to get valset confirms at nonce %d", set.Nonce)
 			return err
 		} else if len(sigs) == 0 {
@@ -43,6 +50,7 @@ func (s *peggyRelayer) RelayValsets(ctx context.Context) error {
 
 	currentEthValset, err := s.FindLatestValset(ctx)
 	if err != nil {
+		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "couldn't find latest confirmed valset on Ethereum")
 		return err
 	}
@@ -52,6 +60,7 @@ func (s *peggyRelayer) RelayValsets(ctx context.Context) error {
 
 		latestEthereumValsetNonce, err := s.peggyContract.GetValsetNonce(ctx, s.peggyContract.FromAddress())
 		if err != nil {
+			metrics.ReportFuncError(s.svcTags)
 			err = errors.Wrap(err, "failed to get latest Valset nonce")
 			return err
 		}
@@ -69,6 +78,7 @@ func (s *peggyRelayer) RelayValsets(ctx context.Context) error {
 				latestCosmosSigs,
 			)
 			if err != nil {
+				metrics.ReportFuncError(s.svcTags)
 				return err
 			}
 

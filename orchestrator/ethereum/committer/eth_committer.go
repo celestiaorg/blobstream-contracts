@@ -93,6 +93,7 @@ func (e *ethCommitter) SendTx(
 	// Figure out the gas price values
 	suggestedGasPrice, err := e.evmProvider.SuggestGasPrice(opts.Context)
 	if err != nil {
+		metrics.ReportFuncError(e.svcTags)
 		return common.Hash{}, errors.Errorf("failed to suggest gas price: %v", err)
 	}
 

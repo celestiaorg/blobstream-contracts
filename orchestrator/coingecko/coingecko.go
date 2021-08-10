@@ -52,9 +52,13 @@ func urlJoin(baseURL string, segments ...string) string {
 }
 
 func (cp *CoingeckoPriceFeed) QueryUSDPrice(erc20Contract common.Address) (float64, error) {
+	metrics.ReportFuncCall(cp.svcTags)
+	doneFn := metrics.ReportFuncTiming(cp.svcTags)
+	defer doneFn()
 
 	u, err := url.ParseRequestURI(urlJoin(cp.config.BaseURL, "simple", "token_price", "ethereum"))
 	if err != nil {
+		metrics.ReportFuncError(cp.svcTags)
 		cp.logger.WithError(err).Fatalln("failed to parse URL")
 	}
 
@@ -67,11 +71,13 @@ func (cp *CoingeckoPriceFeed) QueryUSDPrice(erc20Contract common.Address) (float
 	reqURL := u.String()
 	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
+		metrics.ReportFuncError(cp.svcTags)
 		cp.logger.WithError(err).Fatalln("failed to create HTTP request")
 	}
 
 	resp, err := cp.client.Do(req)
 	if err != nil {
+		metrics.ReportFuncError(cp.svcTags)
 		err = errors.Wrapf(err, "failed to fetch price from %s", reqURL)
 		return zeroPrice, err
 	}
@@ -79,6 +85,7 @@ func (cp *CoingeckoPriceFeed) QueryUSDPrice(erc20Contract common.Address) (float
 	respBody, err := ioutil.ReadAll(io.LimitReader(resp.Body, maxRespBytes))
 	if err != nil {
 		_ = resp.Body.Close()
+		metrics.ReportFuncError(cp.svcTags)
 		err = errors.Wrapf(err, "failed to read response body from %s", reqURL)
 		return zeroPrice, err
 	}
@@ -132,8 +139,13 @@ func checkCoingeckoConfig(cfg *Config) *Config {
 }
 
 func (cp *CoingeckoPriceFeed) CheckFeeThreshold(erc20Contract common.Address, totalFee cosmtypes.Int, minFeeInUSD float64) bool {
+	metrics.ReportFuncCall(cp.svcTags)
+	doneFn := metrics.ReportFuncTiming(cp.svcTags)
+	defer doneFn()
+
 	tokenPriceInUSD, err := cp.QueryUSDPrice(erc20Contract)
 	if err != nil {
+		metrics.ReportFuncError(cp.svcTags)
 		return false
 	}
 

@@ -30,7 +30,6 @@ type PeggyQueryClient interface {
 func NewPeggyQueryClient(client types.QueryClient) PeggyQueryClient {
 	return &peggyQueryClient{
 		daemonQueryClient: client,
-
 		svcTags: metrics.Tags{
 			"svc": "peggy_query",
 		},
@@ -39,7 +38,6 @@ func NewPeggyQueryClient(client types.QueryClient) PeggyQueryClient {
 
 type peggyQueryClient struct {
 	daemonQueryClient types.QueryClient
-
 	svcTags metrics.Tags
 }
 
@@ -58,6 +56,7 @@ func (s *peggyQueryClient) ValsetAt(ctx context.Context, nonce uint64) (*types.V
 		err = errors.Wrap(err, "failed to query ValsetRequest from daemon")
 		return nil, err
 	} else if daemonResp == nil {
+		metrics.ReportFuncError(s.svcTags)
 		return nil, ErrNotFound
 	}
 
@@ -75,6 +74,7 @@ func (s *peggyQueryClient) CurrentValset(ctx context.Context) (*types.Valset, er
 		err = errors.Wrap(err, "failed to query CurrentValset from daemon")
 		return nil, err
 	} else if daemonResp == nil {
+		metrics.ReportFuncError(s.svcTags)
 		return nil, ErrNotFound
 	}
 
@@ -94,6 +94,7 @@ func (s *peggyQueryClient) OldestUnsignedValsets(ctx context.Context, valAccount
 		err = errors.Wrap(err, "failed to query LastPendingValsetRequestByAddr from daemon")
 		return nil, err
 	} else if daemonResp == nil {
+		metrics.ReportFuncError(s.svcTags)
 		return nil, ErrNotFound
 	}
 
@@ -111,6 +112,7 @@ func (s *peggyQueryClient) LatestValsets(ctx context.Context) ([]*types.Valset, 
 		err = errors.Wrap(err, "failed to query LastValsetRequests from daemon")
 		return nil, err
 	} else if daemonResp == nil {
+		metrics.ReportFuncError(s.svcTags)
 		return nil, ErrNotFound
 	}
 
@@ -130,6 +132,7 @@ func (s *peggyQueryClient) AllValsetConfirms(ctx context.Context, nonce uint64) 
 		err = errors.Wrap(err, "failed to query ValsetConfirmsByNonce from daemon")
 		return nil, err
 	} else if daemonResp == nil {
+		metrics.ReportFuncError(s.svcTags)
 		return nil, ErrNotFound
 	}
 
@@ -149,6 +152,7 @@ func (s *peggyQueryClient) OldestUnsignedTransactionBatch(ctx context.Context, v
 		err = errors.Wrap(err, "failed to query LastPendingBatchRequestByAddr from daemon")
 		return nil, err
 	} else if daemonResp == nil {
+		metrics.ReportFuncError(s.svcTags)
 		return nil, ErrNotFound
 	}
 
@@ -166,6 +170,7 @@ func (s *peggyQueryClient) LatestTransactionBatches(ctx context.Context) ([]*typ
 		err = errors.Wrap(err, "failed to query OutgoingTxBatches from daemon")
 		return nil, err
 	} else if daemonResp == nil {
+		metrics.ReportFuncError(s.svcTags)
 		return nil, ErrNotFound
 	}
 
@@ -183,6 +188,7 @@ func (s *peggyQueryClient) UnbatchedTokensWithFees(ctx context.Context) ([]*type
 		err = errors.Wrap(err, "failed to query BatchFees from daemon")
 		return nil, err
 	} else if daemonResp == nil {
+		metrics.ReportFuncError(s.svcTags)
 		return nil, ErrNotFound
 	}
 
@@ -203,6 +209,7 @@ func (s *peggyQueryClient) TransactionBatchSignatures(ctx context.Context, nonce
 		err = errors.Wrap(err, "failed to query BatchConfirms from daemon")
 		return nil, err
 	} else if daemonResp == nil {
+		metrics.ReportFuncError(s.svcTags)
 		return nil, ErrNotFound
 	}
 
@@ -222,6 +229,7 @@ func (s *peggyQueryClient) LastClaimEventByAddr(ctx context.Context, validatorAc
 		err = errors.Wrap(err, "failed to query LastEventByAddr from daemon")
 		return nil, err
 	} else if daemonResp == nil {
+		metrics.ReportFuncError(s.svcTags)
 		return nil, ErrNotFound
 	}
 
@@ -239,6 +247,7 @@ func (s *peggyQueryClient) PeggyParams(ctx context.Context) (*types.Params, erro
 		err = errors.Wrap(err, "failed to query PeggyParams from daemon")
 		return nil, err
 	} else if daemonResp == nil {
+		metrics.ReportFuncError(s.svcTags)
 		return nil, ErrNotFound
 	}
 

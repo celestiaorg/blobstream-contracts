@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
+	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
 	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
 )
 
@@ -24,8 +25,13 @@ func (s *peggyOrchestrator) CheckForEvents(
 	ctx context.Context,
 	startingBlock uint64,
 ) (currentBlock uint64, err error) {
+	metrics.ReportFuncCall(s.svcTags)
+	doneFn := metrics.ReportFuncTiming(s.svcTags)
+	defer doneFn()
+
 	latestHeader, err := s.ethProvider.HeaderByNumber(ctx, nil)
 	if err != nil {
+		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to get latest header")
 		return 0, err
 	}
@@ -43,6 +49,7 @@ func (s *peggyOrchestrator) CheckForEvents(
 
 	peggyFilterer, err := wrappers.NewPeggyFilterer(s.peggyContract.Address(), s.ethProvider)
 	if err != nil {
+		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to init Peggy events filterer")
 		return 0, err
 	}
@@ -55,6 +62,7 @@ func (s *peggyOrchestrator) CheckForEvents(
 			End:   &currentBlock,
 		}, nil, nil, nil)
 		if err != nil {
+			metrics.ReportFuncError(s.svcTags)
 			log.WithFields(log.Fields{
 				"start": startingBlock,
 				"end":   currentBlock,
@@ -88,6 +96,7 @@ func (s *peggyOrchestrator) CheckForEvents(
 			End:   &currentBlock,
 		}, nil, nil)
 		if err != nil {
+			metrics.ReportFuncError(s.svcTags)
 			log.WithFields(log.Fields{
 				"start": startingBlock,
 				"end":   currentBlock,
@@ -120,6 +129,7 @@ func (s *peggyOrchestrator) CheckForEvents(
 			End:   &currentBlock,
 		}, nil)
 		if err != nil {
+			metrics.ReportFuncError(s.svcTags)
 			log.WithFields(log.Fields{
 				"start": startingBlock,
 				"end":   currentBlock,
@@ -153,6 +163,7 @@ func (s *peggyOrchestrator) CheckForEvents(
 	// atomically but lets not take that risk.
 	lastClaimEvent, err := s.cosmosQueryClient.LastClaimEventByAddr(ctx, s.peggyBroadcastClient.AccFromAddress())
 	if err != nil {
+		metrics.ReportFuncError(s.svcTags)
 		err = errors.New("failed to query last claim event from backend")
 		return 0, err
 	}
@@ -164,6 +175,7 @@ func (s *peggyOrchestrator) CheckForEvents(
 	if len(deposits) > 0 || len(withdraws) > 0 || len(valsetUpdates) > 0 {
 		// todo get eth chain id from the chain
 		if err := s.peggyBroadcastClient.SendEthereumClaims(ctx, lastClaimEvent.EthereumEventNonce, deposits, withdraws, valsetUpdates); err != nil {
+			metrics.ReportFuncError(s.svcTags)
 			err = errors.Wrap(err, "failed to send ethereum claims to Cosmos chain")
 			return 0, err
 		}

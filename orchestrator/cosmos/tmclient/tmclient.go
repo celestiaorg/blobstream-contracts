@@ -3,6 +3,7 @@ package tmclient
 import (
 	"context"
 	"strings"
+	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
 
 	log "github.com/xlab/suplog"
 
@@ -21,6 +22,7 @@ type TendermintClient interface {
 
 type tmClient struct {
 	rpcClient rpcclient.Client
+	svcTags metrics.Tags
 }
 
 func NewRPCClient(rpcNodeAddr string) TendermintClient {
@@ -31,6 +33,9 @@ func NewRPCClient(rpcNodeAddr string) TendermintClient {
 
 	return &tmClient{
 		rpcClient: rpcClient,
+		svcTags: metrics.Tags{
+			"svc": string("tmclient"),
+		},
 	}
 }
 
@@ -41,8 +46,13 @@ func (c *tmClient) GetBlock(ctx context.Context, height int64) (*tmctypes.Result
 
 // GetLatestBlockHeight returns the latest block height on the active chain.
 func (c *tmClient) GetLatestBlockHeight(ctx context.Context) (int64, error) {
+	metrics.ReportFuncCall(c.svcTags)
+	doneFn := metrics.ReportFuncTiming(c.svcTags)
+	defer doneFn()
+
 	status, err := c.rpcClient.Status(ctx)
 	if err != nil {
+		metrics.ReportFuncError(c.svcTags)
 		return -1, err
 	}
 
@@ -54,12 +64,16 @@ func (c *tmClient) GetLatestBlockHeight(ctx context.Context) (int64, error) {
 // GetTxs queries for all the transactions in a block height.
 // It uses `Tx` RPC method to query for the transaction.
 func (c *tmClient) GetTxs(ctx context.Context, block *tmctypes.ResultBlock) ([]*ctypes.ResultTx, error) {
-	txs := make([]*ctypes.ResultTx, 0, len(block.Block.Txs))
+	metrics.ReportFuncCall(c.svcTags)
+	doneFn := metrics.ReportFuncTiming(c.svcTags)
+	defer doneFn()
 
+	txs := make([]*ctypes.ResultTx, 0, len(block.Block.Txs))
 	for _, tmTx := range block.Block.Txs {
 		tx, err := c.rpcClient.Tx(ctx, tmTx.Hash(), true)
 		if err != nil {
 			if strings.HasSuffix(err.Error(), "not found") {
+				metrics.ReportFuncError(c.svcTags)
 				log.WithError(err).Errorln("failed to get Tx by hash")
 				continue
 			}
@@ -76,5 +90,9 @@ func (c *tmClient) GetTxs(ctx context.Context, block *tmctypes.ResultBlock) ([]*
 // GetValidatorSet returns all the known Tendermint validators for a given block
 // height. An error is returned if the query fails.
 func (c *tmClient) GetValidatorSet(ctx context.Context, height int64) (*tmctypes.ResultValidators, error) {
+	metrics.ReportFuncCall(c.svcTags)
+	doneFn := metrics.ReportFuncTiming(c.svcTags)
+	defer doneFn()
+
 	return c.rpcClient.Validators(ctx, &height, nil, nil)
 }
