@@ -243,6 +243,9 @@ func (s *peggyBroadcastClient) sendDepositClaims(
 	// claimed to have seen the deposit enter the ethereum blockchain coins are
 	// issued to the Cosmos address in question
 	// -------------
+	metrics.ReportFuncCall(s.svcTags)
+	doneFn := metrics.ReportFuncTiming(s.svcTags)
+	defer doneFn()
 
 	log.WithFields(log.Fields{
 		"sender":      deposit.Sender.Hex(),
@@ -279,6 +282,9 @@ func (s *peggyBroadcastClient) sendWithdrawClaims(
 	ctx context.Context,
 	withdraw *wrappers.PeggyTransactionBatchExecutedEvent,
 ) error {
+	metrics.ReportFuncCall(s.svcTags)
+	doneFn := metrics.ReportFuncTiming(s.svcTags)
+	defer doneFn()
 
 	log.WithFields(log.Fields{
 		"nonce":          withdraw.BatchNonce.String(),
@@ -314,6 +320,9 @@ func (s *peggyBroadcastClient) sendValsetUpdateClaims(
 	ctx context.Context,
 	valsetUpdate *wrappers.PeggyValsetUpdatedEvent,
 ) error {
+	metrics.ReportFuncCall(s.svcTags)
+	doneFn := metrics.ReportFuncTiming(s.svcTags)
+	defer doneFn()
 
 	log.WithFields(log.Fields{
 		"EventNonce":   valsetUpdate.EventNonce.Uint64(),
@@ -366,6 +375,7 @@ func (s *peggyBroadcastClient) SendEthereumClaims(
 	metrics.ReportFuncCall(s.svcTags)
 	doneFn := metrics.ReportFuncTiming(s.svcTags)
 	defer doneFn()
+
 	totalClaimEvents := len(deposits) + len(withdraws) + len(valsetUpdates)
 	var count, i, j, k int
 
@@ -413,10 +423,6 @@ func (s *peggyBroadcastClient) SendToEth(
 	destination ethcmn.Address,
 	amount, fee sdk.Coin,
 ) error {
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
-
 	// MsgSendToEth
 	// This is the message that a user calls when they want to bridge an asset
 	// it will later be removed when it is included in a batch and successfully
@@ -429,6 +435,10 @@ func (s *peggyBroadcastClient) SendToEth(
 	// the fee paid for the bridge, distinct from the fee paid to the chain to
 	// actually send this message in the first place. So a successful send has
 	// two layers of fees for the user
+	metrics.ReportFuncCall(s.svcTags)
+	doneFn := metrics.ReportFuncTiming(s.svcTags)
+	defer doneFn()
+
 	msg := &types.MsgSendToEth{
 		Sender:    s.AccFromAddress().String(),
 		EthDest:   destination.Hex(),
@@ -448,10 +458,6 @@ func (s *peggyBroadcastClient) SendRequestBatch(
 	ctx context.Context,
 	denom string,
 ) error {
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
-
 	// MsgRequestBatch
 	// this is a message anyone can send that requests a batch of transactions to
 	// send across the bridge be created for whatever block height this message is
@@ -461,6 +467,10 @@ func (s *peggyBroadcastClient) SendRequestBatch(
 	// batch, sign it, submit the signatures with a MsgConfirmBatch before a relayer
 	// can finally submit the batch
 	// -------------
+	metrics.ReportFuncCall(s.svcTags)
+	doneFn := metrics.ReportFuncTiming(s.svcTags)
+	defer doneFn()
+	
 	msg := &types.MsgRequestBatch{
 		Denom:        denom,
 		Orchestrator: s.AccFromAddress().String(),
