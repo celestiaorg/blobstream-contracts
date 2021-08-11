@@ -26,9 +26,9 @@ func (m *StatterConfig) BaseTags() []string {
 	if len(config.EnvName) > 0 {
 		baseTags = append(baseTags, "env", config.EnvName)
 	}
-	if len(config.HostName) > 0 {
-		baseTags = append(baseTags, "machine", config.HostName)
-	}
+	// if len(config.HostName) > 0 {
+	// 	baseTags = append(baseTags, "machine", config.HostName)
+	// }
 
 	return baseTags
 }
@@ -72,6 +72,7 @@ func Init(addr string, prefix string, cfg *StatterConfig) error {
 		statsd.Address(addr),
 		statsd.Prefix(prefix),
 		statsd.ErrorHandler(errHandler),
+		statsd.TagsFormat(statsd.InfluxDB),
 		statsd.Tags(config.BaseTags()...),
 	)
 	if err != nil {
