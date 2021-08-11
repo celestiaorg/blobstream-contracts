@@ -62,13 +62,6 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		ethPrivKey     *string
 		ethUseLedger   *bool
 
-		// Metrics
-		statsdPrefix   *string
-		statsdAddr     *string
-		statsdStuckDur *string
-		statsdMocking  *string
-		statsdDisabled *string
-
 		// Relayer config
 		relayValsets *bool
 		relayBatches *bool
@@ -114,15 +107,6 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		&ethUseLedger,
 	)
 
-	initStatsdOptions(
-		cmd,
-		&statsdPrefix,
-		&statsdAddr,
-		&statsdStuckDur,
-		&statsdMocking,
-		&statsdDisabled,
-	)
-
 	initRelayerOptions(
 		cmd,
 		&relayValsets,
@@ -146,14 +130,6 @@ func orchestratorCmd(cmd *cli.Cmd) {
 	cmd.Action = func() {
 		// ensure a clean exit
 		defer closer.Close()
-
-		startMetricsGathering(
-			statsdPrefix,
-			statsdAddr,
-			statsdStuckDur,
-			statsdMocking,
-			statsdDisabled,
-		)
 
 		if *cosmosUseLedger || *ethUseLedger {
 			log.Fatalln("cannot really use Ledger for orchestrator, since signatures msut be realtime")
