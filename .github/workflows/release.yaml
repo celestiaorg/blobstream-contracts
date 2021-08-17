@@ -1,0 +1,28 @@
+name: Release staging docker image
+on:
+  push:
+    branches: [release-staging]
+
+jobs:
+  docker-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout peggo
+        uses: actions/checkout@master
+        with:
+          repository: InjectiveLabs/peggo
+          ref: release-staging
+          token: ${{ secrets.GH_TOKEN }}
+          path: ./peggo
+      - name: Build image
+        run: |
+          cd peggo
+          docker build -t public.ecr.aws/l9h3g6c6/peggo:staging .
+      - name: Push image
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_KEY }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET }}
+          aws configure set region us-east-1
+          aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/l9h3g6c6
+          docker push public.ecr.aws/l9h3g6c6/peggo:staging
