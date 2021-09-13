@@ -254,7 +254,9 @@ func initStatsdOptions(
 func initRelayerOptions(
 	cmd *cli.Cmd,
 	relayValsets **bool,
+	relayValsetOffsetDur **string,
 	relayBatches **bool,
+	relayBatchOffsetDur **string,
 ) {
 	*relayValsets = cmd.Bool(cli.BoolOpt{
 		Name:   "relay_valsets",
@@ -263,11 +265,25 @@ func initRelayerOptions(
 		Value:  false,
 	})
 
+	*relayValsetOffsetDur = cmd.String(cli.StringOpt{
+		Name:   "relay_valset_offset_dur",
+		Desc:   "Sets a duration to delay relaying Valset",
+		EnvVar: "PEGGO_RELAY_VALSET_OFFSET_DUR",
+		Value:  "5m",
+	})
+
 	*relayBatches = cmd.Bool(cli.BoolOpt{
 		Name:   "relay_batches",
 		Desc:   "If enabled, relayer will relay batches to ethereum",
 		EnvVar: "PEGGO_RELAY_BATCHES",
 		Value:  false,
+	})
+
+	*relayBatchOffsetDur = cmd.String(cli.StringOpt{
+		Name:   "relay_batch_offset_dur",
+		Desc:   "Sets a duration to delay relaying Batch",
+		EnvVar: "PEGGO_RELAY_BATCH_OFFSET_DUR",
+		Value:  "5m",
 	})
 }
 

@@ -63,8 +63,10 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		ethUseLedger   *bool
 
 		// Relayer config
-		relayValsets *bool
-		relayBatches *bool
+		relayValsets         *bool
+		relayValsetOffsetDur *string
+		relayBatches         *bool
+		relayBatchOffsetDur  *string
 
 		// Batch requester config
 		minBatchFeeUSD *float64
@@ -110,7 +112,9 @@ func orchestratorCmd(cmd *cli.Cmd) {
 	initRelayerOptions(
 		cmd,
 		&relayValsets,
+		&relayValsetOffsetDur,
 		&relayBatches,
+		&relayBatchOffsetDur,
 	)
 
 	initBatchRequesterOptions(
@@ -226,7 +230,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		peggyContract, err := peggy.NewPeggyContract(ethCommitter, peggyAddress)
 		orShutdown(err)
 
-		relayer := relayer.NewPeggyRelayer(cosmosQueryClient, peggyContract, *relayValsets, *relayBatches)
+		relayer := relayer.NewPeggyRelayer(cosmosQueryClient, tmclient.NewRPCClient(*tendermintRPC), peggyContract, *relayValsets, *relayValsetOffsetDur, *relayBatches, *relayBatchOffsetDur)
 
 		coingeckoConfig := coingecko.Config{
 			BaseURL: *coingeckoApi,

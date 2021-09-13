@@ -2,6 +2,7 @@ package relayer
 
 import (
 	"context"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
@@ -76,6 +77,24 @@ func (s *peggyRelayer) RelayBatches(ctx context.Context) error {
 		}
 		// Check if oldestSignedBatch already submitted by other validators in mean time
 		if oldestSignedBatch.BatchNonce > latestEthereumBatch.Uint64() {
+
+			// Check custom time delay offset
+			blockResult, err := s.tmClient.GetBlock(ctx, int64(oldestSignedBatch.Block))
+			if err != nil {
+				return err
+			}
+			batchCreatedAt := blockResult.Block.Time
+			relayBatchOffsetDur, err := time.ParseDuration(s.relayBatchOffsetDur)
+			if err != nil {
+				return err
+			}
+			customTimeDelay := batchCreatedAt.Add(relayBatchOffsetDur)
+			if time.Now().Sub(customTimeDelay) <= 0 {
+				return nil
+			}
+
+			// TODO: Add a mempool check here
+
 			log.Infof("We have detected latest batch %d but latest on Ethereum is %d sending an update!", oldestSignedBatch.BatchNonce, latestEthereumBatch)
 
 			// Send SendTransactionBatch to Ethereum
@@ -89,4 +108,13 @@ func (s *peggyRelayer) RelayBatches(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// duration parses duration from string with a provided default fallback.
+func duration(s string, defaults time.Duration) time.Duration {
+	dur, err := time.ParseDuration(s)
+	if err != nil {
+		dur = defaults
+	}
+	return dur
 }
