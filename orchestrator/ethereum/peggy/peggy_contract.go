@@ -67,11 +67,15 @@ type PeggyContract interface {
 		erc20ContractAddress common.Address,
 		callerAddress common.Address,
 	) (symbol string, err error)
+
+	SubscribeToPendingTxs(
+		alchemyWebsocketURL string)
 }
 
 func NewPeggyContract(
 	ethCommitter committer.EVMCommitter,
 	peggyAddress common.Address,
+	pendingTxInputList PendingTxInputList,
 ) (PeggyContract, error) {
 	ethPeggy, err := wrappers.NewPeggy(peggyAddress, ethCommitter.Provider())
 	if err != nil {
@@ -79,9 +83,10 @@ func NewPeggyContract(
 	}
 
 	svc := &peggyContract{
-		EVMCommitter: ethCommitter,
-		peggyAddress: peggyAddress,
-		ethPeggy:     ethPeggy,
+		EVMCommitter:       ethCommitter,
+		peggyAddress:       peggyAddress,
+		ethPeggy:           ethPeggy,
+		pendingTxInputList: pendingTxInputList,
 
 		svcTags: metrics.Tags{
 			"svc": "peggy_contract",
@@ -97,6 +102,8 @@ type peggyContract struct {
 	ethProvider  provider.EVMProvider
 	peggyAddress common.Address
 	ethPeggy     *wrappers.Peggy
+
+	pendingTxInputList PendingTxInputList
 
 	svcTags metrics.Tags
 }

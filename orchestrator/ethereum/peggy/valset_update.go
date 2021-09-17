@@ -100,6 +100,11 @@ func (s *peggyContract) SendEthValsetUpdate(
 		return nil, err
 	}
 
+	// Checking in pending txs(mempool) if tx with same input is already submitted
+	if s.pendingTxInputList.IsPendingTxInput(string(txData)) {
+		return nil, errors.New("Transaction with same valset input data is already present in mempool")
+	}
+
 	txHash, err := s.SendTx(ctx, s.peggyAddress, txData)
 	if err != nil {
 		metrics.ReportFuncError(s.svcTags)

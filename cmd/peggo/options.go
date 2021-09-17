@@ -141,6 +141,7 @@ func initEthereumOptions(
 	cmd *cli.Cmd,
 	ethChainID **int,
 	ethNodeRPC **string,
+	ethNodeAlchemyWS **string,
 	ethGasPriceAdjustment **float64,
 ) {
 	*ethChainID = cmd.Int(cli.IntOpt{
@@ -155,6 +156,13 @@ func initEthereumOptions(
 		Desc:   "Specify HTTP endpoint for an Ethereum node.",
 		EnvVar: "PEGGO_ETH_RPC",
 		Value:  "http://localhost:1317",
+	})
+
+	*ethNodeAlchemyWS = cmd.String(cli.StringOpt{
+		Name:   "eth-node-alchemy-ws",
+		Desc:   "Specify websocket url for an Alchemy ethereum node.",
+		EnvVar: "PEGGO_ETH_Alchemy_WS",
+		Value:  "",
 	})
 
 	*ethGasPriceAdjustment = cmd.Float64(cli.Float64Opt{

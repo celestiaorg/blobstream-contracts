@@ -84,8 +84,6 @@ func (s *peggyRelayer) RelayValsets(ctx context.Context) error {
 				return nil
 			}
 
-			// TODO: Add a mempool check here
-
 			log.Infof("Detected latest cosmos valset nonce %d, but latest valset on Ethereum is %d. Sending update to Ethereum\n",
 				latestCosmosConfirmed.Nonce, latestEthereumValsetNonce.Uint64())
 

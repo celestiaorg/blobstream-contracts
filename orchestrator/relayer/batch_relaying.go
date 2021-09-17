@@ -93,8 +93,6 @@ func (s *peggyRelayer) RelayBatches(ctx context.Context) error {
 				return nil
 			}
 
-			// TODO: Add a mempool check here
-
 			log.Infof("We have detected latest batch %d but latest on Ethereum is %d sending an update!", oldestSignedBatch.BatchNonce, latestEthereumBatch)
 
 			// Send SendTransactionBatch to Ethereum
@@ -108,13 +106,4 @@ func (s *peggyRelayer) RelayBatches(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-// duration parses duration from string with a provided default fallback.
-func duration(s string, defaults time.Duration) time.Duration {
-	dur, err := time.ParseDuration(s)
-	if err != nil {
-		dur = defaults
-	}
-	return dur
 }

@@ -53,6 +53,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		// Ethereum params
 		ethChainID            *int
 		ethNodeRPC            *string
+		ethNodeAlchemyWS      *string
 		ethGasPriceAdjustment *float64
 
 		// Ethereum Key Management
@@ -97,6 +98,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		cmd,
 		&ethChainID,
 		&ethNodeRPC,
+		&ethNodeAlchemyWS,
 		&ethGasPriceAdjustment,
 	)
 
@@ -227,8 +229,15 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		ethCommitter, err := committer.NewEthCommitter(ethKeyFromAddress, *ethGasPriceAdjustment, signerFn, ethProvider)
 		orShutdown(err)
 
-		peggyContract, err := peggy.NewPeggyContract(ethCommitter, peggyAddress)
+		pendingTxInputList := peggy.PendingTxInputList{}
+
+		peggyContract, err := peggy.NewPeggyContract(ethCommitter, peggyAddress, pendingTxInputList)
 		orShutdown(err)
+
+		// If Alchemy Websocket URL is set, then Subscribe to Pending Transaction of Peggy Contract.
+		if *ethNodeAlchemyWS != "" {
+			go peggyContract.SubscribeToPendingTxs(*ethNodeAlchemyWS)
+		}
 
 		relayer := relayer.NewPeggyRelayer(cosmosQueryClient, tmclient.NewRPCClient(*tendermintRPC), peggyContract, *relayValsets, *relayValsetOffsetDur, *relayBatches, *relayBatchOffsetDur)
 
