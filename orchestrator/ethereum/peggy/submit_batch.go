@@ -85,7 +85,7 @@ func (s *peggyContract) SendTransactionBatch(
 	}
 
 	// Checking in pending txs(mempool) if tx with same input is already submitted
-	if s.pendingTxInputList.IsPendingTxInput(string(txData), s.pendingTxWaitTime) {
+	if s.pendingTxInputList.IsPendingTxInput(string(txData), s.pendingTxWaitDuration) {
 		return nil, errors.New("Transaction with same batch input data is already present in mempool")
 	}
 

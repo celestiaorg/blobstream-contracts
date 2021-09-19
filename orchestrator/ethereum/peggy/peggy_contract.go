@@ -77,7 +77,7 @@ func NewPeggyContract(
 	ethCommitter committer.EVMCommitter,
 	peggyAddress common.Address,
 	pendingTxInputList PendingTxInputList,
-	pendingTxWaitTime time.Duration,
+	pendingTxWaitDuration time.Duration,
 ) (PeggyContract, error) {
 	ethPeggy, err := wrappers.NewPeggy(peggyAddress, ethCommitter.Provider())
 	if err != nil {
@@ -85,11 +85,11 @@ func NewPeggyContract(
 	}
 
 	svc := &peggyContract{
-		EVMCommitter:       ethCommitter,
-		peggyAddress:       peggyAddress,
-		ethPeggy:           ethPeggy,
-		pendingTxInputList: pendingTxInputList,
-		pendingTxWaitTime:  pendingTxWaitTime,
+		EVMCommitter:          ethCommitter,
+		peggyAddress:          peggyAddress,
+		ethPeggy:              ethPeggy,
+		pendingTxInputList:    pendingTxInputList,
+		pendingTxWaitDuration: pendingTxWaitDuration,
 		svcTags: metrics.Tags{
 			"svc": "peggy_contract",
 		},
@@ -105,8 +105,8 @@ type peggyContract struct {
 	peggyAddress common.Address
 	ethPeggy     *wrappers.Peggy
 
-	pendingTxInputList PendingTxInputList
-	pendingTxWaitTime  time.Duration
+	pendingTxInputList    PendingTxInputList
+	pendingTxWaitDuration time.Duration
 
 	svcTags metrics.Tags
 }

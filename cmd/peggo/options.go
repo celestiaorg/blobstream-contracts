@@ -265,7 +265,7 @@ func initRelayerOptions(
 	relayValsetOffsetDur **string,
 	relayBatches **bool,
 	relayBatchOffsetDur **string,
-	relayPendingTxWaitTime **string,
+	pendingTxWaitDuration **string,
 ) {
 	*relayValsets = cmd.Bool(cli.BoolOpt{
 		Name:   "relay_valsets",
@@ -295,10 +295,10 @@ func initRelayerOptions(
 		Value:  "5m",
 	})
 
-	*relayPendingTxWaitTime = cmd.String(cli.StringOpt{
-		Name:   "relay_pending_tx_wait_time",
-		Desc:   "If set, relayer will broadcast pending batches/valsetupdate only after relayPendingTxWaitTime has passed",
-		EnvVar: "PEGGO_RELAY_PENDING_TX_WAIT_TIME",
+	*pendingTxWaitDuration = cmd.String(cli.StringOpt{
+		Name:   "relay_pending_tx_wait_duration",
+		Desc:   "If set, relayer will broadcast pending batches/valsetupdate only after pendingTxWaitDuration has passed",
+		EnvVar: "PEGGO_RELAY_PENDING_TX_WAIT_DURATION",
 		Value:  "20m",
 	})
 }

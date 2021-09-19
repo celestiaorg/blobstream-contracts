@@ -38,10 +38,10 @@ func (p PendingTxInputList) AddPendingTxInput(pendingTx *RPCTransaction) {
 	}
 }
 
-func (p PendingTxInputList) IsPendingTxInput(txInput string, pendingTxWaitTime time.Duration) bool {
+func (p PendingTxInputList) IsPendingTxInput(txInput string, pendingTxWaitDuration time.Duration) bool {
 	for _, pendingTxInput := range p {
 		if pendingTxInput.InputData == txInput {
-			if time.Now().Before(pendingTxInput.ReceivedTime.Add(pendingTxWaitTime)) {
+			if time.Now().Before(pendingTxInput.ReceivedTime.Add(pendingTxWaitDuration)) {
 				return true
 			} else {
 				return false

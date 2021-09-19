@@ -101,7 +101,7 @@ func (s *peggyContract) SendEthValsetUpdate(
 	}
 
 	// Checking in pending txs(mempool) if tx with same input is already submitted
-	if s.pendingTxInputList.IsPendingTxInput(string(txData), s.pendingTxWaitTime) {
+	if s.pendingTxInputList.IsPendingTxInput(string(txData), s.pendingTxWaitDuration) {
 		return nil, errors.New("Transaction with same valset input data is already present in mempool")
 	}
 
