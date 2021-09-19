@@ -64,10 +64,11 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		ethUseLedger   *bool
 
 		// Relayer config
-		relayValsets         *bool
-		relayValsetOffsetDur *string
-		relayBatches         *bool
-		relayBatchOffsetDur  *string
+		relayValsets           *bool
+		relayValsetOffsetDur   *string
+		relayBatches           *bool
+		relayBatchOffsetDur    *string
+		relayPendingTxWaitTime *string
 
 		// Batch requester config
 		minBatchFeeUSD *float64
@@ -117,6 +118,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		&relayValsetOffsetDur,
 		&relayBatches,
 		&relayBatchOffsetDur,
+		&relayPendingTxWaitTime,
 	)
 
 	initBatchRequesterOptions(
@@ -231,7 +233,10 @@ func orchestratorCmd(cmd *cli.Cmd) {
 
 		pendingTxInputList := peggy.PendingTxInputList{}
 
-		peggyContract, err := peggy.NewPeggyContract(ethCommitter, peggyAddress, pendingTxInputList)
+		pendingTxWaitTime, err := time.ParseDuration(*relayPendingTxWaitTime)
+		orShutdown(err)
+
+		peggyContract, err := peggy.NewPeggyContract(ethCommitter, peggyAddress, pendingTxInputList, pendingTxWaitTime)
 		orShutdown(err)
 
 		// If Alchemy Websocket URL is set, then Subscribe to Pending Transaction of Peggy Contract.

@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/big"
 	"strings"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -76,6 +77,7 @@ func NewPeggyContract(
 	ethCommitter committer.EVMCommitter,
 	peggyAddress common.Address,
 	pendingTxInputList PendingTxInputList,
+	pendingTxWaitTime time.Duration,
 ) (PeggyContract, error) {
 	ethPeggy, err := wrappers.NewPeggy(peggyAddress, ethCommitter.Provider())
 	if err != nil {
@@ -87,7 +89,7 @@ func NewPeggyContract(
 		peggyAddress:       peggyAddress,
 		ethPeggy:           ethPeggy,
 		pendingTxInputList: pendingTxInputList,
-
+		pendingTxWaitTime:  pendingTxWaitTime,
 		svcTags: metrics.Tags{
 			"svc": "peggy_contract",
 		},
@@ -104,6 +106,7 @@ type peggyContract struct {
 	ethPeggy     *wrappers.Peggy
 
 	pendingTxInputList PendingTxInputList
+	pendingTxWaitTime  time.Duration
 
 	svcTags metrics.Tags
 }

@@ -161,7 +161,7 @@ func initEthereumOptions(
 	*ethNodeAlchemyWS = cmd.String(cli.StringOpt{
 		Name:   "eth-node-alchemy-ws",
 		Desc:   "Specify websocket url for an Alchemy ethereum node.",
-		EnvVar: "PEGGO_ETH_Alchemy_WS",
+		EnvVar: "PEGGO_ETH_ALCHEMY_WS",
 		Value:  "",
 	})
 
@@ -265,6 +265,7 @@ func initRelayerOptions(
 	relayValsetOffsetDur **string,
 	relayBatches **bool,
 	relayBatchOffsetDur **string,
+	relayPendingTxWaitTime **string,
 ) {
 	*relayValsets = cmd.Bool(cli.BoolOpt{
 		Name:   "relay_valsets",
@@ -275,7 +276,7 @@ func initRelayerOptions(
 
 	*relayValsetOffsetDur = cmd.String(cli.StringOpt{
 		Name:   "relay_valset_offset_dur",
-		Desc:   "Sets a duration to delay relaying Valset",
+		Desc:   "If set, relayer will broadcast valsetUpdate only after relayValsetOffsetDur has passed from time of valsetUpdate creation",
 		EnvVar: "PEGGO_RELAY_VALSET_OFFSET_DUR",
 		Value:  "5m",
 	})
@@ -289,9 +290,16 @@ func initRelayerOptions(
 
 	*relayBatchOffsetDur = cmd.String(cli.StringOpt{
 		Name:   "relay_batch_offset_dur",
-		Desc:   "Sets a duration to delay relaying Batch",
+		Desc:   "If set, relayer will broadcast batches only after relayBatchOffsetDur has passed from time of batch creation",
 		EnvVar: "PEGGO_RELAY_BATCH_OFFSET_DUR",
 		Value:  "5m",
+	})
+
+	*relayPendingTxWaitTime = cmd.String(cli.StringOpt{
+		Name:   "relay_pending_tx_wait_time",
+		Desc:   "If set, relayer will broadcast pending batches/valsetupdate only after relayPendingTxWaitTime has passed",
+		EnvVar: "PEGGO_RELAY_PENDING_TX_WAIT_TIME",
+		Value:  "20m",
 	})
 }
 

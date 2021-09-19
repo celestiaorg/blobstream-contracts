@@ -13,24 +13,39 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-type PendingTxInputList []string
+type PendingTxInput struct {
+	InputData    string
+	ReceivedTime time.Time
+}
 
-func (p PendingTxInputList) AddPendingTxInput(txInput string) {
+type PendingTxInputList []PendingTxInput
+
+func (p PendingTxInputList) AddPendingTxInput(pendingTx *RPCTransaction) {
+
+	pendingTxInput := PendingTxInput{
+		InputData:    string(pendingTx.Input),
+		ReceivedTime: time.Now(),
+	}
+
 	// Enqueue pending tx input
-	p = append(p, txInput)
+	p = append(p, pendingTxInput)
 
 	// Persisting top 100 pending txs of peggy contract only.
 	if len(p) > 100 {
+		p[0] = PendingTxInput{} // to avoid memory leak
 		// Dequeue pending tx input
-		p[0] = "" // to avoid memory leak
 		p = p[1:]
 	}
 }
 
-func (p PendingTxInputList) IsPendingTxInput(txInput string) bool {
+func (p PendingTxInputList) IsPendingTxInput(txInput string, pendingTxWaitTime time.Duration) bool {
 	for _, pendingTxInput := range p {
-		if pendingTxInput == txInput {
-			return true
+		if pendingTxInput.InputData == txInput {
+			if time.Now().Before(pendingTxInput.ReceivedTime.Add(pendingTxWaitTime)) {
+				return true
+			} else {
+				return false
+			}
 		}
 	}
 	return false
@@ -51,14 +66,14 @@ func (s *peggyContract) SubscribeToPendingTxs(alchemyWebsocketURL string) {
 	defer cancel()
 
 	// Subscribe to Transactions
-	ch := make(chan *RPCTransaction, 16)
+	ch := make(chan *RPCTransaction)
 	_, err = wsClient.EthSubscribe(ctx, ch, "alchemy_filteredNewFullPendingTransactions", args)
 	log.WithField("Subscription error", alchemyWebsocketURL).WithError(err).Fatalln("Failed to subscribe to pending transactions")
 
 	for {
 		// Check that the transaction was send over the channel
 		pendingTransaction := <-ch
-		s.pendingTxInputList.AddPendingTxInput(string(pendingTransaction.Input))
+		s.pendingTxInputList.AddPendingTxInput(pendingTransaction)
 	}
 }
 
