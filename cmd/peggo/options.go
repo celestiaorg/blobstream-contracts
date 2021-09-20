@@ -174,7 +174,7 @@ func initEthereumOptions(
 	})
 
 	*ethMaxGasPrice = cmd.Int(cli.IntOpt{
-		Name:   "eth-max-gas-proce",
+		Name:   "eth-max-gas-price",
 		Desc:   "Specify Max gas price for Ethereum Transactions in GWei",
 		EnvVar: "PEGGO_ETH_MAX_GAS_PRICE",
 		Value:  500,
