@@ -55,6 +55,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		ethNodeRPC            *string
 		ethNodeAlchemyWS      *string
 		ethGasPriceAdjustment *float64
+		ethMaxGasPrice        *int
 
 		// Ethereum Key Management
 		ethKeystoreDir *string
@@ -101,6 +102,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		&ethNodeRPC,
 		&ethNodeAlchemyWS,
 		&ethGasPriceAdjustment,
+		&ethMaxGasPrice,
 	)
 
 	initEthereumKeyOptions(
@@ -228,7 +230,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		ethProvider := provider.NewEVMProvider(evmRPC)
 		log.Infoln("Connected to Ethereum RPC at", *ethNodeRPC)
 
-		ethCommitter, err := committer.NewEthCommitter(ethKeyFromAddress, *ethGasPriceAdjustment, signerFn, ethProvider)
+		ethCommitter, err := committer.NewEthCommitter(ethKeyFromAddress, *ethGasPriceAdjustment, *ethMaxGasPrice, signerFn, ethProvider)
 		orShutdown(err)
 
 		pendingTxInputList := peggy.PendingTxInputList{}

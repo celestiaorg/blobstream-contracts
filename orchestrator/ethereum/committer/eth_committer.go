@@ -21,6 +21,7 @@ import (
 func NewEthCommitter(
 	fromAddress common.Address,
 	ethGasPriceAdjustment float64,
+	ethMaxGasPrice int,
 	fromSigner bind.SignerFn,
 	evmProvider provider.EVMProviderWithRet,
 	committerOpts ...EVMCommitterOption,
@@ -32,11 +33,11 @@ func NewEthCommitter(
 		},
 
 		ethGasPriceAdjustment: ethGasPriceAdjustment,
-
-		fromAddress: fromAddress,
-		fromSigner:  fromSigner,
-		evmProvider: evmProvider,
-		nonceCache:  util.NewNonceCache(),
+		ethMaxGasPrice:        ethMaxGasPrice,
+		fromAddress:           fromAddress,
+		fromSigner:            fromSigner,
+		evmProvider:           evmProvider,
+		nonceCache:            util.NewNonceCache(),
 	}
 
 	if err := applyOptions(committer.committerOpts, committerOpts...); err != nil {
@@ -58,6 +59,7 @@ type ethCommitter struct {
 	fromSigner  bind.SignerFn
 
 	ethGasPriceAdjustment float64
+	ethMaxGasPrice        int
 	evmProvider           provider.EVMProviderWithRet
 	nonceCache            util.NonceCache
 
@@ -105,6 +107,12 @@ func (e *ethCommitter) SendTx(
 	incrementedPrice.Int(gasPrice)
 
 	opts.GasPrice = gasPrice
+
+	//The gas price should be less than max gas price
+	maxGasPrice := big.NewInt(int64(e.ethMaxGasPrice))
+	if opts.GasPrice.Cmp(maxGasPrice) > 0 {
+		return common.Hash{}, errors.Errorf("Suggested gas price %v is greater than max gas price %v", opts.GasPrice.Int64(), maxGasPrice.Int64())
+	}
 
 	resyncNonces := func(from common.Address) {
 		e.nonceCache.Sync(from, func() (uint64, error) {

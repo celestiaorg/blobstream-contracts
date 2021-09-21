@@ -143,6 +143,7 @@ func initEthereumOptions(
 	ethNodeRPC **string,
 	ethNodeAlchemyWS **string,
 	ethGasPriceAdjustment **float64,
+	ethMaxGasPrice **int,
 ) {
 	*ethChainID = cmd.Int(cli.IntOpt{
 		Name:   "eth-chain-id",
@@ -170,6 +171,13 @@ func initEthereumOptions(
 		Desc:   "gas price adjustment for Ethereum transactions",
 		EnvVar: "PEGGO_ETH_GAS_PRICE_ADJUSTMENT",
 		Value:  float64(1.3),
+	})
+
+	*ethMaxGasPrice = cmd.Int(cli.IntOpt{
+		Name:   "eth-max-gas-price",
+		Desc:   "Specify Max gas price for Ethereum Transactions in GWei",
+		EnvVar: "PEGGO_ETH_MAX_GAS_PRICE",
+		Value:  500,
 	})
 }
 
