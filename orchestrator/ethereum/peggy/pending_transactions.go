@@ -1,6 +1,7 @@
 package peggy
 
 import (
+	"bytes"
 	"context"
 
 	"time"
@@ -14,33 +15,49 @@ import (
 )
 
 type PendingTxInput struct {
-	InputData    string
+	InputData    hexutil.Bytes
 	ReceivedTime time.Time
 }
 
 type PendingTxInputList []PendingTxInput
 
-func (p PendingTxInputList) AddPendingTxInput(pendingTx *RPCTransaction) {
+func (p *PendingTxInputList) AddPendingTxInput(pendingTx *RPCTransaction) {
+
+	if !IsBatchAndValsetUpdateTx(pendingTx.Input) {
+		return
+	}
 
 	pendingTxInput := PendingTxInput{
-		InputData:    string(pendingTx.Input),
+		InputData:    pendingTx.Input,
 		ReceivedTime: time.Now(),
 	}
 
 	// Enqueue pending tx input
-	p = append(p, pendingTxInput)
-
+	*p = append(*p, pendingTxInput)
 	// Persisting top 100 pending txs of peggy contract only.
-	if len(p) > 100 {
-		p[0] = PendingTxInput{} // to avoid memory leak
+	if len(*p) > 100 {
+		(*p)[0] = PendingTxInput{} // to avoid memory leak
 		// Dequeue pending tx input
-		p = p[1:]
+		*p = (*p)[1:]
 	}
 }
 
-func (p PendingTxInputList) IsPendingTxInput(txInput string, pendingTxWaitDuration time.Duration) bool {
+func IsBatchAndValsetUpdateTx(inputData hexutil.Bytes) bool {
+
+	submitBatchMethod := peggyABI.Methods["submitBatch"]
+	valsetUpdateMethod := peggyABI.Methods["updateValset"]
+
+	if bytes.Equal(submitBatchMethod.ID, inputData[:4]) || bytes.Equal(valsetUpdateMethod.ID, inputData[:4]) {
+		return true
+	} else {
+		return false
+	}
+}
+
+func (p PendingTxInputList) IsPendingTxInput(txInput []byte, pendingTxWaitDuration time.Duration) bool {
 	for _, pendingTxInput := range p {
-		if pendingTxInput.InputData == txInput {
+		if bytes.Equal(pendingTxInput.InputData, txInput) {
+
 			if time.Now().Before(pendingTxInput.ReceivedTime.Add(pendingTxWaitDuration)) {
 				return true
 			} else {
@@ -68,7 +85,10 @@ func (s *peggyContract) SubscribeToPendingTxs(alchemyWebsocketURL string) {
 	// Subscribe to Transactions
 	ch := make(chan *RPCTransaction)
 	_, err = wsClient.EthSubscribe(ctx, ch, "alchemy_filteredNewFullPendingTransactions", args)
-	log.WithField("Subscription error", alchemyWebsocketURL).WithError(err).Fatalln("Failed to subscribe to pending transactions")
+	if err != nil {
+		log.WithField("Subscription error", alchemyWebsocketURL).WithError(err).Fatalln("Failed to subscribe to pending transactions")
+		return
+	}
 
 	for {
 		// Check that the transaction was send over the channel
