@@ -47,7 +47,7 @@ Commands:
 Run 'peggo COMMAND --help' for more information on a command.      
 ```
 
-## COMMANDS
+## Commands
 
 ### peggo orchestrator
 
