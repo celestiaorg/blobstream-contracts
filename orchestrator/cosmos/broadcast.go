@@ -13,11 +13,11 @@ import (
 	"github.com/InjectiveLabs/sdk-go/chain/client"
 	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/keystore"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
+	"github.com/umee-network/peggo/orchestrator/ethereum/keystore"
+	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
+	"github.com/umee-network/peggo/orchestrator/metrics"
 
-	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
+	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
 )
 
 type PeggyBroadcastClient interface {
@@ -470,7 +470,7 @@ func (s *peggyBroadcastClient) SendRequestBatch(
 	metrics.ReportFuncCall(s.svcTags)
 	doneFn := metrics.ReportFuncTiming(s.svcTags)
 	defer doneFn()
-	
+
 	msg := &types.MsgRequestBatch{
 		Denom:        denom,
 		Orchestrator: s.AccFromAddress().String(),

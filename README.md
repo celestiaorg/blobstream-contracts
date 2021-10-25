@@ -14,7 +14,7 @@ List of executables:
 Get yourself `Go 1.15+` at https://golang.org/dl/ first, then:
 
 ```
-$ go get github.com/InjectiveLabs/peggo/orchestrator/cmd/...
+$ go get github.com/umee-network/peggo/orchestrator/cmd/...
 ```
 
 ## peggo_orchestrator

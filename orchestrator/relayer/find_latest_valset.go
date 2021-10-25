@@ -8,12 +8,12 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/util"
 	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/umee-network/peggo/orchestrator/ethereum/util"
+	"github.com/umee-network/peggo/orchestrator/metrics"
 
-	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
+	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
 )
 
 const defaultBlocksToSearch = 2000

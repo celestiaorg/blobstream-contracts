@@ -1,4 +1,4 @@
-module github.com/InjectiveLabs/peggo
+module github.com/umee-network/peggo
 
 go 1.16
 

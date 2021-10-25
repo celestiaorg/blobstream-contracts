@@ -7,7 +7,7 @@ import (
 	cli "github.com/jawher/mow.cli"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/peggo/orchestrator/version"
+	"github.com/umee-network/peggo/orchestrator/version"
 )
 
 var app = cli.App("peggo", "Peggo is a companion executable for orchestrating a Peggy validator.")

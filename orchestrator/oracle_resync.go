@@ -2,7 +2,8 @@ package orchestrator
 
 import (
 	"context"
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
+
+	"github.com/umee-network/peggo/orchestrator/metrics"
 )
 
 // GetLastCheckedBlock retrieves the last claim event this oracle has relayed to Cosmos.
