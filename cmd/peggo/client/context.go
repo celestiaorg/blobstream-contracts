@@ -18,8 +18,9 @@ import (
 	exchange "github.com/InjectiveLabs/sdk-go/chain/exchange/types"
 	insurance "github.com/InjectiveLabs/sdk-go/chain/insurance/types"
 	oracle "github.com/InjectiveLabs/sdk-go/chain/oracle/types"
-	peggy "github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 	chaintypes "github.com/InjectiveLabs/sdk-go/chain/types"
+
+	peggy "github.com/umee-network/umee/x/peggy/types"
 
 	cosmostypes "github.com/cosmos/cosmos-sdk/types"
 	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"

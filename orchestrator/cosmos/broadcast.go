@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/InjectiveLabs/sdk-go/chain/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	"github.com/umee-network/peggo/cmd/peggo/client"
 	"github.com/umee-network/peggo/orchestrator/ethereum/keystore"
 	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
 	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
