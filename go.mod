@@ -9,6 +9,7 @@ require (
 	github.com/StackExchange/wmi v1.2.0 // indirect
 	github.com/alexcesaro/statsd v2.0.0+incompatible
 	github.com/avast/retry-go v3.0.0+incompatible
+	github.com/bugsnag/panicwrap v1.3.4 // indirect
 	github.com/cosmos/cosmos-sdk v0.43.0-rc1
 	github.com/dgraph-io/ristretto v0.1.0 // indirect
 	github.com/ethereum/go-ethereum v1.10.5
