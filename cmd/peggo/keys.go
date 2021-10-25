@@ -13,7 +13,9 @@ import (
 	"syscall"
 
 	cosmcrypto "github.com/cosmos/cosmos-sdk/crypto"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	cosmtypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts"
@@ -26,9 +28,6 @@ import (
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh/terminal"
-
-	"github.com/InjectiveLabs/sdk-go/chain/crypto/ethsecp256k1"
-	"github.com/InjectiveLabs/sdk-go/chain/crypto/hd"
 
 	"github.com/umee-network/peggo/orchestrator/ethereum/keystore"
 )
@@ -59,9 +58,7 @@ func initCosmosKeyring(
 			return emptyCosmosAddress, nil, err
 		}
 
-		// Specfic to Injective chain with Ethermint keys
-		// Should be secp256k1.PrivKey for generic Cosmos chain
-		cosmosAccPk := &ethsecp256k1.PrivKey{
+		cosmosAccPk := &secp256k1.PrivKey{
 			Key: pkBytes,
 		}
 
@@ -115,7 +112,7 @@ func initCosmosKeyring(
 			*cosmosKeyringBackend,
 			absoluteKeyringDir,
 			passReader,
-			hd.EthSecp256k1Option(),
+			hd.Secp256k1Option(),
 		)
 		if err != nil {
 			err = errors.Wrap(err, "failed to init keyring")

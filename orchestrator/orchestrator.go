@@ -12,7 +12,6 @@ import (
 	"github.com/umee-network/peggo/orchestrator/ethereum/keystore"
 	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
 	"github.com/umee-network/peggo/orchestrator/ethereum/provider"
-	"github.com/umee-network/peggo/orchestrator/metrics"
 	"github.com/umee-network/peggo/orchestrator/relayer"
 )
 
@@ -29,8 +28,6 @@ type PeggyOrchestrator interface {
 }
 
 type peggyOrchestrator struct {
-	svcTags metrics.Tags
-
 	tmClient             tmclient.TendermintClient
 	cosmosQueryClient    sidechain.PeggyQueryClient
 	peggyBroadcastClient sidechain.PeggyBroadcastClient
@@ -72,8 +69,5 @@ func NewPeggyOrchestrator(
 		relayer:              relayer,
 		minBatchFeeUSD:       minBatchFeeUSD,
 		priceFeeder:          priceFeeder,
-		svcTags: metrics.Tags{
-			"svc": "peggy_orchestrator",
-		},
 	}
 }

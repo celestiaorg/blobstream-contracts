@@ -11,12 +11,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
-
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 	"github.com/umee-network/peggo/orchestrator/ethereum/committer"
 	"github.com/umee-network/peggo/orchestrator/ethereum/provider"
-	"github.com/umee-network/peggo/orchestrator/metrics"
 	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
+	"github.com/umee-network/umee/x/peggy/types"
 )
 
 type PeggyContract interface {
@@ -82,10 +80,6 @@ func NewPeggyContract(
 		EVMCommitter: ethCommitter,
 		peggyAddress: peggyAddress,
 		ethPeggy:     ethPeggy,
-
-		svcTags: metrics.Tags{
-			"svc": "peggy_contract",
-		},
 	}
 
 	return svc, nil
@@ -97,8 +91,6 @@ type peggyContract struct {
 	ethProvider  provider.EVMProvider
 	peggyAddress common.Address
 	ethPeggy     *wrappers.Peggy
-
-	svcTags metrics.Tags
 }
 
 func (s *peggyContract) Address() common.Address {

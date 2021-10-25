@@ -5,15 +5,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/InjectiveLabs/sdk-go/chain/client"
+	ctypes "github.com/InjectiveLabs/sdk-go/chain/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/rpc"
 	cli "github.com/jawher/mow.cli"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
-	"github.com/xlab/closer"
-	log "github.com/xlab/suplog"
-
-	"github.com/InjectiveLabs/sdk-go/chain/client"
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
-
 	"github.com/umee-network/peggo/orchestrator"
 	"github.com/umee-network/peggo/orchestrator/coingecko"
 	"github.com/umee-network/peggo/orchestrator/cosmos"
@@ -22,9 +19,9 @@ import (
 	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
 	"github.com/umee-network/peggo/orchestrator/ethereum/provider"
 	"github.com/umee-network/peggo/orchestrator/relayer"
-
-	ctypes "github.com/InjectiveLabs/sdk-go/chain/types"
-	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/umee-network/umee/x/peggy/types"
+	"github.com/xlab/closer"
+	log "github.com/xlab/suplog"
 )
 
 // startOrchestrator action runs an infinite loop,

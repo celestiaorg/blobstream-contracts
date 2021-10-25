@@ -4,16 +4,13 @@ import (
 	"context"
 	"sort"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
-	log "github.com/xlab/suplog"
-
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/umee-network/peggo/orchestrator/ethereum/util"
-	"github.com/umee-network/peggo/orchestrator/metrics"
-
 	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
+	"github.com/umee-network/umee/x/peggy/types"
+	log "github.com/xlab/suplog"
 )
 
 const defaultBlocksToSearch = 2000
@@ -24,13 +21,8 @@ const defaultBlocksToSearch = 2000
 // backwards in time. In the case that the validator set has not been updated for a very long time
 // this will take longer.
 func (s *peggyRelayer) FindLatestValset(ctx context.Context) (*types.Valset, error) {
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
-
 	latestHeader, err := s.ethProvider.HeaderByNumber(ctx, nil)
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to get latest header")
 		return nil, err
 	}
@@ -38,21 +30,18 @@ func (s *peggyRelayer) FindLatestValset(ctx context.Context) (*types.Valset, err
 
 	peggyFilterer, err := wrappers.NewPeggyFilterer(s.peggyContract.Address(), s.ethProvider)
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to init Peggy events filterer")
 		return nil, err
 	}
 
 	latestEthereumValsetNonce, err := s.peggyContract.GetValsetNonce(ctx, s.peggyContract.FromAddress())
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to get latest Valset nonce")
 		return nil, err
 	}
 
 	cosmosValset, err := s.cosmosQueryClient.ValsetAt(ctx, latestEthereumValsetNonce.Uint64())
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to get cosmos Valset")
 		return nil, err
 	}
@@ -74,7 +63,6 @@ func (s *peggyRelayer) FindLatestValset(ctx context.Context) (*types.Valset, err
 			End:   &currentBlock,
 		}, nil)
 		if err != nil {
-			metrics.ReportFuncError(s.svcTags)
 			err = errors.Wrap(err, "failed to filter past ValsetUpdated events from Ethereum")
 			return nil, err
 		} else {

@@ -5,16 +5,14 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/InjectiveLabs/etherman/deployer"
+	"github.com/InjectiveLabs/etherman/sol"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	ctypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"github.com/InjectiveLabs/etherman/deployer"
-
-	"github.com/InjectiveLabs/etherman/sol"
 	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
 	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
 )

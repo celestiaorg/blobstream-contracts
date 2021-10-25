@@ -3,11 +3,10 @@ package relayer
 import (
 	"context"
 
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 	"github.com/umee-network/peggo/orchestrator/cosmos"
 	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
 	"github.com/umee-network/peggo/orchestrator/ethereum/provider"
-	"github.com/umee-network/peggo/orchestrator/metrics"
+	"github.com/umee-network/umee/x/peggy/types"
 )
 
 type PeggyRelayer interface {
@@ -19,8 +18,6 @@ type PeggyRelayer interface {
 }
 
 type peggyRelayer struct {
-	svcTags metrics.Tags
-
 	cosmosQueryClient  cosmos.PeggyQueryClient
 	peggyContract      peggy.PeggyContract
 	ethProvider        provider.EVMProvider
@@ -40,8 +37,5 @@ func NewPeggyRelayer(
 		ethProvider:        peggyContract.Provider(),
 		valsetRelayEnabled: valsetRelayEnabled,
 		batchRelayEnabled:  batchRelayEnabled,
-		svcTags: metrics.Tags{
-			"svc": "peggy_relayer",
-		},
 	}
 }

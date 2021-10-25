@@ -9,13 +9,6 @@ func initGlobalOptions(
 	appLogLevel **string,
 	svcWaitTimeout **string,
 ) {
-	*envName = app.String(cli.StringOpt{
-		Name:   "e env",
-		Desc:   "The environment name this app runs in. Used for metrics and error reporting.",
-		EnvVar: "PEGGO_ENV",
-		Value:  "local",
-	})
-
 	*appLogLevel = app.String(cli.StringOpt{
 		Name:   "l log-level",
 		Desc:   "Available levels: error, warn, info, debug.",

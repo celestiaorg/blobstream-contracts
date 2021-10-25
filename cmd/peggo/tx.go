@@ -4,14 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/InjectiveLabs/sdk-go/chain/client"
 	cli "github.com/jawher/mow.cli"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
+	"github.com/umee-network/peggo/orchestrator/cosmos"
+	"github.com/umee-network/umee/x/peggy/types"
 	"github.com/xlab/closer"
 	log "github.com/xlab/suplog"
-
-	"github.com/InjectiveLabs/sdk-go/chain/client"
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
-	"github.com/umee-network/peggo/orchestrator/cosmos"
 )
 
 // txCmdSubset contains actions that can sign and send messages to Cosmos module
