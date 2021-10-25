@@ -11,12 +11,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
-
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/committer"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/provider"
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
-	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
+	"github.com/umee-network/peggo/orchestrator/ethereum/committer"
+	"github.com/umee-network/peggo/orchestrator/ethereum/provider"
+	"github.com/umee-network/peggo/orchestrator/metrics"
+	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
+	"github.com/umee-network/umee/x/peggy/types"
 )
 
 type PeggyContract interface {

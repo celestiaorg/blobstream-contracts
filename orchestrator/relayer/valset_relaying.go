@@ -4,10 +4,9 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	"github.com/umee-network/peggo/orchestrator/metrics"
+	"github.com/umee-network/umee/x/peggy/types"
 	log "github.com/xlab/suplog"
-
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 )
 
 // RelayValsets checks the last validator set on Ethereum, if it's lower than our latest validator

@@ -8,17 +8,14 @@ import (
 	"time"
 
 	"github.com/avast/retry-go"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/shopspring/decimal"
-	log "github.com/xlab/suplog"
-
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
-
-	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
-	"github.com/InjectiveLabs/peggo/orchestrator/loops"
-
 	cosmtypes "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 	ethcmn "github.com/ethereum/go-ethereum/common"
+	"github.com/shopspring/decimal"
+	"github.com/umee-network/peggo/orchestrator/cosmos"
+	"github.com/umee-network/peggo/orchestrator/loops"
+	"github.com/umee-network/umee/x/peggy/types"
+	log "github.com/xlab/suplog"
 )
 
 const defaultLoopDur = 60 * time.Second

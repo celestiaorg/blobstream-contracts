@@ -5,19 +5,16 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/InjectiveLabs/sdk-go/chain/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	"github.com/umee-network/peggo/orchestrator/ethereum/keystore"
+	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
+	"github.com/umee-network/peggo/orchestrator/metrics"
+	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
+	"github.com/umee-network/umee/x/peggy/types"
 	log "github.com/xlab/suplog"
-
-	"github.com/InjectiveLabs/sdk-go/chain/client"
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
-
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/keystore"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
-
-	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
 )
 
 type PeggyBroadcastClient interface {
@@ -470,7 +467,7 @@ func (s *peggyBroadcastClient) SendRequestBatch(
 	metrics.ReportFuncCall(s.svcTags)
 	doneFn := metrics.ReportFuncTiming(s.svcTags)
 	defer doneFn()
-	
+
 	msg := &types.MsgRequestBatch{
 		Denom:        denom,
 		Orchestrator: s.AccFromAddress().String(),

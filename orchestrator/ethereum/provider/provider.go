@@ -15,7 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
 
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
+	"github.com/umee-network/peggo/orchestrator/metrics"
 )
 
 type EVMProvider interface {
@@ -40,7 +40,7 @@ type EVMProviderWithRet interface {
 
 type evmProviderWithRet struct {
 	*ethclient.Client
-	rc *rpc.Client
+	rc      *rpc.Client
 	svcTags metrics.Tags
 }
 

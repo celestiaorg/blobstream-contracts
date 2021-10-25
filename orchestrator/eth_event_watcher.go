@@ -8,8 +8,8 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
-	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
+	"github.com/umee-network/peggo/orchestrator/metrics"
+	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
 )
 
 // Considering blocktime of up to 3 seconds approx on the Injective Chain and an oracle loop duration = 1 minute,

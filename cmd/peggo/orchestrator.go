@@ -5,26 +5,23 @@ import (
 	"os"
 	"time"
 
+	"github.com/InjectiveLabs/sdk-go/chain/client"
+	ctypes "github.com/InjectiveLabs/sdk-go/chain/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/rpc"
 	cli "github.com/jawher/mow.cli"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
+	"github.com/umee-network/peggo/orchestrator"
+	"github.com/umee-network/peggo/orchestrator/coingecko"
+	"github.com/umee-network/peggo/orchestrator/cosmos"
+	"github.com/umee-network/peggo/orchestrator/cosmos/tmclient"
+	"github.com/umee-network/peggo/orchestrator/ethereum/committer"
+	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
+	"github.com/umee-network/peggo/orchestrator/ethereum/provider"
+	"github.com/umee-network/peggo/orchestrator/relayer"
+	"github.com/umee-network/umee/x/peggy/types"
 	"github.com/xlab/closer"
 	log "github.com/xlab/suplog"
-
-	"github.com/InjectiveLabs/sdk-go/chain/client"
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
-
-	"github.com/InjectiveLabs/peggo/orchestrator"
-	"github.com/InjectiveLabs/peggo/orchestrator/coingecko"
-	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
-	"github.com/InjectiveLabs/peggo/orchestrator/cosmos/tmclient"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/committer"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/provider"
-	"github.com/InjectiveLabs/peggo/orchestrator/relayer"
-
-	ctypes "github.com/InjectiveLabs/sdk-go/chain/types"
-	"github.com/ethereum/go-ethereum/rpc"
 )
 
 // startOrchestrator action runs an infinite loop,

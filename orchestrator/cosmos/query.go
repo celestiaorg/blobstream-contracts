@@ -6,9 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
+	"github.com/umee-network/peggo/orchestrator/metrics"
+	"github.com/umee-network/umee/x/peggy/types"
 )
 
 type PeggyQueryClient interface {
@@ -38,7 +37,7 @@ func NewPeggyQueryClient(client types.QueryClient) PeggyQueryClient {
 
 type peggyQueryClient struct {
 	daemonQueryClient types.QueryClient
-	svcTags metrics.Tags
+	svcTags           metrics.Tags
 }
 
 var ErrNotFound = errors.New("not found")

@@ -10,8 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
+	"github.com/umee-network/umee/x/peggy/types"
 )
 
 /// EncodeValsetConfirm takes the required input data and produces the required signature to confirm a validator

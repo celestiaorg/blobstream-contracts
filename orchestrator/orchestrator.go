@@ -5,15 +5,15 @@ import (
 
 	ethcmn "github.com/ethereum/go-ethereum/common"
 
-	"github.com/InjectiveLabs/peggo/orchestrator/coingecko"
-	"github.com/InjectiveLabs/peggo/orchestrator/cosmos/tmclient"
+	"github.com/umee-network/peggo/orchestrator/coingecko"
+	"github.com/umee-network/peggo/orchestrator/cosmos/tmclient"
 
-	sidechain "github.com/InjectiveLabs/peggo/orchestrator/cosmos"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/keystore"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/provider"
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
-	"github.com/InjectiveLabs/peggo/orchestrator/relayer"
+	sidechain "github.com/umee-network/peggo/orchestrator/cosmos"
+	"github.com/umee-network/peggo/orchestrator/ethereum/keystore"
+	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
+	"github.com/umee-network/peggo/orchestrator/ethereum/provider"
+	"github.com/umee-network/peggo/orchestrator/metrics"
+	"github.com/umee-network/peggo/orchestrator/relayer"
 )
 
 type PeggyOrchestrator interface {

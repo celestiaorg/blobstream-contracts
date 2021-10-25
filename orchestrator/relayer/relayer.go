@@ -3,11 +3,11 @@ package relayer
 import (
 	"context"
 
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
-	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/provider"
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
+	"github.com/umee-network/peggo/orchestrator/cosmos"
+	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
+	"github.com/umee-network/peggo/orchestrator/ethereum/provider"
+	"github.com/umee-network/peggo/orchestrator/metrics"
+	"github.com/umee-network/umee/x/peggy/types"
 )
 
 type PeggyRelayer interface {
