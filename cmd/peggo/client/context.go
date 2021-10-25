@@ -4,18 +4,16 @@ import (
 	"os"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/std"
-	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/pkg/errors"
 
+	umeeapp "github.com/umee-network/umee/app"
 	oracle "github.com/umee-network/umee/x/oracle/types"
 	peggy "github.com/umee-network/umee/x/peggy/types"
 
 	cosmostypes "github.com/cosmos/cosmos-sdk/types"
-	signingtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -30,32 +28,6 @@ import (
 	ibcapplicationtypes "github.com/cosmos/ibc-go/modules/apps/transfer/types"
 	ibccoretypes "github.com/cosmos/ibc-go/modules/core/types"
 )
-
-// NewTxConfig initializes new Cosmos TxConfig with certain signModes enabled.
-func NewTxConfig(signModes []signingtypes.SignMode) client.TxConfig {
-	interfaceRegistry := types.NewInterfaceRegistry()
-	std.RegisterInterfaces(interfaceRegistry)
-	oracle.RegisterInterfaces(interfaceRegistry)
-	peggy.RegisterInterfaces(interfaceRegistry)
-
-	// more cosmos types
-	authtypes.RegisterInterfaces(interfaceRegistry)
-	vestingtypes.RegisterInterfaces(interfaceRegistry)
-	banktypes.RegisterInterfaces(interfaceRegistry)
-	crisistypes.RegisterInterfaces(interfaceRegistry)
-	distributiontypes.RegisterInterfaces(interfaceRegistry)
-	evidencetypes.RegisterInterfaces(interfaceRegistry)
-	govtypes.RegisterInterfaces(interfaceRegistry)
-	paramproposaltypes.RegisterInterfaces(interfaceRegistry)
-	ibcapplicationtypes.RegisterInterfaces(interfaceRegistry)
-	ibccoretypes.RegisterInterfaces(interfaceRegistry)
-	slashingtypes.RegisterInterfaces(interfaceRegistry)
-	stakingtypes.RegisterInterfaces(interfaceRegistry)
-	upgradetypes.RegisterInterfaces(interfaceRegistry)
-
-	marshaler := codec.NewProtoCodec(interfaceRegistry)
-	return tx.NewTxConfig(marshaler, signModes)
-}
 
 // NewClientContext creates a new Cosmos Client context, where chainID
 // corresponds to Cosmos chain ID, fromSpec is either name of the key, or bech32-address
@@ -85,15 +57,6 @@ func NewClientContext(
 	stakingtypes.RegisterInterfaces(interfaceRegistry)
 	upgradetypes.RegisterInterfaces(interfaceRegistry)
 
-	marshaler := codec.NewProtoCodec(interfaceRegistry)
-	encodingConfig := EncodingConfig{
-		InterfaceRegistry: interfaceRegistry,
-		Marshaler:         marshaler,
-		TxConfig: NewTxConfig([]signingtypes.SignMode{
-			signingtypes.SignMode_SIGN_MODE_DIRECT,
-		}),
-	}
-
 	var keyInfo keyring.Info
 
 	if kb != nil {
@@ -116,7 +79,6 @@ func NewClientContext(
 
 	clientCtx = newContext(
 		chainId,
-		encodingConfig,
 		kb,
 		keyInfo,
 	)
@@ -124,18 +86,12 @@ func NewClientContext(
 	return clientCtx, nil
 }
 
-type EncodingConfig struct {
-	InterfaceRegistry types.InterfaceRegistry
-	Marshaler         codec.Codec
-	TxConfig          client.TxConfig
-}
-
 func newContext(
 	chainId string,
-	encodingConfig EncodingConfig,
 	kb keyring.Keyring,
 	keyInfo keyring.Info,
 ) client.Context {
+	encodingConfig := umeeapp.MakeEncodingConfig()
 	clientCtx := client.Context{
 		ChainID:           chainId,
 		JSONCodec:         encodingConfig.Marshaler,
