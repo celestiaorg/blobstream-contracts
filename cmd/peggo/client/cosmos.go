@@ -58,6 +58,11 @@ func NewCosmosClient(
 		}
 	}
 
+	txFactory := NewTxFactory(ctx)
+	if len(opts.GasPrices) > 0 {
+		txFactory = txFactory.WithGasPrices(opts.GasPrices)
+	}
+
 	cc := &cosmosClient{
 		ctx:  ctx,
 		opts: opts,
@@ -67,11 +72,12 @@ func NewCosmosClient(
 			"svc":    "cosmosClient",
 		}),
 
-		conn:    conn,
-		canSign: ctx.Keyring != nil,
-		syncMux: new(sync.Mutex),
-		msgC:    make(chan sdk.Msg, msgCommitBatchSizeLimit),
-		doneC:   make(chan bool, 1),
+		conn:      conn,
+		txFactory: txFactory,
+		canSign:   ctx.Keyring != nil,
+		syncMux:   new(sync.Mutex),
+		msgC:      make(chan sdk.Msg, msgCommitBatchSizeLimit),
+		doneC:     make(chan bool, 1),
 	}
 
 	if cc.canSign {
