@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/InjectiveLabs/sdk-go/chain/client"
-	ctypes "github.com/InjectiveLabs/sdk-go/chain/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rpc"
 	cli "github.com/jawher/mow.cli"
@@ -203,7 +202,8 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		injAddress := ethcmn.HexToAddress(peggyParams.CosmosCoinErc20Contract)
 
 		erc20ContractMapping := make(map[ethcmn.Address]string)
-		erc20ContractMapping[injAddress] = ctypes.InjectiveCoin
+		// TODO: add this as a config to peggyParams
+		erc20ContractMapping[injAddress] = "umee" //ctypes.InjectiveCoin
 
 		evmRPC, err := rpc.Dial(*ethNodeRPC)
 		if err != nil {

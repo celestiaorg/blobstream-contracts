@@ -13,7 +13,6 @@ import (
 	"syscall"
 
 	cosmcrypto "github.com/cosmos/cosmos-sdk/crypto"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -29,6 +28,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh/terminal"
 
+	"github.com/umee-network/peggo/cmd/peggo/hd"
 	"github.com/umee-network/peggo/orchestrator/ethereum/keystore"
 )
 
@@ -112,7 +112,7 @@ func initCosmosKeyring(
 			*cosmosKeyringBackend,
 			absoluteKeyringDir,
 			passReader,
-			hd.Secp256k1Option(),
+			hd.EthSecp256k1Option(),
 		)
 		if err != nil {
 			err = errors.Wrap(err, "failed to init keyring")
