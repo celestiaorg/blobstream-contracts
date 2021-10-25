@@ -28,6 +28,7 @@ type EVMProvider interface {
 	TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error)
 	SendTransaction(ctx context.Context, tx *types.Transaction) error
 	HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error)
+	SuggestGasTipCap(ctx context.Context) (*big.Int, error)
 }
 
 type EVMProviderWithRet interface {
