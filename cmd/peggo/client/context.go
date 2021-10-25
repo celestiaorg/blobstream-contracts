@@ -11,15 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/pkg/errors"
 
-	keyscodec "github.com/InjectiveLabs/sdk-go/chain/crypto/codec"
-
-	auction "github.com/InjectiveLabs/sdk-go/chain/auction/types"
-	evm "github.com/InjectiveLabs/sdk-go/chain/evm/types"
-	exchange "github.com/InjectiveLabs/sdk-go/chain/exchange/types"
-	insurance "github.com/InjectiveLabs/sdk-go/chain/insurance/types"
-	oracle "github.com/InjectiveLabs/sdk-go/chain/oracle/types"
-	chaintypes "github.com/InjectiveLabs/sdk-go/chain/types"
-
+	oracle "github.com/umee-network/umee/x/oracle/types"
 	peggy "github.com/umee-network/umee/x/peggy/types"
 
 	cosmostypes "github.com/cosmos/cosmos-sdk/types"
@@ -42,14 +34,9 @@ import (
 // NewTxConfig initializes new Cosmos TxConfig with certain signModes enabled.
 func NewTxConfig(signModes []signingtypes.SignMode) client.TxConfig {
 	interfaceRegistry := types.NewInterfaceRegistry()
-	keyscodec.RegisterInterfaces(interfaceRegistry)
 	std.RegisterInterfaces(interfaceRegistry)
-	exchange.RegisterInterfaces(interfaceRegistry)
 	oracle.RegisterInterfaces(interfaceRegistry)
-	insurance.RegisterInterfaces(interfaceRegistry)
-	evm.RegisterInterfaces(interfaceRegistry)
 	peggy.RegisterInterfaces(interfaceRegistry)
-	chaintypes.RegisterInterfaces(interfaceRegistry)
 
 	// more cosmos types
 	authtypes.RegisterInterfaces(interfaceRegistry)
@@ -79,15 +66,9 @@ func NewClientContext(
 	clientCtx := client.Context{}
 
 	interfaceRegistry := types.NewInterfaceRegistry()
-	keyscodec.RegisterInterfaces(interfaceRegistry)
 	std.RegisterInterfaces(interfaceRegistry)
-	exchange.RegisterInterfaces(interfaceRegistry)
-	insurance.RegisterInterfaces(interfaceRegistry)
-	auction.RegisterInterfaces(interfaceRegistry)
 	oracle.RegisterInterfaces(interfaceRegistry)
-	evm.RegisterInterfaces(interfaceRegistry)
 	peggy.RegisterInterfaces(interfaceRegistry)
-	chaintypes.RegisterInterfaces(interfaceRegistry)
 
 	// more cosmos types
 	authtypes.RegisterInterfaces(interfaceRegistry)
