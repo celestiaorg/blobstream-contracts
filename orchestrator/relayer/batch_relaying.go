@@ -7,12 +7,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/umee-network/umee/x/peggy/types"
 	log "github.com/xlab/suplog"
-<<<<<<< HEAD
-
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
-	"github.com/umee-network/peggo/orchestrator/metrics"
-=======
->>>>>>> a30a3c85a12266091efa13d33785f0095c608a8a
 )
 
 // RelayBatches checks the last validator set on Ethereum, if it's lower than our latest valida

@@ -199,49 +199,6 @@ func initEthereumKeyOptions(
 }
 
 // initStatsdOptions sets options for StatsD metrics.
-func initStatsdOptions(
-	cmd *cli.Cmd,
-	statsdPrefix **string,
-	statsdAddr **string,
-	statsdStuckDur **string,
-	statsdMocking **string,
-	statsdDisabled **string,
-) {
-	*statsdPrefix = cmd.String(cli.StringOpt{
-		Name:   "statsd-prefix",
-		Desc:   "Specify StatsD compatible metrics prefix.",
-		EnvVar: "PEGGO_STATSD_PREFIX",
-		Value:  "peggo",
-	})
-
-	*statsdAddr = cmd.String(cli.StringOpt{
-		Name:   "statsd-addr",
-		Desc:   "UDP address of a StatsD compatible metrics aggregator.",
-		EnvVar: "PEGGO_STATSD_ADDR",
-		Value:  "localhost:8125",
-	})
-
-	*statsdStuckDur = cmd.String(cli.StringOpt{
-		Name:   "statsd-stuck-func",
-		Desc:   "Sets a duration to consider a function to be stuck (e.g. in deadlock).",
-		EnvVar: "PEGGO_STATSD_STUCK_DUR",
-		Value:  "5m",
-	})
-
-	*statsdMocking = cmd.String(cli.StringOpt{
-		Name:   "statsd-mocking",
-		Desc:   "If enabled replaces statsd client with a mock one that simply logs values.",
-		EnvVar: "PEGGO_STATSD_MOCKING",
-		Value:  "false",
-	})
-
-	*statsdDisabled = cmd.String(cli.StringOpt{
-		Name:   "statsd-disabled",
-		Desc:   "Force disabling statsd reporting completely.",
-		EnvVar: "PEGGO_STATSD_DISABLED",
-		Value:  "true",
-	})
-}
 
 // initRelayerOption sets options for relayer.
 func initRelayerOptions(

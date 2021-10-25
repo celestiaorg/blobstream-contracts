@@ -21,10 +21,6 @@ type TendermintClient interface {
 
 type tmClient struct {
 	rpcClient rpcclient.Client
-<<<<<<< HEAD
-	svcTags   metrics.Tags
-=======
->>>>>>> a30a3c85a12266091efa13d33785f0095c608a8a
 }
 
 func NewRPCClient(rpcNodeAddr string) TendermintClient {
