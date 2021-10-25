@@ -21,7 +21,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/usbwallet"
 	"github.com/ethereum/go-ethereum/common"
-	ethcmn "github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
@@ -161,7 +160,7 @@ func initCosmosKeyring(
 	}
 }
 
-var emptyEthAddress = ethcmn.Address{}
+var emptyEthAddress = common.Address{}
 
 func initEthereumAccountsManager(
 	ethChainID uint64,
@@ -171,7 +170,7 @@ func initEthereumAccountsManager(
 	ethPrivKey *string,
 	ethUseLedger *bool,
 ) (
-	ethKeyFromAddress ethcmn.Address,
+	ethKeyFromAddress common.Address,
 	signerFn bind.SignerFn,
 	personalSignFn keystore.PersonalSignFn,
 	err error,
@@ -183,8 +182,8 @@ func initEthereumAccountsManager(
 			return emptyEthAddress, nil, nil, err
 		}
 
-		ethKeyFromAddress = ethcmn.HexToAddress(*ethKeyFrom)
-		if ethKeyFromAddress == (ethcmn.Address{}) {
+		ethKeyFromAddress = common.HexToAddress(*ethKeyFrom)
+		if ethKeyFromAddress == (common.Address{}) {
 			err = errors.Wrap(err, "failed to parse Ethereum from address")
 			return emptyEthAddress, nil, nil, err
 		}
@@ -265,8 +264,8 @@ func initEthereumAccountsManager(
 		ethAddressFromPk := ethcrypto.PubkeyToAddress(ethPk.PublicKey)
 
 		if len(*ethKeyFrom) > 0 {
-			addr := ethcmn.HexToAddress(*ethKeyFrom)
-			if addr == (ethcmn.Address{}) {
+			addr := common.HexToAddress(*ethKeyFrom)
+			if addr == (common.Address{}) {
 				err = errors.Wrap(err, "failed to parse Ethereum from address")
 				return emptyEthAddress, nil, nil, err
 			} else if addr != ethAddressFromPk {
@@ -295,8 +294,8 @@ func initEthereumAccountsManager(
 			return emptyEthAddress, nil, nil, err
 		}
 
-		ethKeyFromAddress = ethcmn.HexToAddress(*ethKeyFrom)
-		if ethKeyFromAddress == (ethcmn.Address{}) {
+		ethKeyFromAddress = common.HexToAddress(*ethKeyFrom)
+		if ethKeyFromAddress == (common.Address{}) {
 			err = errors.Wrap(err, "failed to parse Ethereum from address")
 			return emptyEthAddress, nil, nil, err
 		}
