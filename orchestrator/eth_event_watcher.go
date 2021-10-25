@@ -25,13 +25,9 @@ func (s *peggyOrchestrator) CheckForEvents(
 	ctx context.Context,
 	startingBlock uint64,
 ) (currentBlock uint64, err error) {
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
 
 	latestHeader, err := s.ethProvider.HeaderByNumber(ctx, nil)
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to get latest header")
 		return 0, err
 	}
@@ -49,7 +45,6 @@ func (s *peggyOrchestrator) CheckForEvents(
 
 	peggyFilterer, err := wrappers.NewPeggyFilterer(s.peggyContract.Address(), s.ethProvider)
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to init Peggy events filterer")
 		return 0, err
 	}
@@ -62,7 +57,6 @@ func (s *peggyOrchestrator) CheckForEvents(
 			End:   &currentBlock,
 		}, nil, nil, nil)
 		if err != nil {
-			metrics.ReportFuncError(s.svcTags)
 			log.WithFields(log.Fields{
 				"start": startingBlock,
 				"end":   currentBlock,

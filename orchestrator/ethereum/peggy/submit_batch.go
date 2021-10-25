@@ -6,7 +6,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	"github.com/umee-network/peggo/orchestrator/metrics"
 	"github.com/umee-network/umee/x/peggy/types"
 	log "github.com/xlab/suplog"
 )
@@ -17,10 +16,6 @@ func (s *peggyContract) SendTransactionBatch(
 	batch *types.OutgoingTxBatch,
 	confirms []*types.MsgConfirmBatch,
 ) (*common.Hash, error) {
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
-
 	log.WithFields(log.Fields{
 		"token_contract": batch.TokenContract,
 		"new_nonce":      batch.BatchNonce,
@@ -29,7 +24,6 @@ func (s *peggyContract) SendTransactionBatch(
 
 	validators, powers, sigV, sigR, sigS, err := checkBatchSigsAndRepack(currentValset, confirms)
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "confirmations check failed")
 		return nil, err
 	}
@@ -78,14 +72,12 @@ func (s *peggyContract) SendTransactionBatch(
 		batchTimeout,
 	)
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		log.WithError(err).Errorln("ABI Pack (Peggy submitBatch) method")
 		return nil, err
 	}
 
 	txHash, err := s.SendTx(ctx, s.peggyAddress, txData)
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		log.WithError(err).WithField("tx_hash", txHash.Hex()).Errorln("Failed to sign and submit (Peggy submitBatch) to EVM")
 		return nil, err
 	}

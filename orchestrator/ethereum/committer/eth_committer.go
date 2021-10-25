@@ -9,11 +9,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
-	log "github.com/xlab/suplog"
-
 	"github.com/umee-network/peggo/orchestrator/ethereum/provider"
 	"github.com/umee-network/peggo/orchestrator/ethereum/util"
-	"github.com/umee-network/peggo/orchestrator/metrics"
+	log "github.com/xlab/suplog"
 )
 
 // NewEthCommitter returns an instance of EVMCommitter, which
@@ -26,17 +24,12 @@ func NewEthCommitter(
 	committerOpts ...EVMCommitterOption,
 ) (EVMCommitter, error) {
 	committer := &ethCommitter{
-		committerOpts: defaultOptions(),
-		svcTags: metrics.Tags{
-			"module": "eth_committer",
-		},
-
+		committerOpts:         defaultOptions(),
 		ethGasPriceAdjustment: ethGasPriceAdjustment,
-
-		fromAddress: fromAddress,
-		fromSigner:  fromSigner,
-		evmProvider: evmProvider,
-		nonceCache:  util.NewNonceCache(),
+		fromAddress:           fromAddress,
+		fromSigner:            fromSigner,
+		evmProvider:           evmProvider,
+		nonceCache:            util.NewNonceCache(),
 	}
 
 	if err := applyOptions(committer.committerOpts, committerOpts...); err != nil {
@@ -60,8 +53,6 @@ type ethCommitter struct {
 	ethGasPriceAdjustment float64
 	evmProvider           provider.EVMProviderWithRet
 	nonceCache            util.NonceCache
-
-	svcTags metrics.Tags
 }
 
 func (e *ethCommitter) FromAddress() common.Address {
@@ -77,10 +68,6 @@ func (e *ethCommitter) SendTx(
 	recipient common.Address,
 	txData []byte,
 ) (txHash common.Hash, err error) {
-	metrics.ReportFuncCall(e.svcTags)
-	doneFn := metrics.ReportFuncTiming(e.svcTags)
-	defer doneFn()
-
 	opts := &bind.TransactOpts{
 		From:   e.fromAddress,
 		Signer: e.fromSigner,
@@ -93,7 +80,6 @@ func (e *ethCommitter) SendTx(
 	// Figure out the gas price values
 	suggestedGasPrice, err := e.evmProvider.SuggestGasPrice(opts.Context)
 	if err != nil {
-		metrics.ReportFuncError(e.svcTags)
 		return common.Hash{}, errors.Errorf("failed to suggest gas price: %v", err)
 	}
 
@@ -189,8 +175,6 @@ func (e *ethCommitter) SendTx(
 			}
 		}
 	}); err != nil {
-		metrics.ReportFuncError(e.svcTags)
-
 		return common.Hash{}, err
 	}
 

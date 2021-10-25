@@ -6,7 +6,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	"github.com/umee-network/peggo/orchestrator/metrics"
 	"github.com/umee-network/umee/x/peggy/types"
 	log "github.com/xlab/suplog"
 )
@@ -26,12 +25,8 @@ func (s *peggyContract) SendEthValsetUpdate(
 	newValset *types.Valset,
 	confirms []*types.MsgValsetConfirm,
 ) (*common.Hash, error) {
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
 
 	if newValset.Nonce <= oldValset.Nonce {
-		metrics.ReportFuncError(s.svcTags)
 		err := errors.New("new valset nonce should be greater than old valset nonce")
 		return nil, err
 	}
@@ -56,7 +51,6 @@ func (s *peggyContract) SendEthValsetUpdate(
 	// members of the validator set in the contract.
 	currentValidators, currentPowers, sigV, sigR, sigS, err := checkValsetSigsAndRepack(oldValset, confirms)
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "confirmations check failed")
 		return nil, err
 	}
@@ -94,14 +88,12 @@ func (s *peggyContract) SendEthValsetUpdate(
 		sigS,
 	)
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		log.WithError(err).Errorln("ABI Pack (Peggy updateValset) method")
 		return nil, err
 	}
 
 	txHash, err := s.SendTx(ctx, s.peggyAddress, txData)
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		log.WithError(err).WithField("tx_hash", txHash.Hex()).Errorln("Failed to sign and submit (Peggy updateValset) to EVM")
 		return nil, err
 	}

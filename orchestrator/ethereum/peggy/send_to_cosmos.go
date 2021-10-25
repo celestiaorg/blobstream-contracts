@@ -8,10 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	log "github.com/xlab/suplog"
-
-	"github.com/umee-network/peggo/orchestrator/metrics"
 	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
+	log "github.com/xlab/suplog"
 )
 
 func (s *peggyContract) SendToCosmos(
@@ -21,13 +19,9 @@ func (s *peggyContract) SendToCosmos(
 	cosmosAccAddress sdk.AccAddress,
 	senderAddress common.Address,
 ) (*common.Hash, error) {
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
 
 	erc20Wrapper, err := wrappers.NewERC20(erc20, s.ethProvider)
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to get ERC20 wrapper")
 		return nil, err
 	}
@@ -36,21 +30,18 @@ func (s *peggyContract) SendToCosmos(
 		From:    common.Address{},
 		Context: ctx,
 	}, senderAddress, s.peggyAddress); err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to get ERC20 allowance for peggy contract")
 		return nil, err
 	} else if allowance.Cmp(maxUintAllowance) != 0 {
 		// allowance not set or not max (a.k.a. unlocked token)
 		txData, err := erc20ABI.Pack("approve", s.peggyAddress, maxUintAllowance)
 		if err != nil {
-			metrics.ReportFuncError(s.svcTags)
 			log.WithError(err).Errorln("ABI Pack (ERC20 approve) method")
 			return nil, err
 		}
 
 		txHash, err := s.SendTx(ctx, erc20, txData)
 		if err != nil {
-			metrics.ReportFuncError(s.svcTags)
 			log.WithError(err).WithField("tx_hash", txHash.Hex()).Errorln("Failed to sign and submit (ERC20 approve) to EVM")
 			return nil, err
 		}
@@ -69,14 +60,12 @@ func (s *peggyContract) SendToCosmos(
 
 	txData, err := peggyABI.Pack("sendToCosmos", erc20, cosmosDestAddressBytes, amount)
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		log.WithError(err).Errorln("ABI Pack (Peggy sendToCosmos) method")
 		return nil, err
 	}
 
 	txHash, err := s.SendTx(ctx, s.peggyAddress, txData)
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		log.WithError(err).WithField("tx_hash", txHash.Hex()).Errorln("Failed to sign and submit (Peggy sendToCosmos) to EVM")
 		return nil, err
 	}

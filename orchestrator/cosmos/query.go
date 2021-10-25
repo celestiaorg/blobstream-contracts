@@ -195,20 +195,14 @@ func (s *peggyQueryClient) UnbatchedTokensWithFees(ctx context.Context) ([]*type
 }
 
 func (s *peggyQueryClient) TransactionBatchSignatures(ctx context.Context, nonce uint64, tokenContract ethcmn.Address) ([]*types.MsgConfirmBatch, error) {
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
-
 	daemonResp, err := s.daemonQueryClient.BatchConfirms(ctx, &types.QueryBatchConfirmsRequest{
 		Nonce:           nonce,
 		ContractAddress: tokenContract.String(),
 	})
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to query BatchConfirms from daemon")
 		return nil, err
 	} else if daemonResp == nil {
-		metrics.ReportFuncError(s.svcTags)
 		return nil, ErrNotFound
 	}
 
@@ -216,19 +210,13 @@ func (s *peggyQueryClient) TransactionBatchSignatures(ctx context.Context, nonce
 }
 
 func (s *peggyQueryClient) LastClaimEventByAddr(ctx context.Context, validatorAccountAddress sdk.AccAddress) (*types.LastClaimEvent, error) {
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
-
 	daemonResp, err := s.daemonQueryClient.LastEventByAddr(ctx, &types.QueryLastEventByAddrRequest{
 		Address: validatorAccountAddress.String(),
 	})
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to query LastEventByAddr from daemon")
 		return nil, err
 	} else if daemonResp == nil {
-		metrics.ReportFuncError(s.svcTags)
 		return nil, ErrNotFound
 	}
 
@@ -236,17 +224,11 @@ func (s *peggyQueryClient) LastClaimEventByAddr(ctx context.Context, validatorAc
 }
 
 func (s *peggyQueryClient) PeggyParams(ctx context.Context) (*types.Params, error) {
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
-
 	daemonResp, err := s.daemonQueryClient.Params(ctx, &types.QueryParamsRequest{})
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to query PeggyParams from daemon")
 		return nil, err
 	} else if daemonResp == nil {
-		metrics.ReportFuncError(s.svcTags)
 		return nil, ErrNotFound
 	}
 
