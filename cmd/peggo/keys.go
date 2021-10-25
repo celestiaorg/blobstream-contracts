@@ -27,7 +27,6 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh/terminal"
 
-	"github.com/umee-network/peggo/cmd/peggo/hd"
 	"github.com/umee-network/peggo/orchestrator/ethereum/keystore"
 )
 
@@ -111,7 +110,6 @@ func initCosmosKeyring(
 			*cosmosKeyringBackend,
 			absoluteKeyringDir,
 			passReader,
-			hd.EthSecp256k1Option(),
 		)
 		if err != nil {
 			err = errors.Wrap(err, "failed to init keyring")
@@ -381,7 +379,7 @@ func (r *passReader) Read(p []byte) (n int, err error) {
 // KeyringForPrivKey creates a temporary in-mem keyring for a PrivKey.
 // Allows to init Context when the key has been provided in plaintext and parsed.
 func KeyringForPrivKey(name string, privKey cryptotypes.PrivKey) (keyring.Keyring, error) {
-	kb := keyring.NewInMemory(hd.EthSecp256k1Option())
+	kb := keyring.NewInMemory()
 	tmpPhrase := randPhrase(64)
 	armored := cosmcrypto.EncryptArmorPrivKey(privKey, tmpPhrase, privKey.Type())
 	err := kb.ImportPrivKey(name, armored, tmpPhrase)
