@@ -25,6 +25,7 @@ func NewRootCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		getOrchestratorCmd(),
+		getBridgeCommand(),
 		getQueryCmd(),
 		getTxCmd(),
 		getVersionCmd(),

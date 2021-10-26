@@ -111,6 +111,7 @@ flag (e.g. PEGGO_COSMOS_PK).`,
 			// query peggy params
 			cosmosQueryClient := cosmos.NewPeggyQueryClient(peggyQuerier)
 			ctx, cancel = context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
 
 			peggyParams, err := cosmosQueryClient.PeggyParams(ctx)
 			if err != nil {

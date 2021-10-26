@@ -123,7 +123,7 @@ func (s *peggyBroadcastClient) UpdatePeggyOrchestratorAddresses(
 	}
 
 	res, err := s.broadcastClient.SyncBroadcastMsg(msg)
-	fmt.Fprintf(os.Stderr, "Broadcast MsgSetOrchestratorAddresses response: %v\n", res)
+	fmt.Fprintf(os.Stderr, "Broadcast MsgSetOrchestratorAddresses response: \n%v\n", res)
 	if err != nil {
 		err = errors.Wrap(err, "broadcasting MsgSetOrchestratorAddresses failed")
 		return err
