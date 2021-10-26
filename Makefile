@@ -1,32 +1,50 @@
-APP_VERSION = $(shell git describe --abbrev=0 --tags)
-GIT_COMMIT = $(shell git rev-parse --short HEAD)
-BUILD_DATE = $(shell date -u "+%Y%m%d-%H%M")
-VERSION_PKG = github.com/umee-network/peggo/orchestrator/version
-IMAGE_NAME := gcr.io/injective-core/peggo
+BUILD_DIR ?= $(CURDIR)/build
+COMMIT    := $(shell git log -1 --format='%H')
 
-all:
+###############################################################################
+##                                  Version                                  ##
+###############################################################################
 
-image:
-	docker build --build-arg GIT_COMMIT=$(GIT_COMMIT) -t $(IMAGE_NAME):local -f Dockerfile .
-	docker tag $(IMAGE_NAME):local $(IMAGE_NAME):$(GIT_COMMIT)
-	docker tag $(IMAGE_NAME):local $(IMAGE_NAME):latest
+ifeq (,$(VERSION))
+  VERSION := $(shell git describe --exact-match 2>/dev/null)
+  # if VERSION is empty, then populate it with branch's name and raw commit hash
+  ifeq (,$(VERSION))
+    VERSION := $(BRANCH)-$(COMMIT)
+  endif
+endif
 
-push:
-	docker push $(IMAGE_NAME):$(GIT_COMMIT)
-	docker push $(IMAGE_NAME):latest
+###############################################################################
+##                              Build / Install                              ##
+###############################################################################
 
-install: export GOPROXY=direct
-install: export VERSION_FLAGS="-X $(VERSION_PKG).GitCommit=$(GIT_COMMIT) -X $(VERSION_PKG).BuildDate=$(BUILD_DATE)"
-install:
-	go install \
-		-ldflags $(VERSION_FLAGS) \
-		./cmd/...
+ldflags = -X github.com/umee-network/peggo/cmd/peggo.Version=$(VERSION) \
+		  -X github.com/umee-network/peggo/cmd/peggo.Commit=$(COMMIT)
 
-.PHONY: install image push test gen
+BUILD_FLAGS := -ldflags '$(ldflags)'
 
-test:
-	# go clean -testcache
-	go test ./test/...
+build: go.sum
+	@echo "--> Building..."
+	CGO_ENABLED=0 go build -mod=readonly -o $(BUILD_DIR)/ $(BUILD_FLAGS) ./...
+
+install: go.sum
+	@echo "--> Installing..."
+	CGO_ENABLED=0 go install -mod=readonly $(BUILD_FLAGS) ./...
+
+.PHONY: build install
+
+###############################################################################
+##                              Tests & Linting                              ##
+###############################################################################
+
+test-unit:
+	@echo "--> Running tests"
+	@go test -mod=readonly -race ./test/... -v
+
+.PHONY: test-unit
+
+###############################################################################
+##                                 Solidity                                  ##
+###############################################################################
 
 gen: solidity-wrappers
 

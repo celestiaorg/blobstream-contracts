@@ -1,177 +1,125 @@
-package main
+package peggo
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"time"
 
-	cli "github.com/jawher/mow.cli"
+	"github.com/spf13/cobra"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 	"github.com/umee-network/peggo/cmd/peggo/client"
 	"github.com/umee-network/peggo/orchestrator/cosmos"
-	"github.com/umee-network/umee/x/peggy/types"
-	"github.com/xlab/closer"
-	log "github.com/xlab/suplog"
+	peggytypes "github.com/umee-network/umee/x/peggy/types"
 )
 
-// txCmdSubset contains actions that can sign and send messages to Cosmos module
-// as well as Ethereum transactions to Peggy contract.
-//
-// $ peggo tx
-func txCmdSubset(cmd *cli.Cmd) {
-	cmd.Command(
-		"register-eth-key",
-		"Submits an Ethereum key that will be used to sign messages on behalf of your Validator",
-		registerEthKeyCmd,
+func getTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "tx",
+		Short: "Transactions for Peggy governance and maintenance on the Cosmos chain",
+		Long: `Transactions for Peggy governance and maintenance on the Cosmos chain.
+
+Inputs in the CLI commands can be provided via flags or environment variables. If
+using the later, prefix the environment variable with PEGGO_ and the named of the
+flag (e.g. PEGGO_COSMOS_PK).`,
+	}
+
+	cmd.AddCommand(
+		getRegisterEthKeyCmd(),
 	)
+
+	return cmd
 }
 
-func registerEthKeyCmd(cmd *cli.Cmd) {
-	var (
-		// Cosmos params
-		cosmosChainID   *string
-		cosmosGRPC      *string
-		tendermintRPC   *string
-		cosmosGasPrices *string
+func getRegisterEthKeyCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "register-eth-key",
+		Short: "Submits an Ethereum key that will be used to sign messages on behalf of your Validator",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			konfig, err := parseServerConfig(cmd)
+			if err != nil {
+				return err
+			}
 
-		// Cosmos Key Management
-		cosmosKeyringDir     *string
-		cosmosKeyringAppName *string
-		cosmosKeyringBackend *string
+			if konfig.Bool(flagEthUseLedger) {
+				fmt.Fprintln(os.Stderr, "WARNING: Cannot use Ledger for orchestrator, so make sure the Ethereum key is accessible outside of it")
+			}
 
-		cosmosKeyFrom       *string
-		cosmosKeyPassphrase *string
-		cosmosPrivKey       *string
-		cosmosUseLedger     *bool
+			valAddress, cosmosKeyring, err := initCosmosKeyring(konfig)
+			if err != nil {
+				return fmt.Errorf("failed to initialize Cosmos keyring: %w", err)
+			}
 
-		// Ethereum Key Management
-		ethKeystoreDir *string
-		ethKeyFrom     *string
-		ethPassphrase  *string
-		ethPrivKey     *string
-		ethUseLedger   *bool
+			ethKeyFromAddress, _, personalSignFn, err := initEthereumAccountsManager(0, konfig)
+			if err != nil {
+				return fmt.Errorf("failed to initialize Ethereum account: %w", err)
+			}
 
-		// Misc
-		alwaysAutoConfirm *bool
-	)
+			fmt.Fprintf(os.Stderr, "Using Cosmos validator address: %s\n", valAddress)
+			fmt.Fprintf(os.Stderr, "Using Ethereum address: %s\n", ethKeyFromAddress)
 
-	initCosmosOptions(
-		cmd,
-		&cosmosChainID,
-		&cosmosGRPC,
-		&tendermintRPC,
-		&cosmosGasPrices,
-	)
+			autoConfirm := konfig.Bool(flagAutoConfirm)
+			actionConfirmed := autoConfirm || stdinConfirm("Confirm UpdatePeggyOrchestratorAddresses transaction? [y/N]: ")
+			if !actionConfirmed {
+				return nil
+			}
 
-	initCosmosKeyOptions(
-		cmd,
-		&cosmosKeyringDir,
-		&cosmosKeyringAppName,
-		&cosmosKeyringBackend,
-		&cosmosKeyFrom,
-		&cosmosKeyPassphrase,
-		&cosmosPrivKey,
-		&cosmosUseLedger,
-	)
+			cosmosChainID := konfig.String(flagCosmosChainID)
+			clientCtx, err := client.NewClientContext(cosmosChainID, valAddress.String(), cosmosKeyring)
+			if err != nil {
+				return err
+			}
 
-	initEthereumKeyOptions(
-		cmd,
-		&ethKeystoreDir,
-		&ethKeyFrom,
-		&ethPassphrase,
-		&ethPrivKey,
-		&ethUseLedger,
-	)
+			tmRPCEndpoint := konfig.String(flagTendermintRPC)
+			cosmosGRPC := konfig.String(flagCosmosGRPC)
+			cosmosGasPrices := konfig.String(flagCosmosGasPrices)
 
-	initInteractiveOptions(
-		cmd,
-		&alwaysAutoConfirm,
-	)
+			tmRPC, err := rpchttp.New(tmRPCEndpoint, "/websocket")
+			if err != nil {
+				return fmt.Errorf("failed to create Tendermint RPC client: %w", err)
+			}
 
-	cmd.Action = func() {
-		// ensure a clean exit
-		defer closer.Close()
+			fmt.Fprintf(os.Stderr, "Connected to Tendermint RPC: %s\n", tmRPCEndpoint)
+			clientCtx = clientCtx.WithClient(tmRPC).WithNodeURI(tmRPCEndpoint)
 
-		if *ethUseLedger {
-			log.Warningln("beware: you cannot really use Ledger for orchestrator, so make sure the Ethereum key is accessible outside of it")
-		}
+			daemonClient, err := client.NewCosmosClient(clientCtx, cosmosGRPC, client.OptionGasPrices(cosmosGasPrices))
+			if err != nil {
+				return err
+			}
 
-		valAddress, cosmosKeyring, err := initCosmosKeyring(
-			cosmosKeyringDir,
-			cosmosKeyringAppName,
-			cosmosKeyringBackend,
-			cosmosKeyFrom,
-			cosmosKeyPassphrase,
-			cosmosPrivKey,
-			cosmosUseLedger,
-		)
-		if err != nil {
-			log.WithError(err).Fatalln("failed to init Cosmos keyring")
-		}
-
-		ethKeyFromAddress, _, personalSignFn, err := initEthereumAccountsManager(
-			0,
-			ethKeystoreDir,
-			ethKeyFrom,
-			ethPassphrase,
-			ethPrivKey,
-			ethUseLedger,
-		)
-		if err != nil {
-			log.WithError(err).Fatalln("failed to init Ethereum account")
-		}
-
-		log.Infoln("Using Cosmos ValAddress", valAddress.String())
-		log.Infoln("Using Ethereum address", ethKeyFromAddress.String())
-
-		actionConfirmed := *alwaysAutoConfirm || stdinConfirm("Confirm UpdatePeggyOrchestratorAddresses transaction? [y/N]: ")
-		if !actionConfirmed {
-			return
-		}
-
-		clientCtx, err := client.NewClientContext(*cosmosChainID, valAddress.String(), cosmosKeyring)
-		if err != nil {
-			log.WithError(err).Fatalln("failed to initialize cosmos client context")
-		}
-		clientCtx = clientCtx.WithNodeURI(*tendermintRPC)
-
-		tmRPC, err := rpchttp.New(*tendermintRPC, "/websocket")
-		if err != nil {
-			log.WithError(err)
-		}
-
-		clientCtx = clientCtx.WithClient(tmRPC)
-		daemonClient, err := client.NewCosmosClient(clientCtx, *cosmosGRPC, client.OptionGasPrices(*cosmosGasPrices))
-		if err != nil {
-			log.WithError(err).WithFields(log.Fields{
-				"endpoint": *cosmosGRPC,
-			}).Fatalln("failed to connect to Cosmos daemon")
-		}
-
-		log.Infoln("Waiting for injectived GRPC")
-		time.Sleep(1 * time.Second)
-
-		daemonWaitCtx, cancelWait := context.WithTimeout(context.Background(), time.Minute)
-		grpcConn := daemonClient.QueryClient()
-		waitForService(daemonWaitCtx, grpcConn)
-		peggyQuerier := types.NewQueryClient(grpcConn)
-		peggyBroadcaster := cosmos.NewPeggyBroadcastClient(
-			peggyQuerier,
-			daemonClient,
-			nil,
-			personalSignFn,
-		)
-		cancelWait()
-
-		broadcastCtx, cancelFn := context.WithTimeout(context.Background(), 15*time.Second)
-		defer cancelFn()
-
-		if err = peggyBroadcaster.UpdatePeggyOrchestratorAddresses(broadcastCtx, ethKeyFromAddress, valAddress); err != nil {
-			log.WithError(err).Errorln("failed to broadcast Tx")
+			// TODO: Clean this up to be more ergonomic and clean. We can probably
+			// encapsulate all of this into a single utility function that gracefully
+			// checks for the gRPC status/health.
+			//
+			// Ref: https://github.com/umee-network/peggo/issues/2
+			fmt.Fprintln(os.Stderr, "Waiting for cosmos gRPC service...")
 			time.Sleep(time.Second)
-			return
-		}
 
-		log.Infof("Registered Ethereum address %s for validator address %s",
-			ethKeyFromAddress, valAddress.String())
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+
+			gRPCConn := daemonClient.QueryClient()
+			waitForService(ctx, gRPCConn)
+
+			peggyQuerier := peggytypes.NewQueryClient(gRPCConn)
+			peggyBroadcaster := cosmos.NewPeggyBroadcastClient(peggyQuerier, daemonClient, nil, personalSignFn)
+
+			ctx, cancel = context.WithTimeout(context.Background(), 15*time.Second)
+			defer cancel()
+
+			if err = peggyBroadcaster.UpdatePeggyOrchestratorAddresses(ctx, ethKeyFromAddress, valAddress); err != nil {
+				return fmt.Errorf("failed to broadcast transaction: %w", err)
+			}
+
+			fmt.Fprintf(os.Stderr, "Registered Ethereum Address %s for validator %s\n", ethKeyFromAddress, valAddress)
+			return nil
+		},
 	}
+
+	cmd.Flags().BoolP(flagAutoConfirm, "y", false, "Auto-confirm actions (e.g. transaction sending)")
+	cmd.Flags().AddFlagSet(cosmosFlagSet())
+	cmd.Flags().AddFlagSet(cosmosKeyringFlagSet())
+	cmd.Flags().AddFlagSet(ethereumKeyOptsFlagSet())
+
+	return cmd
 }
