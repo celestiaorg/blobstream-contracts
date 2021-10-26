@@ -153,6 +153,12 @@ flag (e.g. PEGGO_COSMOS_PK).`,
 				BaseURL: coingeckoAPI,
 			})
 
+			// TODO: Pass logger to NewPeggyOrchestrator
+			// logger, err := getLogger(cmd)
+			// if err != nil {
+			// 	return err
+			// }
+
 			minBatchFeeUSD := konfig.Float64(flagMinBatchFeeUSD)
 			orch := orchestrator.NewPeggyOrchestrator(
 				cosmosQueryClient,
