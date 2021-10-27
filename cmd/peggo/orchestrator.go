@@ -8,8 +8,10 @@ import (
 	"syscall"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	ethrpc "github.com/ethereum/go-ethereum/rpc"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 	"github.com/umee-network/peggo/cmd/peggo/client"
@@ -52,9 +54,6 @@ func getOrchestratorCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to initialize Ethereum account: %w", err)
 			}
-
-			fmt.Fprintf(os.Stderr, "Using Cosmos validator address: %s\n", valAddress)
-			fmt.Fprintf(os.Stderr, "Using Ethereum address: %s\n", ethKeyFromAddress)
 
 			cosmosChainID := konfig.String(flagCosmosChainID)
 			clientCtx, err := client.NewClientContext(cosmosChainID, valAddress.String(), cosmosKeyring)
@@ -111,12 +110,6 @@ func getOrchestratorCmd() *cobra.Command {
 				return fmt.Errorf("failed to query for Peggy params: %w", err)
 			}
 
-			erc20ContractMapping := make(map[ethcmn.Address]string)
-			// TODO: Figure out what this is and if we need it???
-			// erc20Addr := ethcmn.HexToAddress(peggyParams.CosmosCoinErc20Contract)
-			// TODO: add this as a config to peggyParams
-			// erc20ContractMapping[erc20Addr] = "umee" //ctypes.InjectiveCoin
-
 			ethRPCEndpoint := konfig.String(flagEthRPC)
 			ethRPC, err := ethrpc.Dial(ethRPCEndpoint)
 			if err != nil {
@@ -147,14 +140,18 @@ func getOrchestratorCmd() *cobra.Command {
 				BaseURL: coingeckoAPI,
 			})
 
-			// TODO: Pass logger to NewPeggyOrchestrator
-			// logger, err := getLogger(cmd)
-			// if err != nil {
-			// 	return err
-			// }
+			logger, err := getLogger(cmd)
+			if err != nil {
+				return err
+			}
 
-			minBatchFeeUSD := konfig.Float64(flagMinBatchFeeUSD)
+			logger = logger.With().
+				Str("relayer_validator_addr", sdk.ValAddress(valAddress).String()).
+				Str("relayer_ethereum_addr", ethKeyFromAddress.String()).
+				Logger()
+
 			orch := orchestrator.NewPeggyOrchestrator(
+				logger,
 				peggyQueryClient,
 				peggyBroadcaster,
 				tmclient.NewRPCClient(tmRPCEndpoint),
@@ -162,17 +159,16 @@ func getOrchestratorCmd() *cobra.Command {
 				ethKeyFromAddress,
 				signerFn,
 				personalSignFn,
-				erc20ContractMapping,
 				relayer,
-				minBatchFeeUSD,
-				coingeckoFeed,
+				orchestrator.SetMinBatchFee(konfig.Float64(flagMinBatchFeeUSD)),
+				orchestrator.SetPriceFeeder(coingeckoFeed),
 			)
 
 			ctx, cancel = context.WithCancel(context.Background())
 			g, errCtx := errgroup.WithContext(ctx)
 
 			g.Go(func() error {
-				return startOrchestrator(errCtx, orch)
+				return startOrchestrator(errCtx, logger, orch)
 			})
 
 			// listen for and trap any OS signal to gracefully shutdown and exit
@@ -207,10 +203,10 @@ func trapSignal(cancel context.CancelFunc) {
 	}()
 }
 
-func startOrchestrator(ctx context.Context, orch orchestrator.PeggyOrchestrator) error {
+func startOrchestrator(ctx context.Context, logger zerolog.Logger, orch orchestrator.PeggyOrchestrator) error {
 	srvErrCh := make(chan error, 1)
 	go func() {
-		fmt.Fprintln(os.Stderr, "Starting orchestrator...")
+		logger.Info().Msg("starting orchestrator...")
 		srvErrCh <- orch.Start(ctx)
 	}()
 
@@ -220,9 +216,8 @@ func startOrchestrator(ctx context.Context, orch orchestrator.PeggyOrchestrator)
 			return nil
 
 		case err := <-srvErrCh:
-			fmt.Fprintln(os.Stderr, "Failed to start orchestrator")
+			logger.Error().Err(err).Msg("failed to start orchestrator")
 			return err
 		}
 	}
-
 }

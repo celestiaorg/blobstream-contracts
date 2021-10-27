@@ -4,6 +4,7 @@ import (
 	"context"
 
 	ethcmn "github.com/ethereum/go-ethereum/common"
+	"github.com/rs/zerolog"
 
 	"github.com/umee-network/peggo/orchestrator/coingecko"
 	"github.com/umee-network/peggo/orchestrator/cosmos/tmclient"
@@ -17,17 +18,20 @@ import (
 
 type PeggyOrchestrator interface {
 	Start(ctx context.Context) error
-
 	CheckForEvents(ctx context.Context, startingBlock uint64) (currentBlock uint64, err error)
 	GetLastCheckedBlock(ctx context.Context) (uint64, error)
-
 	EthOracleMainLoop(ctx context.Context) error
 	EthSignerMainLoop(ctx context.Context) error
 	BatchRequesterLoop(ctx context.Context) error
 	RelayerMainLoop(ctx context.Context) error
+
+	SetMinBatchFee(float64)
+	SetERC20ContractMapping(map[ethcmn.Address]string)
+	SetPriceFeeder(*coingecko.CoingeckoPriceFeed)
 }
 
 type peggyOrchestrator struct {
+	logger               zerolog.Logger
 	tmClient             tmclient.TendermintClient
 	cosmosQueryClient    sidechain.PeggyQueryClient
 	peggyBroadcastClient sidechain.PeggyBroadcastClient
@@ -36,13 +40,16 @@ type peggyOrchestrator struct {
 	ethFrom              ethcmn.Address
 	ethSignerFn          keystore.SignerFn
 	ethPersonalSignFn    keystore.PersonalSignFn
-	erc20ContractMapping map[ethcmn.Address]string
 	relayer              relayer.PeggyRelayer
+
+	// optional inputs with defaults
+	erc20ContractMapping map[ethcmn.Address]string
 	minBatchFeeUSD       float64
 	priceFeeder          *coingecko.CoingeckoPriceFeed
 }
 
 func NewPeggyOrchestrator(
+	logger zerolog.Logger,
 	cosmosQueryClient sidechain.PeggyQueryClient,
 	peggyBroadcastClient sidechain.PeggyBroadcastClient,
 	tmClient tmclient.TendermintClient,
@@ -50,13 +57,13 @@ func NewPeggyOrchestrator(
 	ethFrom ethcmn.Address,
 	ethSignerFn keystore.SignerFn,
 	ethPersonalSignFn keystore.PersonalSignFn,
-	erc20ContractMapping map[ethcmn.Address]string,
 	relayer relayer.PeggyRelayer,
-	minBatchFeeUSD float64,
-	priceFeeder *coingecko.CoingeckoPriceFeed,
-
+	options ...func(PeggyOrchestrator),
 ) PeggyOrchestrator {
-	return &peggyOrchestrator{
+
+	var orch PeggyOrchestrator
+	orch = &peggyOrchestrator{
+		logger:               logger,
 		tmClient:             tmClient,
 		cosmosQueryClient:    cosmosQueryClient,
 		peggyBroadcastClient: peggyBroadcastClient,
@@ -65,9 +72,12 @@ func NewPeggyOrchestrator(
 		ethFrom:              ethFrom,
 		ethSignerFn:          ethSignerFn,
 		ethPersonalSignFn:    ethPersonalSignFn,
-		erc20ContractMapping: erc20ContractMapping,
 		relayer:              relayer,
-		minBatchFeeUSD:       minBatchFeeUSD,
-		priceFeeder:          priceFeeder,
 	}
+
+	for _, option := range options {
+		option(orch)
+	}
+
+	return orch
 }
