@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/big"
 	"os"
+	"strconv"
 	"time"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -28,11 +29,6 @@ func getBridgeCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bridge",
 		Short: "Commands to interface with Peggy (Gravity Bridge) Ethereum contract",
-		Long: `Commands to interface with Peggy (Gravity Bridge) Ethereum contract.
-		
-Inputs in the CLI commands can be provided via flags or environment variables. If
-using the later, prefix the environment variable with PEGGO_ and the named of the
-flag (e.g. PEGGO_COSMOS_PK).`,
 	}
 
 	cmd.PersistentFlags().AddFlagSet(cosmosFlagSet())
@@ -42,6 +38,7 @@ flag (e.g. PEGGO_COSMOS_PK).`,
 		deployPeggyCmd(),
 		initPeggyCmd(),
 		deployERC20Cmd(),
+		deployERC20RawCmd(),
 	)
 
 	return cmd
@@ -151,7 +148,7 @@ prior to initializing.`,
 				return fmt.Errorf("failed to dial Ethereum RPC node: %w", err)
 			}
 
-			peggyContract, err := getPeggyContract(konfig, peggyParams, gRPCConn)
+			peggyContract, err := getPeggyContract(ethRPC, peggyParams.BridgeEthereumAddress)
 			if err != nil {
 				return err
 			}
@@ -211,7 +208,7 @@ Init Params:
   Validator Set Size: %d
   Validator Total Power: %d
 Transaction: %s
-			`,
+`,
 				peggyParams.BridgeEthereumAddress,
 				peggyParams.PeggyId,
 				peggyID,
@@ -232,7 +229,7 @@ Transaction: %s
 
 func deployERC20Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "deploy-erc20 [base-denom]",
+		Use:   "deploy-erc20 [denom-base]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Deploy a Cosmos native asset on Ethereum as an ERC20 token",
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -294,7 +291,7 @@ func deployERC20Cmd() *cobra.Command {
 				return err
 			}
 
-			peggyContract, err := getPeggyContract(konfig, peggyParams, gRPCConn)
+			peggyContract, err := getPeggyContract(ethRPC, peggyParams.BridgeEthereumAddress)
 			if err != nil {
 				return err
 			}
@@ -331,11 +328,80 @@ func deployERC20Cmd() *cobra.Command {
 Base Denom: %s
 Name: %s
 Symbol: %s
+Decimals: %d
 Transaction: %s
-			`,
+`,
 				baseDenom,
 				resp.Metadata.Name,
 				resp.Metadata.Symbol,
+				decimals,
+				tx.Hash().Hex(),
+			)
+
+			return nil
+		},
+	}
+
+	return cmd
+}
+
+func deployERC20RawCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "deploy-erc20-raw [peggy-addr] [denom-base] [denom-name] [denom-symbol] [denom-decimals]",
+		Short: "Deploy a Cosmos native asset on Ethereum as an ERC20 token using raw input",
+		Long: `Deploy a Cosmos native asset on Ethereum as an ERC20 token using raw input.
+The Peggy contract address along with all Cosmos native token denomination data
+must be provided. This can be useful for deploying ERC20 tokens prior to the Umee
+network starting.`,
+		Args: cobra.ExactArgs(5),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			konfig, err := parseServerConfig(cmd)
+			if err != nil {
+				return err
+			}
+
+			ethRPCEndpoint := konfig.String(flagEthRPC)
+			ethRPC, err := ethclient.Dial(ethRPCEndpoint)
+			if err != nil {
+				return fmt.Errorf("failed to dial Ethereum RPC node: %w", err)
+			}
+
+			auth, err := buildTransactOpts(konfig, ethRPC)
+			if err != nil {
+				return err
+			}
+
+			peggyAddr := args[0]
+
+			peggyContract, err := getPeggyContract(ethRPC, peggyAddr)
+			if err != nil {
+				return err
+			}
+
+			denomBase := args[1]
+			denomName := args[2]
+			denomSymbol := args[3]
+			denomDecimals, err := strconv.Atoi(args[4])
+			if err != nil {
+				return fmt.Errorf("invalid denom decimals: %w", err)
+			}
+
+			tx, err := peggyContract.DeployERC20(auth, denomBase, denomName, denomSymbol, uint8(denomDecimals))
+			if err != nil {
+				return fmt.Errorf("failed deploy Cosmos native ERC20 token: %w", err)
+			}
+
+			_, _ = fmt.Fprintf(os.Stderr, `Cosmos native token deployed as an ERC20 on Ethereum!
+Base Denom: %s
+Name: %s
+Symbol: %s
+Decimals: %d
+Transaction: %s
+`,
+				denomBase,
+				denomName,
+				denomSymbol,
+				denomDecimals,
 				tx.Hash().Hex(),
 			)
 
@@ -427,14 +493,8 @@ func getPeggyParams(gRPCConn *grpc.ClientConn) (*peggytypes.Params, error) {
 	return peggyParams, nil
 }
 
-func getPeggyContract(konfig *koanf.Koanf, peggyParams *peggytypes.Params, gRPCConn *grpc.ClientConn) (*wrappers.Peggy, error) {
-	ethRPCEndpoint := konfig.String(flagEthRPC)
-	ethRPC, err := ethclient.Dial(ethRPCEndpoint)
-	if err != nil {
-		return nil, fmt.Errorf("failed to dial Ethereum RPC node: %w", err)
-	}
-
-	contract, err := wrappers.NewPeggy(ethcmn.HexToAddress(peggyParams.BridgeEthereumAddress), ethRPC)
+func getPeggyContract(ethRPC *ethclient.Client, peggyAddr string) (*wrappers.Peggy, error) {
+	contract, err := wrappers.NewPeggy(ethcmn.HexToAddress(peggyAddr), ethRPC)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Peggy contract instance: %w", err)
 	}

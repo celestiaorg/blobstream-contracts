@@ -17,11 +17,6 @@ func getTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tx",
 		Short: "Transactions for Peggy (Gravity Bridge) governance and maintenance on the Cosmos chain",
-		Long: `Transactions for Peggy (Gravity Bridge) governance and maintenance on the Cosmos chain.
-
-Inputs in the CLI commands can be provided via flags or environment variables. If
-using the later, prefix the environment variable with PEGGO_ and the named of the
-flag (e.g. PEGGO_COSMOS_PK).`,
 	}
 
 	cmd.AddCommand(

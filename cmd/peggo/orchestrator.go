@@ -30,13 +30,6 @@ func getOrchestratorCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "orchestrator",
 		Short: "Starts the orchestrator",
-		Long: `Starts the orchestrator's main relayer loop. Only start the orchestrator
-if the Peggy (Gravity Bridge) contract has been deployed and initialized, which
-requires all validators to set their delegate keys.
-
-Inputs in the CLI commands can be provided via flags or environment variables. If
-using the later, prefix the environment variable with PEGGO_ and the named of the
-flag (e.g. PEGGO_COSMOS_PK).`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			konfig, err := parseServerConfig(cmd)
 			if err != nil {
