@@ -223,7 +223,7 @@ func (s *peggyBroadcastClient) sendDepositClaims(
 
 	log.WithFields(log.Fields{
 		"sender":      deposit.Sender.Hex(),
-		"destination": sdk.AccAddress(deposit.Destination[12:32]).String(),
+		"destination": sdk.AccAddress(deposit.Destination[:32]).String(),
 		"amount":      deposit.Amount.String(),
 		"event_nonce": deposit.EventNonce.String(),
 	}).Infoln("Oracle observed a deposit event. Sending MsgDepositClaim")
@@ -234,7 +234,7 @@ func (s *peggyBroadcastClient) sendDepositClaims(
 		TokenContract:  deposit.TokenContract.Hex(),
 		Amount:         sdk.NewIntFromBigInt(deposit.Amount),
 		EthereumSender: deposit.Sender.Hex(),
-		CosmosReceiver: sdk.AccAddress(deposit.Destination[12:32]).String(),
+		CosmosReceiver: sdk.AccAddress(deposit.Destination[:32]).String(),
 		Orchestrator:   s.broadcastClient.FromAddress().String(),
 	}
 
