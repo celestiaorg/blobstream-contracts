@@ -4,10 +4,12 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	"math"
 	"math/big"
 	"os"
 	"time"
 
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
@@ -19,6 +21,7 @@ import (
 	"github.com/umee-network/peggo/orchestrator/cosmos"
 	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
 	peggytypes "github.com/umee-network/umee/x/peggy/types"
+	"google.golang.org/grpc"
 )
 
 func getBridgeCommand() *cobra.Command {
@@ -32,17 +35,19 @@ using the later, prefix the environment variable with PEGGO_ and the named of th
 flag (e.g. PEGGO_COSMOS_PK).`,
 	}
 
+	cmd.PersistentFlags().AddFlagSet(cosmosFlagSet())
+	cmd.PersistentFlags().AddFlagSet(bridgeFlagSet())
+
 	cmd.AddCommand(
 		deployPeggyCmd(),
 		initPeggyCmd(),
-		// TODO:
-		// - Deploy ERC20 command
+		deployERC20Cmd(),
 	)
 
 	return cmd
 }
 
-// TODO: Support --admin capabilities
+// TODO: Support --admin capabilities.
 func deployPeggyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "deploy-peggy",
@@ -80,8 +85,6 @@ Transaction: %s
 			return nil
 		},
 	}
-
-	cmd.Flags().AddFlagSet(bridgeFlagSet())
 
 	return cmd
 }
@@ -137,15 +140,9 @@ prior to initializing.`,
 			gRPCConn := daemonClient.QueryClient()
 			waitForService(ctx, gRPCConn)
 
-			peggyQuerier := peggytypes.NewQueryClient(gRPCConn)
-			cosmosQueryClient := cosmos.NewPeggyQueryClient(peggyQuerier)
-
-			ctx, cancel = context.WithTimeout(context.Background(), time.Minute)
-			defer cancel()
-
-			peggyParams, err := cosmosQueryClient.PeggyParams(ctx)
+			peggyParams, err := getPeggyParams(gRPCConn)
 			if err != nil {
-				return fmt.Errorf("failed to query for Peggy params: %w", err)
+				return err
 			}
 
 			ethRPCEndpoint := konfig.String(flagEthRPC)
@@ -154,9 +151,9 @@ prior to initializing.`,
 				return fmt.Errorf("failed to dial Ethereum RPC node: %w", err)
 			}
 
-			contract, err := wrappers.NewPeggy(ethcmn.HexToAddress(peggyParams.BridgeEthereumAddress), ethRPC)
+			peggyContract, err := getPeggyContract(konfig, peggyParams, gRPCConn)
 			if err != nil {
-				return fmt.Errorf("failed to create Peggy contract instance: %w", err)
+				return err
 			}
 
 			auth, err := buildTransactOpts(konfig, ethRPC)
@@ -174,7 +171,8 @@ prior to initializing.`,
 			var peggyID [32]byte
 			copy(peggyID[:], peggyParams.PeggyId)
 
-			currValSet, err := cosmosQueryClient.CurrentValset(cmd.Context())
+			peggyQueryClient := cosmos.NewPeggyQueryClient(peggytypes.NewQueryClient(gRPCConn))
+			currValSet, err := peggyQueryClient.CurrentValset(cmd.Context())
 			if err != nil {
 				return err
 			}
@@ -185,6 +183,7 @@ prior to initializing.`,
 
 				totalPower uint64
 			)
+
 			for i, member := range currValSet.Members {
 				validators[i] = ethcmn.HexToAddress(member.EthereumAddress)
 				powers[i] = new(big.Int).SetUint64(member.Power)
@@ -198,7 +197,7 @@ prior to initializing.`,
 				)
 			}
 
-			tx, err := contract.Initialize(auth, peggyID, powerThreshold, validators, powers)
+			tx, err := peggyContract.Initialize(auth, peggyID, powerThreshold, validators, powers)
 			if err != nil {
 				return fmt.Errorf("failed to initialize Peggy (Gravity Bridge): %w", err)
 			}
@@ -226,9 +225,123 @@ Transaction: %s
 		},
 	}
 
-	cmd.Flags().AddFlagSet(cosmosFlagSet())
-	cmd.Flags().AddFlagSet(bridgeFlagSet())
 	cmd.Flags().Uint64(flagPowerThreshold, 2834678415, "The validator power threshold to initialize Peggy with")
+
+	return cmd
+}
+
+func deployERC20Cmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "deploy-erc20 [base-denom]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Deploy a Cosmos native asset on Ethereum as an ERC20 token",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			konfig, err := parseServerConfig(cmd)
+			if err != nil {
+				return err
+			}
+
+			ethRPCEndpoint := konfig.String(flagEthRPC)
+			ethRPC, err := ethclient.Dial(ethRPCEndpoint)
+			if err != nil {
+				return fmt.Errorf("failed to dial Ethereum RPC node: %w", err)
+			}
+
+			auth, err := buildTransactOpts(konfig, ethRPC)
+			if err != nil {
+				return err
+			}
+
+			// query for the name and symbol on-chain via the token's metadata
+			cosmosChainID := konfig.String(flagCosmosChainID)
+			clientCtx, err := client.NewClientContext(cosmosChainID, "", nil)
+			if err != nil {
+				return err
+			}
+
+			tmRPCEndpoint := konfig.String(flagTendermintRPC)
+			cosmosGRPC := konfig.String(flagCosmosGRPC)
+
+			tmRPC, err := rpchttp.New(tmRPCEndpoint, "/websocket")
+			if err != nil {
+				return fmt.Errorf("failed to create Tendermint RPC client: %w", err)
+			}
+
+			fmt.Fprintf(os.Stderr, "Connected to Tendermint RPC: %s\n", tmRPCEndpoint)
+			clientCtx = clientCtx.WithClient(tmRPC).WithNodeURI(tmRPCEndpoint)
+
+			daemonClient, err := client.NewCosmosClient(clientCtx, cosmosGRPC)
+			if err != nil {
+				return err
+			}
+
+			// TODO: Clean this up to be more ergonomic and clean. We can probably
+			// encapsulate all of this into a single utility function that gracefully
+			// checks for the gRPC status/health.
+			//
+			// Ref: https://github.com/umee-network/peggo/issues/2
+			fmt.Fprintln(os.Stderr, "Waiting for cosmos gRPC service...")
+			time.Sleep(time.Second)
+
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+
+			gRPCConn := daemonClient.QueryClient()
+			waitForService(ctx, gRPCConn)
+
+			peggyParams, err := getPeggyParams(gRPCConn)
+			if err != nil {
+				return err
+			}
+
+			peggyContract, err := getPeggyContract(konfig, peggyParams, gRPCConn)
+			if err != nil {
+				return err
+			}
+
+			baseDenom := args[0]
+			bankQuerier := banktypes.NewQueryClient(gRPCConn)
+
+			ctx, cancel = context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+
+			resp, err := bankQuerier.DenomMetadata(ctx, &banktypes.QueryDenomMetadataRequest{Denom: baseDenom})
+			if err != nil {
+				return fmt.Errorf("failed to query for bank metadata: %w", err)
+			}
+
+			var decimals uint8
+			for _, unit := range resp.Metadata.DenomUnits {
+				if unit.Denom == baseDenom {
+					if unit.Exponent > math.MaxUint8 {
+						return fmt.Errorf("token exponent too large; %d > %d", unit.Exponent, math.MaxInt8)
+					}
+
+					decimals = uint8(unit.Exponent)
+					break
+				}
+			}
+
+			tx, err := peggyContract.DeployERC20(auth, baseDenom, resp.Metadata.Name, resp.Metadata.Symbol, decimals)
+			if err != nil {
+				return fmt.Errorf("failed deploy Cosmos native ERC20 token: %w", err)
+			}
+
+			_, _ = fmt.Fprintf(os.Stderr, `Cosmos native token deployed as an ERC20 on Ethereum!
+Base Denom: %s
+Name: %s
+Symbol: %s
+Transaction: %s
+			`,
+				baseDenom,
+				resp.Metadata.Name,
+				resp.Metadata.Symbol,
+				tx.Hash().Hex(),
+			)
+
+			return nil
+		},
+	}
 
 	return cmd
 }
@@ -298,4 +411,33 @@ func buildTransactOpts(konfig *koanf.Koanf, ethClient *ethclient.Client) (*bind.
 	auth.GasPrice = gasPrice
 
 	return auth, nil
+}
+
+func getPeggyParams(gRPCConn *grpc.ClientConn) (*peggytypes.Params, error) {
+	peggyQueryClient := cosmos.NewPeggyQueryClient(peggytypes.NewQueryClient(gRPCConn))
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	peggyParams, err := peggyQueryClient.PeggyParams(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query for Peggy params: %w", err)
+	}
+
+	return peggyParams, nil
+}
+
+func getPeggyContract(konfig *koanf.Koanf, peggyParams *peggytypes.Params, gRPCConn *grpc.ClientConn) (*wrappers.Peggy, error) {
+	ethRPCEndpoint := konfig.String(flagEthRPC)
+	ethRPC, err := ethclient.Dial(ethRPCEndpoint)
+	if err != nil {
+		return nil, fmt.Errorf("failed to dial Ethereum RPC node: %w", err)
+	}
+
+	contract, err := wrappers.NewPeggy(ethcmn.HexToAddress(peggyParams.BridgeEthereumAddress), ethRPC)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Peggy contract instance: %w", err)
+	}
+
+	return contract, nil
 }

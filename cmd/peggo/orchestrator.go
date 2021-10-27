@@ -109,11 +109,11 @@ flag (e.g. PEGGO_COSMOS_PK).`,
 			)
 
 			// query peggy params
-			cosmosQueryClient := cosmos.NewPeggyQueryClient(peggyQuerier)
+			peggyQueryClient := cosmos.NewPeggyQueryClient(peggyQuerier)
 			ctx, cancel = context.WithTimeout(context.Background(), time.Minute)
 			defer cancel()
 
-			peggyParams, err := cosmosQueryClient.PeggyParams(ctx)
+			peggyParams, err := peggyQueryClient.PeggyParams(ctx)
 			if err != nil {
 				return fmt.Errorf("failed to query for Peggy params: %w", err)
 			}
@@ -147,7 +147,7 @@ flag (e.g. PEGGO_COSMOS_PK).`,
 
 			relayValSets := konfig.Bool(flagRelayValsets)
 			relayBatches := konfig.Bool(flagRelayBatches)
-			relayer := relayer.NewPeggyRelayer(cosmosQueryClient, peggyContract, relayValSets, relayBatches)
+			relayer := relayer.NewPeggyRelayer(peggyQueryClient, peggyContract, relayValSets, relayBatches)
 
 			coingeckoAPI := konfig.String(flagCoinGeckoAPI)
 			coingeckoFeed := coingecko.NewCoingeckoPriceFeed(100, &coingecko.Config{
@@ -162,7 +162,7 @@ flag (e.g. PEGGO_COSMOS_PK).`,
 
 			minBatchFeeUSD := konfig.Float64(flagMinBatchFeeUSD)
 			orch := orchestrator.NewPeggyOrchestrator(
-				cosmosQueryClient,
+				peggyQueryClient,
 				peggyBroadcaster,
 				tmclient.NewRPCClient(tmRPCEndpoint),
 				peggyContract,
