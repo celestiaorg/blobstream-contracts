@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethcmn "github.com/ethereum/go-ethereum/common"
@@ -39,6 +40,7 @@ func getBridgeCommand() *cobra.Command {
 		initPeggyCmd(),
 		deployERC20Cmd(),
 		deployERC20RawCmd(),
+		sendToCosmosCmd(),
 	)
 
 	return cmd
@@ -346,7 +348,7 @@ Transaction: %s
 }
 
 func deployERC20RawCmd() *cobra.Command {
-	cmd := &cobra.Command{
+	return &cobra.Command{
 		Use:   "deploy-erc20-raw [peggy-addr] [denom-base] [denom-name] [denom-symbol] [denom-decimals]",
 		Short: "Deploy a Cosmos native asset on Ethereum as an ERC20 token using raw input",
 		Long: `Deploy a Cosmos native asset on Ethereum as an ERC20 token using raw input.
@@ -408,8 +410,114 @@ Transaction: %s
 			return nil
 		},
 	}
+}
 
-	return cmd
+func sendToCosmosCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "send-to-cosmos [token-address] [recipient] [amount]",
+		Args:  cobra.ExactArgs(3),
+		Short: "Send tokens from an Ethereum account to a recipient on Cosmos via Peggy (Gravity Bridge)",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			konfig, err := parseServerConfig(cmd)
+			if err != nil {
+				return err
+			}
+
+			ethRPCEndpoint := konfig.String(flagEthRPC)
+			ethRPC, err := ethclient.Dial(ethRPCEndpoint)
+			if err != nil {
+				return fmt.Errorf("failed to dial Ethereum RPC node: %w", err)
+			}
+
+			// query for the name and symbol on-chain via the token's metadata
+			cosmosChainID := konfig.String(flagCosmosChainID)
+			clientCtx, err := client.NewClientContext(cosmosChainID, "", nil)
+			if err != nil {
+				return err
+			}
+
+			tmRPCEndpoint := konfig.String(flagTendermintRPC)
+			cosmosGRPC := konfig.String(flagCosmosGRPC)
+
+			tmRPC, err := rpchttp.New(tmRPCEndpoint, "/websocket")
+			if err != nil {
+				return fmt.Errorf("failed to create Tendermint RPC client: %w", err)
+			}
+
+			fmt.Fprintf(os.Stderr, "Connected to Tendermint RPC: %s\n", tmRPCEndpoint)
+			clientCtx = clientCtx.WithClient(tmRPC).WithNodeURI(tmRPCEndpoint)
+
+			daemonClient, err := client.NewCosmosClient(clientCtx, cosmosGRPC)
+			if err != nil {
+				return err
+			}
+
+			// TODO: Clean this up to be more ergonomic and clean. We can probably
+			// encapsulate all of this into a single utility function that gracefully
+			// checks for the gRPC status/health.
+			//
+			// Ref: https://github.com/umee-network/peggo/issues/2
+			fmt.Fprintln(os.Stderr, "Waiting for cosmos gRPC service...")
+			time.Sleep(time.Second)
+
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			defer cancel()
+
+			gRPCConn := daemonClient.QueryClient()
+			waitForService(ctx, gRPCConn)
+
+			peggyParams, err := getPeggyParams(gRPCConn)
+			if err != nil {
+				return err
+			}
+
+			peggyContract, err := getPeggyContract(ethRPC, peggyParams.BridgeEthereumAddress)
+			if err != nil {
+				return err
+			}
+
+			auth, err := buildTransactOpts(konfig, ethRPC)
+			if err != nil {
+				return err
+			}
+
+			tokenAddr := ethcmn.HexToAddress(args[0])
+
+			recipientAddr, err := sdk.AccAddressFromBech32(args[1])
+			if err != nil {
+				return fmt.Errorf("failed to Bech32 decode recipient address: %w", err)
+			}
+
+			var recipientBz [32]byte
+			copy(recipientBz[:], recipientAddr.Bytes())
+
+			amount, ok := new(big.Int).SetString(args[2], 10)
+			if !ok || amount == nil {
+				return fmt.Errorf("invalid token amount: %s", args[2])
+			}
+
+			tx, err := peggyContract.SendToCosmos(auth, tokenAddr, recipientBz, amount)
+			if err != nil {
+				return fmt.Errorf("failed to send tokens to Cosmos: %w", err)
+			}
+
+			_, _ = fmt.Fprintf(os.Stderr, `Ethereum tokens successfully sent to Cosmos!
+Token Address: %s
+Sender: %s
+Recipient: %s
+Amount: %s
+Transaction: %s
+`,
+				tokenAddr.String(),
+				auth.From.String(),
+				recipientAddr.String(),
+				amount.String(),
+				tx.Hash().Hex(),
+			)
+
+			return nil
+		},
+	}
 }
 
 func buildTransactOpts(konfig *koanf.Koanf, ethClient *ethclient.Client) (*bind.TransactOpts, error) {

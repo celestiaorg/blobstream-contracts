@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 	"github.com/umee-network/peggo/cmd/peggo/client"
@@ -50,7 +51,7 @@ func getRegisterEthKeyCmd() *cobra.Command {
 				return fmt.Errorf("failed to initialize Ethereum account: %w", err)
 			}
 
-			fmt.Fprintf(os.Stderr, "Using Cosmos validator address: %s\n", valAddress)
+			fmt.Fprintf(os.Stderr, "Using Cosmos validator address: %s\n", sdk.ValAddress(valAddress))
 			fmt.Fprintf(os.Stderr, "Using Ethereum address: %s\n", ethKeyFromAddress)
 
 			autoConfirm := konfig.Bool(flagAutoConfirm)
@@ -106,7 +107,7 @@ func getRegisterEthKeyCmd() *cobra.Command {
 				return fmt.Errorf("failed to broadcast transaction: %w", err)
 			}
 
-			fmt.Fprintf(os.Stderr, "Registered Ethereum Address %s for validator %s\n", ethKeyFromAddress, valAddress)
+			fmt.Fprintf(os.Stderr, "Registered Ethereum Address %s for validator %s\n", ethKeyFromAddress, sdk.ValAddress(valAddress))
 			return nil
 		},
 	}
