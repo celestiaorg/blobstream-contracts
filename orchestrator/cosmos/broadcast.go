@@ -13,6 +13,7 @@ import (
 	"github.com/umee-network/peggo/orchestrator/ethereum/keystore"
 	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
 	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
+	umeeapp "github.com/umee-network/umee/app"
 	"github.com/umee-network/umee/x/peggy/types"
 	log "github.com/xlab/suplog"
 )
@@ -221,9 +222,11 @@ func (s *peggyBroadcastClient) sendDepositClaims(
 	// issued to the Cosmos address in question
 	// -------------
 
+	recipientBz := deposit.Destination[:umeeapp.MaxAddrLen]
+
 	log.WithFields(log.Fields{
 		"sender":      deposit.Sender.Hex(),
-		"destination": sdk.AccAddress(deposit.Destination[:]).String(),
+		"destination": sdk.AccAddress(recipientBz).String(),
 		"amount":      deposit.Amount.String(),
 		"event_nonce": deposit.EventNonce.String(),
 	}).Infoln("Oracle observed a deposit event. Sending MsgDepositClaim")
@@ -234,7 +237,7 @@ func (s *peggyBroadcastClient) sendDepositClaims(
 		TokenContract:  deposit.TokenContract.Hex(),
 		Amount:         sdk.NewIntFromBigInt(deposit.Amount),
 		EthereumSender: deposit.Sender.Hex(),
-		CosmosReceiver: sdk.AccAddress(deposit.Destination[:]).String(),
+		CosmosReceiver: sdk.AccAddress(recipientBz).String(),
 		Orchestrator:   s.broadcastClient.FromAddress().String(),
 	}
 
