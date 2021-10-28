@@ -9,7 +9,7 @@ updates:
     directory: "/"
     schedule:
       interval: daily
-    commit_message:
+    commit-message:
       prefix: "chore"
     open-pull-requests-limit: 10
     reviewers:
