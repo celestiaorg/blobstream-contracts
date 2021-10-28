@@ -26,7 +26,7 @@ require (
 	github.com/prometheus/procfs v0.7.0 // indirect
 	github.com/rs/zerolog v1.23.0
 	github.com/shirou/gopsutil v3.21.6+incompatible // indirect
-	github.com/shopspring/decimal v1.2.0
+	github.com/shopspring/decimal v1.3.1
 	github.com/sirkon/goproxy v1.4.8
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
