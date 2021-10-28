@@ -36,11 +36,15 @@ install: go.sum
 ##                              Tests & Linting                              ##
 ###############################################################################
 
-test-unit:
+test-integration:
 	@echo "--> Running tests"
 	@go test -mod=readonly -race ./test/... -v
 
-.PHONY: test-unit
+lint:
+	@echo "--> Running linter"
+	@go run github.com/golangci/golangci-lint/cmd/golangci-lint run
+
+.PHONY: test-integration lint
 
 ###############################################################################
 ##                                 Solidity                                  ##

@@ -1,0 +1,32 @@
+name: Build
+on: [push, pull_request]
+
+# This workflow makes amd64 and arm64 binaries for macOS and Linux.
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+        targetos: [darwin, linux]
+    name: peggo ${{ matrix.arch }} for ${{ matrix.targetos }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup go
+        uses: actions/setup-go@v2.1.4
+        with:
+          go-version: 1.17
+        env:
+          GOOS: ${{ matrix.targetos }}
+          GOARCH: ${{ matrix.arch }}
+
+      - name: Compile
+        run: |
+          go mod download
+          go build .
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: peggo ${{ matrix.targetos }} ${{ matrix.arch }}
+          path: cmd/peggo
