@@ -369,14 +369,22 @@ func (s *peggyBroadcastClient) SendEthereumClaims(
 			}
 			k++
 		}
-		count = count + 1
-		lastClaimEvent = lastClaimEvent + 1
 
-		// Considering blockTime=2.8s on Injective chain, Adding Sleep to make sure new event is
-		// sent only after previous event is executed successfully.
+		count++
+		lastClaimEvent++
+
+		// TODO: Evaluate this condition and if it needs to be configurable. For
+		// Umee, our block times will average around 6s.
+		//
+		// Original comment:
+		// Considering blockTime=2.8s on Injective chain, Adding Sleep to make sure
+		// new event is sent only after previous event is executed successfully.
 		// Otherwise it will through `non contiguous event nonce` failing CheckTx.
-		time.Sleep(3 * time.Second)
+		//
+		// time.Sleep(3 * time.Second)
+		time.Sleep(6 * time.Second)
 	}
+
 	return nil
 }
 

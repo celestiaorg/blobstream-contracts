@@ -20,11 +20,11 @@ require (
 	github.com/knadh/koanf v1.3.0
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mimoo/StrobeGo v0.0.0-20210601165009-122bf33a46e0 // indirect
-	github.com/onsi/ginkgo v1.16.4
-	github.com/onsi/gomega v1.13.0
+	github.com/onsi/ginkgo v1.16.5
+	github.com/onsi/gomega v1.16.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/procfs v0.7.0 // indirect
-	github.com/rs/zerolog v1.23.0
+	github.com/rs/zerolog v1.25.0
 	github.com/shirou/gopsutil v3.21.6+incompatible // indirect
 	github.com/shopspring/decimal v1.3.1
 	github.com/sirkon/goproxy v1.4.8

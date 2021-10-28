@@ -11,10 +11,17 @@ import (
 	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
 )
 
-// Considering blocktime of up to 3 seconds approx on the Injective Chain and an oracle loop duration = 1 minute,
-// we broadcast only 20 events in each iteration.
-// So better to search only 20 blocks to ensure all the events are broadcast to Injective Chain without misses.
-const defaultBlocksToSearch = 20
+// TODO: Evaluate this condition and if it needs to be configurable. For
+// Umee, our block times will average around 6s.
+//
+// Original comment:
+// Considering blocktime of up to 3 seconds approx on the Injective Chain and an
+// oracle loop duration = 1 minute, we broadcast only 20 events in each iteration.
+// So better to search only 20 blocks to ensure all the events are broadcast to
+// Injective Chain without misses.
+//
+// const defaultBlocksToSearch = 20
+const defaultBlocksToSearch = 40
 
 const ethBlockConfirmationDelay = 12
 
