@@ -35,7 +35,7 @@ require (
 	github.com/tyler-smith/go-bip39 v1.1.0 // indirect
 	github.com/umee-network/umee v0.0.0-20211023233917-5816260c0998
 	github.com/xlab/closer v0.0.0-20190328110542-03326addb7c2 // indirect
-	github.com/xlab/suplog v1.3.0
+	github.com/xlab/suplog v1.3.1
 	go.etcd.io/bbolt v1.3.6 // indirect
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
