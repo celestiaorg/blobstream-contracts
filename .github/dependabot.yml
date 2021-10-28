@@ -9,6 +9,8 @@ updates:
     directory: "/"
     schedule:
       interval: daily
+    commit_message:
+      prefix: "chore"
     open-pull-requests-limit: 10
     reviewers:
       - alexanderbez
