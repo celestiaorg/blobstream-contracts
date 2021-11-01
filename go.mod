@@ -33,7 +33,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/tendermint/tendermint v0.34.14
 	github.com/tyler-smith/go-bip39 v1.1.0 // indirect
-	github.com/umee-network/umee v0.0.0-20211023233917-5816260c0998
+	github.com/umee-network/umee v0.4.0-rc2
 	github.com/xlab/closer v0.0.0-20190328110542-03326addb7c2 // indirect
 	github.com/xlab/suplog v1.3.1
 	go.etcd.io/bbolt v1.3.6 // indirect

@@ -26,7 +26,6 @@ type PeggyOrchestrator interface {
 	RelayerMainLoop(ctx context.Context) error
 
 	SetMinBatchFee(float64)
-	SetERC20ContractMapping(map[ethcmn.Address]string)
 	SetPriceFeeder(*coingecko.CoingeckoPriceFeed)
 }
 
@@ -43,9 +42,8 @@ type peggyOrchestrator struct {
 	relayer              relayer.PeggyRelayer
 
 	// optional inputs with defaults
-	erc20ContractMapping map[ethcmn.Address]string
-	minBatchFeeUSD       float64
-	priceFeeder          *coingecko.CoingeckoPriceFeed
+	minBatchFeeUSD float64
+	priceFeeder    *coingecko.CoingeckoPriceFeed
 }
 
 func NewPeggyOrchestrator(
@@ -63,7 +61,7 @@ func NewPeggyOrchestrator(
 
 	var orch PeggyOrchestrator
 	orch = &peggyOrchestrator{
-		logger:               logger,
+		logger:               logger.With().Str("module", "orchestrator").Logger(),
 		tmClient:             tmClient,
 		cosmosQueryClient:    cosmosQueryClient,
 		peggyBroadcastClient: peggyBroadcastClient,
