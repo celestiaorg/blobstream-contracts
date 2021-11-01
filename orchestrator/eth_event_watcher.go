@@ -55,6 +55,39 @@ func (s *peggyOrchestrator) CheckForEvents(
 		return 0, err
 	}
 
+	var erc20DeployedEvents []*wrappers.PeggyERC20DeployedEvent
+	{
+		iter, err := peggyFilterer.FilterERC20DeployedEvent(&bind.FilterOpts{
+			Start: startingBlock,
+			End:   &currentBlock,
+		}, nil)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"start": startingBlock,
+				"end":   currentBlock,
+			}).Errorln("failed to scan past ERC20Deployed events from Ethereum")
+
+			if !isUnknownBlockErr(err) {
+				err = errors.Wrap(err, "failed to scan past ERC20Deployed events from Ethereum")
+				return 0, err
+			} else if iter == nil {
+				return 0, errors.New("no iterator returned")
+			}
+		}
+
+		for iter.Next() {
+			erc20DeployedEvents = append(erc20DeployedEvents, iter.Event)
+		}
+
+		iter.Close()
+	}
+
+	log.WithFields(log.Fields{
+		"start":     startingBlock,
+		"end":       currentBlock,
+		"Contracts": erc20DeployedEvents,
+	}).Debugln("Scanned ERC20Deployed events from Ethereum")
+
 	var sendToCosmosEvents []*wrappers.PeggySendToCosmosEvent
 	{
 
@@ -168,10 +201,12 @@ func (s *peggyOrchestrator) CheckForEvents(
 	deposits := filterSendToCosmosEventsByNonce(sendToCosmosEvents, lastClaimEvent.EthereumEventNonce)
 	withdraws := filterTransactionBatchExecutedEventsByNonce(transactionBatchExecutedEvents, lastClaimEvent.EthereumEventNonce)
 	valsetUpdates := filterValsetUpdateEventsByNonce(valsetUpdatedEvents, lastClaimEvent.EthereumEventNonce)
+	deployedERC20Updates := filterERC20DeployedEventsByNonce(erc20DeployedEvents, lastClaimEvent.EthereumEventNonce)
 
-	if len(deposits) > 0 || len(withdraws) > 0 || len(valsetUpdates) > 0 {
+	if len(deposits) > 0 || len(withdraws) > 0 || len(valsetUpdates) > 0 || len(deployedERC20Updates) > 0 {
 		// todo get eth chain id from the chain
-		if err := s.peggyBroadcastClient.SendEthereumClaims(ctx, lastClaimEvent.EthereumEventNonce, deposits, withdraws, valsetUpdates); err != nil {
+		if err := s.peggyBroadcastClient.SendEthereumClaims(ctx, lastClaimEvent.EthereumEventNonce, deposits, withdraws, valsetUpdates, deployedERC20Updates); err != nil {
+
 			err = errors.Wrap(err, "failed to send ethereum claims to Cosmos chain")
 			return 0, err
 		}
@@ -215,6 +250,20 @@ func filterValsetUpdateEventsByNonce(
 	nonce uint64,
 ) []*wrappers.PeggyValsetUpdatedEvent {
 	res := make([]*wrappers.PeggyValsetUpdatedEvent, 0, len(events))
+
+	for _, ev := range events {
+		if ev.EventNonce.Uint64() > nonce {
+			res = append(res, ev)
+		}
+	}
+	return res
+}
+
+func filterERC20DeployedEventsByNonce(
+	events []*wrappers.PeggyERC20DeployedEvent,
+	nonce uint64,
+) []*wrappers.PeggyERC20DeployedEvent {
+	res := make([]*wrappers.PeggyERC20DeployedEvent, 0, len(events))
 
 	for _, ev := range events {
 		if ev.EventNonce.Uint64() > nonce {

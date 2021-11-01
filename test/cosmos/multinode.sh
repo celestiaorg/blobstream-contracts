@@ -146,6 +146,11 @@ if [[ ! -d "$hdir" ]]; then
 		cat $n0cfgDir/genesis.json | jq '.app_state["crisis"]["constant_fee"]["denom"]="'$DENOM'"' > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
 		cat $n0cfgDir/genesis.json | jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="'$DENOM'"' > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
 		cat $n0cfgDir/genesis.json | jq '.app_state["mint"]["params"]["mint_denom"]="'$DENOM'"' > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
+		cat $n0cfgDir/genesis.json | jq '.consensus_params["block"]["time_iota_ms]="5000"' > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
+		cat $n0cfgDir/genesis.json | jq '.app_state["peggy"]["params"]["bridge_ethereum_address"]="0x93b5122922F9dCd5458Af42Ba69Bd7baEc546B3c"' > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
+		cat $n0cfgDir/genesis.json | jq '.app_state["peggy"]["params"]["bridge_chain_id"]="5"' > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
+		cat $n0cfgDir/genesis.json | jq '.app_state["peggy"]["params"]["bridge_contract_start_height"]="5763150"' > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
+		cat $n0cfgDir/genesis.json | jq '.app_state["peggy"]["params"]["cosmos_coin_denom"]=""' > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
 	fi
 
 	echo "NOTE: Setting Governance Voting Period to 10 seconds for rapid testing"

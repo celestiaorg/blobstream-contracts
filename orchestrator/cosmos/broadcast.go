@@ -53,6 +53,7 @@ type PeggyBroadcastClient interface {
 		deposits []*wrappers.PeggySendToCosmosEvent,
 		withdraws []*wrappers.PeggyTransactionBatchExecutedEvent,
 		valsetUpdates []*wrappers.PeggyValsetUpdatedEvent,
+		erc20Deployed []*wrappers.PeggyERC20DeployedEvent,
 	) error
 
 	// SendToEth broadcasts a Tx that tokens from Cosmos to Ethereum.
@@ -241,15 +242,16 @@ func (s *peggyBroadcastClient) sendDepositClaims(
 		Orchestrator:   s.broadcastClient.FromAddress().String(),
 	}
 
-	if txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg); err != nil {
+	txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg)
+	if err != nil {
 		log.WithError(err).Errorln("broadcasting MsgDepositClaim failed")
 		return err
-	} else {
-		log.WithFields(log.Fields{
-			"event_nonce": deposit.EventNonce.String(),
-			"txHash":      txResponse.TxHash,
-		}).Infoln("Oracle sent deposit event succesfully")
 	}
+
+	log.WithFields(log.Fields{
+		"event_nonce": deposit.EventNonce.String(),
+		"txHash":      txResponse.TxHash,
+	}).Infoln("Oracle sent deposit event succesfully")
 
 	return nil
 }
@@ -275,15 +277,16 @@ func (s *peggyBroadcastClient) sendWithdrawClaims(
 		Orchestrator:  s.AccFromAddress().String(),
 	}
 
-	if txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg); err != nil {
+	txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg)
+	if err != nil {
 		log.WithError(err).Errorln("broadcasting MsgWithdrawClaim failed")
 		return err
-	} else {
-		log.WithFields(log.Fields{
-			"event_nonce": withdraw.EventNonce.String(),
-			"txHash":      txResponse.TxHash,
-		}).Infoln("Oracle sent Withdraw event succesfully")
 	}
+
+	log.WithFields(log.Fields{
+		"event_nonce": withdraw.EventNonce.String(),
+		"txHash":      txResponse.TxHash,
+	}).Infoln("Oracle sent Withdraw event succesfully")
 
 	return nil
 }
@@ -320,15 +323,52 @@ func (s *peggyBroadcastClient) sendValsetUpdateClaims(
 		Orchestrator: s.AccFromAddress().String(),
 	}
 
-	if txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg); err != nil {
+	txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg)
+	if err != nil {
 		log.WithError(err).Errorln("broadcasting MsgValsetUpdatedClaim failed")
 		return err
-	} else {
-		log.WithFields(log.Fields{
-			"event_nonce": valsetUpdate.EventNonce.String(),
-			"txHash":      txResponse.TxHash,
-		}).Infoln("Oracle sent ValsetUpdate event succesfully")
 	}
+
+	log.WithFields(log.Fields{
+		"event_nonce": valsetUpdate.EventNonce.String(),
+		"txHash":      txResponse.TxHash,
+	}).Infoln("Oracle sent ValsetUpdate event succesfully")
+
+	return nil
+}
+
+func (s *peggyBroadcastClient) sendERC20DeployedClaims(
+	ctx context.Context,
+	event *wrappers.PeggyERC20DeployedEvent,
+) error {
+
+	log.WithFields(log.Fields{
+		"token_contract": event.TokenContract.Hex(),
+		"cosmos_denom":   event.CosmosDenom,
+		"event_nonce":    event.EventNonce.String(),
+	}).Infoln("Oracle observed an ERC20 deployed event. Sending MsgERC20DeployedClaim")
+
+	msg := &types.MsgERC20DeployedClaim{
+		EventNonce:    event.EventNonce.Uint64(),
+		BlockHeight:   event.Raw.BlockNumber,
+		Orchestrator:  s.AccFromAddress().String(),
+		CosmosDenom:   event.CosmosDenom,
+		TokenContract: event.TokenContract.Hex(),
+		Name:          event.Name,
+		Decimals:      uint64(event.Decimals),
+		Symbol:        event.Symbol,
+	}
+
+	txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg)
+	if err != nil {
+		log.WithError(err).Errorln("broadcasting ERC20DeployedClaim failed")
+		return err
+	}
+
+	log.WithFields(log.Fields{
+		"event_nonce": event.EventNonce.String(),
+		"txHash":      txResponse.TxHash,
+	}).Infoln("Oracle sent ERC20Deployed event succesfully")
 
 	return nil
 }
@@ -339,10 +379,10 @@ func (s *peggyBroadcastClient) SendEthereumClaims(
 	deposits []*wrappers.PeggySendToCosmosEvent,
 	withdraws []*wrappers.PeggyTransactionBatchExecutedEvent,
 	valsetUpdates []*wrappers.PeggyValsetUpdatedEvent,
+	erc20Deployed []*wrappers.PeggyERC20DeployedEvent,
 ) error {
-
-	totalClaimEvents := len(deposits) + len(withdraws) + len(valsetUpdates)
-	var count, i, j, k int
+	totalClaimEvents := len(deposits) + len(withdraws) + len(valsetUpdates) + len(erc20Deployed)
+	var count, i, j, k, l int
 
 	// Individual arrays (deposits, withdraws, valsetUpdates) are sorted.
 	// Broadcast claim events sequentially starting with eventNonce = lastClaimEvent + 1.
@@ -368,6 +408,13 @@ func (s *peggyBroadcastClient) SendEthereumClaims(
 				return err
 			}
 			k++
+		} else if l < len(erc20Deployed) && erc20Deployed[k].EventNonce.Uint64() == lastClaimEvent+1 {
+			// send erc20 deployed claim
+			if err := s.sendERC20DeployedClaims(ctx, erc20Deployed[k]); err != nil {
+				log.WithError(err).Errorln("broadcasting MsgERC20DeployedClaim failed")
+				return err
+			}
+			l++
 		}
 
 		count++
