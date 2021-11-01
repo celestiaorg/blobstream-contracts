@@ -27,12 +27,12 @@ const ethBlockConfirmationDelay = 12
 
 // CheckForEvents checks for events such as a deposit to the Peggy Ethereum contract or a validator set update
 // or a transaction batch update. It then responds to these events by performing actions on the Cosmos chain if required
-func (s *peggyOrchestrator) CheckForEvents(
+func (p *peggyOrchestrator) CheckForEvents(
 	ctx context.Context,
 	startingBlock uint64,
 ) (currentBlock uint64, err error) {
 
-	latestHeader, err := s.ethProvider.HeaderByNumber(ctx, nil)
+	latestHeader, err := p.ethProvider.HeaderByNumber(ctx, nil)
 	if err != nil {
 		err = errors.Wrap(err, "failed to get latest header")
 		return 0, err
@@ -49,7 +49,7 @@ func (s *peggyOrchestrator) CheckForEvents(
 		currentBlock = startingBlock + defaultBlocksToSearch
 	}
 
-	peggyFilterer, err := wrappers.NewPeggyFilterer(s.peggyContract.Address(), s.ethProvider)
+	peggyFilterer, err := wrappers.NewPeggyFilterer(p.peggyContract.Address(), p.ethProvider)
 	if err != nil {
 		err = errors.Wrap(err, "failed to init Peggy events filterer")
 		return 0, err
@@ -192,7 +192,7 @@ func (s *peggyOrchestrator) CheckForEvents(
 	// block, so we also need this routine so make sure we don't send in the first event in this hypothetical
 	// multi event block again. In theory we only send all events for every block and that will pass of fail
 	// atomically but lets not take that risk.
-	lastClaimEvent, err := s.cosmosQueryClient.LastClaimEventByAddr(ctx, s.peggyBroadcastClient.AccFromAddress())
+	lastClaimEvent, err := p.cosmosQueryClient.LastClaimEventByAddr(ctx, p.peggyBroadcastClient.AccFromAddress())
 	if err != nil {
 		err = errors.New("failed to query last claim event from backend")
 		return 0, err
@@ -205,7 +205,7 @@ func (s *peggyOrchestrator) CheckForEvents(
 
 	if len(deposits) > 0 || len(withdraws) > 0 || len(valsetUpdates) > 0 || len(deployedERC20Updates) > 0 {
 		// todo get eth chain id from the chain
-		if err := s.peggyBroadcastClient.SendEthereumClaims(ctx, lastClaimEvent.EthereumEventNonce, deposits, withdraws, valsetUpdates, deployedERC20Updates); err != nil {
+		if err := p.peggyBroadcastClient.SendEthereumClaims(ctx, lastClaimEvent.EthereumEventNonce, deposits, withdraws, valsetUpdates, deployedERC20Updates); err != nil {
 
 			err = errors.Wrap(err, "failed to send ethereum claims to Cosmos chain")
 			return 0, err

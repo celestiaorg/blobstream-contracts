@@ -36,6 +36,14 @@ install: go.sum
 ##                              Tests & Linting                              ##
 ###############################################################################
 
+build-docker-test:
+	@echo "--> Building docker image..."
+	@docker build -f Dockerfile.test -t peggo-test .
+
+docker-test:
+	@echo "--> Running tests in docker..."
+	@docker run peggo-test
+
 test-integration:
 	@echo "--> Running tests"
 	@go test -mod=readonly -race ./test/... -v

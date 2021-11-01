@@ -46,7 +46,6 @@ jobs:
             go.mod
             go.sum
       - name: Test Integration
-        run: |
-          make test-integration
+        run: ./test/run-gh-tests.sh
         if: env.GIT_DIFF
 # TODO: Add job for unit and coverage testing!
