@@ -50,7 +50,7 @@ test-integration:
 
 lint:
 	@echo "--> Running linter"
-	@go run github.com/golangci/golangci-lint/cmd/golangci-lint run
+	@go run github.com/golangci/golangci-lint/cmd/golangci-lint run --timeout=10m
 
 .PHONY: test-integration lint
 
