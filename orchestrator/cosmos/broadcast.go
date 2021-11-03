@@ -408,9 +408,9 @@ func (s *peggyBroadcastClient) SendEthereumClaims(
 				return err
 			}
 			k++
-		} else if l < len(erc20Deployed) && erc20Deployed[k].EventNonce.Uint64() == lastClaimEvent+1 {
+		} else if l < len(erc20Deployed) && erc20Deployed[l].EventNonce.Uint64() == lastClaimEvent+1 {
 			// send erc20 deployed claim
-			if err := s.sendERC20DeployedClaims(ctx, erc20Deployed[k]); err != nil {
+			if err := s.sendERC20DeployedClaims(ctx, erc20Deployed[l]); err != nil {
 				log.WithError(err).Errorln("broadcasting MsgERC20DeployedClaim failed")
 				return err
 			}
