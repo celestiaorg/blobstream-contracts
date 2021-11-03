@@ -7,7 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"github.com/umee-network/umee/x/peggy/types"
-	log "github.com/xlab/suplog"
 )
 
 type ValsetArgs struct {
@@ -16,6 +15,7 @@ type ValsetArgs struct {
 	ValsetNonce  *big.Int         `protobuf:"varint,3,opt,name=valsetNonce,proto3" json:"valsetNonce,omitempty"`
 	RewardAmount *big.Int         `protobuf:"bytes,4,opt,name=rewardAmount,json=rewardAmount,proto3" json:"rewardAmount"`
 	// the reward token in it's Ethereum hex address representation
+	// nolint: lll
 	RewardToken common.Address `protobuf:"bytes,5,opt,name=rewardToken,json=rewardToken,proto3" json:"rewardToken,omitempty"`
 }
 
@@ -31,10 +31,10 @@ func (s *peggyContract) SendEthValsetUpdate(
 		return nil, err
 	}
 
-	log.WithFields(log.Fields{
-		"old_nonce": oldValset.Nonce,
-		"new_nonce": newValset.Nonce,
-	}).Infoln("Checking signatures and submitting validator set update to Ethereum")
+	s.logger.Info().
+		Uint64("old_valset_nonce", oldValset.Nonce).
+		Uint64("new_valset_nonce", newValset.Nonce).
+		Msg("checking signatures and submitting validator set update to Ethereum")
 
 	newValidators, newPowers := validatorsAndPowers(newValset)
 	newValsetNonce := new(big.Int).SetUint64(newValset.Nonce)
@@ -79,7 +79,12 @@ func (s *peggyContract) SendEthValsetUpdate(
 	// 		bytes32[] memory _r,
 	// 		bytes32[] memory _s
 	// )
-	log.Debugln("Sending updateValset Ethereum tx", "currentValidators", currentValidators, "currentPowers", currentPowers, "currentValsetNonce", currentValsetNonce)
+	s.logger.Debug().
+		Interface("current_validators", currentValidators).
+		Interface("current_powers", currentPowers).
+		Interface("current_valset_nonce", currentValsetNonce).
+		Msg("sending updateValset Ethereum TX")
+
 	txData, err := peggyABI.Pack("updateValset",
 		newValsetArgs,
 		currentValsetArgs,
@@ -88,17 +93,20 @@ func (s *peggyContract) SendEthValsetUpdate(
 		sigS,
 	)
 	if err != nil {
-		log.WithError(err).Errorln("ABI Pack (Peggy updateValset) method")
+		s.logger.Err(err).Msg("ABI Pack (Peggy updateValset) method")
 		return nil, err
 	}
 
 	txHash, err := s.SendTx(ctx, s.peggyAddress, txData)
 	if err != nil {
-		log.WithError(err).WithField("tx_hash", txHash.Hex()).Errorln("Failed to sign and submit (Peggy updateValset) to EVM")
+		s.logger.Err(err).
+			Str("tx_hash", txHash.String()).
+			Msg("failed to sign and submit (Peggy updateValset) to EVM")
+
 		return nil, err
 	}
 
-	log.Infoln("Sent Tx (Peggy updateValset):", txHash.Hex())
+	s.logger.Info().Str("tx_hash", txHash.Hex()).Msg("sent Tx (Peggy updateValset)")
 
 	//     let before_nonce = get_valset_nonce(peggy_contract_address, eth_address, web3).await?;
 	//     if before_nonce != old_nonce {
@@ -200,8 +208,8 @@ func checkValsetSigsAndRepack(
 	}
 	if peggyPowerToPercent(powerOfGoodSigs) < 66 {
 		err = ErrInsufficientVotingPowerToPass
-		return
+		return validators, powers, v, r, s, err
 	}
 
-	return
+	return validators, powers, v, r, s, err
 }

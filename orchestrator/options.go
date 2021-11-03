@@ -16,10 +16,10 @@ func (p *peggyOrchestrator) SetMinBatchFee(minFee float64) {
 // SetPriceFeeder sets the (optional) price feeder used when performing profitable
 // batch calculations. Note, this should be supplied only when the min batch
 // fee is non-zero.
-func SetPriceFeeder(pf *coingecko.CoingeckoPriceFeed) func(PeggyOrchestrator) {
+func SetPriceFeeder(pf *coingecko.PriceFeed) func(PeggyOrchestrator) {
 	return func(p PeggyOrchestrator) { p.SetPriceFeeder(pf) }
 }
 
-func (p *peggyOrchestrator) SetPriceFeeder(pf *coingecko.CoingeckoPriceFeed) {
+func (p *peggyOrchestrator) SetPriceFeeder(pf *coingecko.PriceFeed) {
 	p.priceFeeder = pf
 }

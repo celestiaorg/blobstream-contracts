@@ -120,7 +120,12 @@ prior to initializing.`,
 			fmt.Fprintf(os.Stderr, "Connected to Tendermint RPC: %s\n", tmRPCEndpoint)
 			clientCtx = clientCtx.WithClient(tmRPC).WithNodeURI(tmRPCEndpoint)
 
-			daemonClient, err := client.NewCosmosClient(clientCtx, cosmosGRPC)
+			logger, err := getLogger(cmd)
+			if err != nil {
+				return err
+			}
+
+			daemonClient, err := client.NewCosmosClient(clientCtx, logger, cosmosGRPC)
 			if err != nil {
 				return err
 			}
@@ -202,7 +207,7 @@ prior to initializing.`,
 			}
 
 			_, _ = fmt.Fprintf(os.Stderr, `Peggy (Gravity Bridge) contract successfully initialized!
-Gravity Addres: %s
+Gravity Address: %s
 PeggyID: %s
 Init Params:
   Peggy ID: 0x%X
@@ -269,7 +274,12 @@ func deployERC20Cmd() *cobra.Command {
 			fmt.Fprintf(os.Stderr, "Connected to Tendermint RPC: %s\n", tmRPCEndpoint)
 			clientCtx = clientCtx.WithClient(tmRPC).WithNodeURI(tmRPCEndpoint)
 
-			daemonClient, err := client.NewCosmosClient(clientCtx, cosmosGRPC)
+			logger, err := getLogger(cmd)
+			if err != nil {
+				return err
+			}
+
+			daemonClient, err := client.NewCosmosClient(clientCtx, logger, cosmosGRPC)
 			if err != nil {
 				return err
 			}
@@ -447,7 +457,12 @@ func sendToCosmosCmd() *cobra.Command {
 			fmt.Fprintf(os.Stderr, "Connected to Tendermint RPC: %s\n", tmRPCEndpoint)
 			clientCtx = clientCtx.WithClient(tmRPC).WithNodeURI(tmRPCEndpoint)
 
-			daemonClient, err := client.NewCosmosClient(clientCtx, cosmosGRPC)
+			logger, err := getLogger(cmd)
+			if err != nil {
+				return err
+			}
+
+			daemonClient, err := client.NewCosmosClient(clientCtx, logger, cosmosGRPC)
 			if err != nil {
 				return err
 			}

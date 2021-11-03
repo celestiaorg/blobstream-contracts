@@ -3,6 +3,7 @@ package relayer
 import (
 	"context"
 
+	"github.com/rs/zerolog"
 	"github.com/umee-network/peggo/orchestrator/cosmos"
 	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
 	"github.com/umee-network/peggo/orchestrator/ethereum/provider"
@@ -18,20 +19,23 @@ type PeggyRelayer interface {
 }
 
 type peggyRelayer struct {
+	logger             zerolog.Logger
 	cosmosQueryClient  cosmos.PeggyQueryClient
-	peggyContract      peggy.PeggyContract
+	peggyContract      peggy.Contract
 	ethProvider        provider.EVMProvider
 	valsetRelayEnabled bool
 	batchRelayEnabled  bool
 }
 
 func NewPeggyRelayer(
+	logger zerolog.Logger,
 	cosmosQueryClient cosmos.PeggyQueryClient,
-	peggyContract peggy.PeggyContract,
+	peggyContract peggy.Contract,
 	valsetRelayEnabled bool,
 	batchRelayEnabled bool,
 ) PeggyRelayer {
 	return &peggyRelayer{
+		logger:             logger.With().Str("module", "peggy_relayer").Logger(),
 		cosmosQueryClient:  cosmosQueryClient,
 		peggyContract:      peggyContract,
 		ethProvider:        peggyContract.Provider(),

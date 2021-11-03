@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"github.com/shopspring/decimal"
 	"github.com/umee-network/peggo/orchestrator/ethereum/committer"
 	"github.com/umee-network/peggo/orchestrator/ethereum/provider"
@@ -17,7 +18,7 @@ import (
 	"github.com/umee-network/umee/x/peggy/types"
 )
 
-type PeggyContract interface {
+type Contract interface {
 	committer.EVMCommitter
 
 	Address() common.Address
@@ -68,15 +69,17 @@ type PeggyContract interface {
 }
 
 func NewPeggyContract(
+	logger zerolog.Logger,
 	ethCommitter committer.EVMCommitter,
 	peggyAddress common.Address,
-) (PeggyContract, error) {
+) (Contract, error) {
 	ethPeggy, err := wrappers.NewPeggy(peggyAddress, ethCommitter.Provider())
 	if err != nil {
 		return nil, err
 	}
 
 	svc := &peggyContract{
+		logger:       logger.With().Str("module", "peggy_contract").Logger(),
 		EVMCommitter: ethCommitter,
 		peggyAddress: peggyAddress,
 		ethPeggy:     ethPeggy,
@@ -86,6 +89,7 @@ func NewPeggyContract(
 }
 
 type peggyContract struct {
+	logger zerolog.Logger
 	committer.EVMCommitter
 
 	ethProvider  provider.EVMProvider

@@ -6,7 +6,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
-	log "github.com/xlab/suplog"
 
 	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
 )
@@ -38,7 +37,7 @@ func (p *peggyOrchestrator) CheckForEvents(
 		return 0, err
 	}
 
-	// add delay to ensure minimum confirmations are received and block is finalised
+	// add delay to ensure minimum confirmations are received and block is finalized
 	currentBlock = latestHeader.Number.Uint64() - uint64(ethBlockConfirmationDelay)
 
 	if currentBlock < startingBlock {
@@ -62,10 +61,10 @@ func (p *peggyOrchestrator) CheckForEvents(
 			End:   &currentBlock,
 		}, nil)
 		if err != nil {
-			log.WithFields(log.Fields{
-				"start": startingBlock,
-				"end":   currentBlock,
-			}).Errorln("failed to scan past ERC20Deployed events from Ethereum")
+			p.logger.Err(err).
+				Uint64("start", startingBlock).
+				Uint64("end", currentBlock).
+				Msg("failed to scan past ERC20Deployed events from Ethereum")
 
 			if !isUnknownBlockErr(err) {
 				err = errors.Wrap(err, "failed to scan past ERC20Deployed events from Ethereum")
@@ -82,11 +81,11 @@ func (p *peggyOrchestrator) CheckForEvents(
 		iter.Close()
 	}
 
-	log.WithFields(log.Fields{
-		"start":     startingBlock,
-		"end":       currentBlock,
-		"Contracts": erc20DeployedEvents,
-	}).Debugln("Scanned ERC20Deployed events from Ethereum")
+	p.logger.Debug().
+		Uint64("start", startingBlock).
+		Uint64("end", currentBlock).
+		Int("num_events", len(erc20DeployedEvents)).
+		Msg("scanned ERC20Deployed events from Ethereum")
 
 	var sendToCosmosEvents []*wrappers.PeggySendToCosmosEvent
 	{
@@ -96,10 +95,10 @@ func (p *peggyOrchestrator) CheckForEvents(
 			End:   &currentBlock,
 		}, nil, nil, nil)
 		if err != nil {
-			log.WithFields(log.Fields{
-				"start": startingBlock,
-				"end":   currentBlock,
-			}).Errorln("failed to scan past SendToCosmos events from Ethereum")
+			p.logger.Err(err).
+				Uint64("start", startingBlock).
+				Uint64("end", currentBlock).
+				Msg("failed to scan past SendToCosmos events from Ethereum")
 
 			if !isUnknownBlockErr(err) {
 				err = errors.Wrap(err, "failed to scan past SendToCosmos events from Ethereum")
@@ -116,11 +115,11 @@ func (p *peggyOrchestrator) CheckForEvents(
 		iter.Close()
 	}
 
-	log.WithFields(log.Fields{
-		"start":    startingBlock,
-		"end":      currentBlock,
-		"Deposits": sendToCosmosEvents,
-	}).Debugln("Scanned SendToCosmos events from Ethereum")
+	p.logger.Debug().
+		Uint64("start", startingBlock).
+		Uint64("end", currentBlock).
+		Int("num_events", len(sendToCosmosEvents)).
+		Msg("scanned SendToCosmos events from Ethereum")
 
 	var transactionBatchExecutedEvents []*wrappers.PeggyTransactionBatchExecutedEvent
 	{
@@ -129,10 +128,10 @@ func (p *peggyOrchestrator) CheckForEvents(
 			End:   &currentBlock,
 		}, nil, nil)
 		if err != nil {
-			log.WithFields(log.Fields{
-				"start": startingBlock,
-				"end":   currentBlock,
-			}).Errorln("failed to scan past TransactionBatchExecuted events from Ethereum")
+			p.logger.Err(err).
+				Uint64("start", startingBlock).
+				Uint64("end", currentBlock).
+				Msg("failed to scan past TransactionBatchExecuted events from Ethereum")
 
 			if !isUnknownBlockErr(err) {
 				err = errors.Wrap(err, "failed to scan past TransactionBatchExecuted events from Ethereum")
@@ -148,11 +147,12 @@ func (p *peggyOrchestrator) CheckForEvents(
 
 		iter.Close()
 	}
-	log.WithFields(log.Fields{
-		"start":     startingBlock,
-		"end":       currentBlock,
-		"Withdraws": transactionBatchExecutedEvents,
-	}).Debugln("Scanned TransactionBatchExecuted events from Ethereum")
+
+	p.logger.Debug().
+		Uint64("start", startingBlock).
+		Uint64("end", currentBlock).
+		Int("num_events", len(transactionBatchExecutedEvents)).
+		Msg("scanned TransactionBatchExecuted events from Ethereum")
 
 	var valsetUpdatedEvents []*wrappers.PeggyValsetUpdatedEvent
 	{
@@ -161,10 +161,10 @@ func (p *peggyOrchestrator) CheckForEvents(
 			End:   &currentBlock,
 		}, nil)
 		if err != nil {
-			log.WithFields(log.Fields{
-				"start": startingBlock,
-				"end":   currentBlock,
-			}).Errorln("failed to scan past ValsetUpdatedEvent events from Ethereum")
+			p.logger.Err(err).
+				Uint64("start", startingBlock).
+				Uint64("end", currentBlock).
+				Msg("failed to scan past ValsetUpdatedEvent events from Ethereum")
 
 			if !isUnknownBlockErr(err) {
 				err = errors.Wrap(err, "failed to scan past ValsetUpdatedEvent events from Ethereum")
@@ -181,11 +181,11 @@ func (p *peggyOrchestrator) CheckForEvents(
 		iter.Close()
 	}
 
-	log.WithFields(log.Fields{
-		"start":         startingBlock,
-		"end":           currentBlock,
-		"valsetUpdates": valsetUpdatedEvents,
-	}).Debugln("Scanned ValsetUpdatedEvents events from Ethereum")
+	p.logger.Debug().
+		Uint64("start", startingBlock).
+		Uint64("end", currentBlock).
+		Int("num_events", len(valsetUpdatedEvents)).
+		Msg("scanned ValsetUpdatedEvents events from Ethereum")
 
 	// note that starting block overlaps with our last che	cked block, because we have to deal with
 	// the possibility that the relayer was killed after relaying only one of multiple events in a single
@@ -199,14 +199,23 @@ func (p *peggyOrchestrator) CheckForEvents(
 	}
 
 	deposits := filterSendToCosmosEventsByNonce(sendToCosmosEvents, lastClaimEvent.EthereumEventNonce)
-	withdraws := filterTransactionBatchExecutedEventsByNonce(transactionBatchExecutedEvents, lastClaimEvent.EthereumEventNonce)
+	withdraws := filterTransactionBatchExecutedEventsByNonce(
+		transactionBatchExecutedEvents,
+		lastClaimEvent.EthereumEventNonce,
+	)
 	valsetUpdates := filterValsetUpdateEventsByNonce(valsetUpdatedEvents, lastClaimEvent.EthereumEventNonce)
 	deployedERC20Updates := filterERC20DeployedEventsByNonce(erc20DeployedEvents, lastClaimEvent.EthereumEventNonce)
 
 	if len(deposits) > 0 || len(withdraws) > 0 || len(valsetUpdates) > 0 || len(deployedERC20Updates) > 0 {
 		// todo get eth chain id from the chain
-		if err := p.peggyBroadcastClient.SendEthereumClaims(ctx, lastClaimEvent.EthereumEventNonce, deposits, withdraws, valsetUpdates, deployedERC20Updates); err != nil {
-
+		if err := p.peggyBroadcastClient.SendEthereumClaims(
+			ctx,
+			lastClaimEvent.EthereumEventNonce,
+			deposits,
+			withdraws,
+			valsetUpdates,
+			deployedERC20Updates,
+		); err != nil {
 			err = errors.Wrap(err, "failed to send ethereum claims to Cosmos chain")
 			return 0, err
 		}

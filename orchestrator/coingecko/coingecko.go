@@ -14,8 +14,8 @@ import (
 	cosmtypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"github.com/shopspring/decimal"
-	log "github.com/xlab/suplog"
 )
 
 const (
@@ -26,13 +26,13 @@ const (
 
 var zeroPrice = float64(0)
 
-type CoingeckoPriceFeed struct {
+type PriceFeed struct {
 	client *http.Client
 	config *Config
 
 	interval time.Duration
 
-	logger log.Logger
+	logger zerolog.Logger
 }
 
 type Config struct {
@@ -49,11 +49,11 @@ func urlJoin(baseURL string, segments ...string) string {
 
 }
 
-func (cp *CoingeckoPriceFeed) QueryUSDPrice(erc20Contract common.Address) (float64, error) {
+func (cp *PriceFeed) QueryUSDPrice(erc20Contract common.Address) (float64, error) {
 
 	u, err := url.ParseRequestURI(urlJoin(cp.config.BaseURL, "simple", "token_price", "ethereum"))
 	if err != nil {
-		cp.logger.WithError(err).Fatalln("failed to parse URL")
+		cp.logger.Fatal().Err(err).Msg("failed to parse URL")
 	}
 
 	q := make(url.Values)
@@ -65,7 +65,7 @@ func (cp *CoingeckoPriceFeed) QueryUSDPrice(erc20Contract common.Address) (float
 	reqURL := u.String()
 	req, err := http.NewRequest(http.MethodGet, reqURL, nil)
 	if err != nil {
-		cp.logger.WithError(err).Fatalln("failed to create HTTP request")
+		cp.logger.Fatal().Err(err).Msg("failed to create HTTP request")
 	}
 
 	resp, err := cp.client.Do(req)
@@ -84,6 +84,10 @@ func (cp *CoingeckoPriceFeed) QueryUSDPrice(erc20Contract common.Address) (float
 
 	var f interface{}
 	err = json.Unmarshal(respBody, &f)
+	if err != nil {
+		return zeroPrice, errors.Wrapf(err, "failed to parse response body from %s", reqURL)
+	}
+
 	m := f.(map[string]interface{})
 
 	v := m[strings.ToLower(erc20Contract.String())]
@@ -95,8 +99,8 @@ func (cp *CoingeckoPriceFeed) QueryUSDPrice(erc20Contract common.Address) (float
 
 // NewCoingeckoPriceFeed returns price puller for given symbol. The price will be pulled
 // from endpoint and divided by scaleFactor. Symbol name (if reported by endpoint) must match.
-func NewCoingeckoPriceFeed(interval time.Duration, endpointConfig *Config) *CoingeckoPriceFeed {
-	return &CoingeckoPriceFeed{
+func NewCoingeckoPriceFeed(logger zerolog.Logger, interval time.Duration, endpointConfig *Config) *PriceFeed {
+	return &PriceFeed{
 		client: &http.Client{
 			Transport: &http.Transport{
 				ResponseHeaderTimeout: maxRespHeadersTime,
@@ -107,10 +111,7 @@ func NewCoingeckoPriceFeed(interval time.Duration, endpointConfig *Config) *Coin
 
 		interval: interval,
 
-		logger: log.WithFields(log.Fields{
-			"svc":      "oracle",
-			"provider": "coingeckgo",
-		}),
+		logger: logger.With().Str("module", "coingecko_pricefeed").Logger(),
 	}
 }
 
@@ -126,7 +127,7 @@ func checkCoingeckoConfig(cfg *Config) *Config {
 	return cfg
 }
 
-func (cp *CoingeckoPriceFeed) CheckFeeThreshold(erc20Contract common.Address, totalFee cosmtypes.Int, minFeeInUSD float64) bool {
+func (cp *PriceFeed) CheckFeeThreshold(erc20Contract common.Address, totalFee cosmtypes.Int, minFeeInUSD float64) bool {
 	tokenPriceInUSD, err := cp.QueryUSDPrice(erc20Contract)
 	if err != nil {
 		return false
@@ -136,8 +137,6 @@ func (cp *CoingeckoPriceFeed) CheckFeeThreshold(erc20Contract common.Address, to
 	totalFeeInUSDDec := decimal.NewFromBigInt(totalFee.BigInt(), -18).Mul(tokenPriceInUSDDec)
 	minFeeInUSDDec := decimal.NewFromFloat(minFeeInUSD)
 
-	if totalFeeInUSDDec.GreaterThan(minFeeInUSDDec) {
-		return true
-	}
-	return false
+	return totalFeeInUSDDec.GreaterThan(minFeeInUSDDec)
+
 }

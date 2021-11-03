@@ -13,7 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
-	log "github.com/xlab/suplog"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 )
 
@@ -41,8 +41,9 @@ type CosmosClient interface {
 // protoAddr must be in form "tcp://127.0.0.1:8080" or "unix:///tmp/test.sock", protocol is required.
 func NewCosmosClient(
 	ctx client.Context,
+	logger zerolog.Logger,
 	protoAddr string,
-	options ...cosmosClientOption,
+	options ...CosmosClientOption,
 ) (CosmosClient, error) {
 	conn, err := grpc.Dial(protoAddr, grpc.WithInsecure(), grpc.WithContextDialer(dialerFunc))
 	if err != nil {
@@ -67,10 +68,7 @@ func NewCosmosClient(
 		ctx:  ctx,
 		opts: opts,
 
-		logger: log.WithFields(log.Fields{
-			"module": "sdk-go",
-			"svc":    "cosmosClient",
-		}),
+		logger: logger.With().Str("module", "cosmos_client").Logger(),
 
 		conn:      conn,
 		txFactory: txFactory,
@@ -103,9 +101,9 @@ func defaultCosmosClientOptions() *cosmosClientOptions {
 	return &cosmosClientOptions{}
 }
 
-type cosmosClientOption func(opts *cosmosClientOptions) error
+type CosmosClientOption func(opts *cosmosClientOptions) error
 
-func OptionGasPrices(gasPrices string) cosmosClientOption {
+func OptionGasPrices(gasPrices string) CosmosClientOption {
 	return func(opts *cosmosClientOptions) error {
 		_, err := sdk.ParseDecCoins(gasPrices)
 		if err != nil {
@@ -121,13 +119,13 @@ func OptionGasPrices(gasPrices string) cosmosClientOption {
 func (c *cosmosClient) syncNonce() {
 	num, seq, err := c.txFactory.AccountRetriever().GetAccountNumberSequence(c.ctx, c.ctx.GetFromAddress())
 	if err != nil {
-		c.logger.WithError(err).Errorln("failed to get account seq")
+		c.logger.Err(err).Msg("failed to get account seq")
 		return
 	} else if num != c.accNum {
-		c.logger.WithFields(log.Fields{
-			"expected": c.accNum,
-			"actual":   num,
-		}).Panic("account number changed during nonce sync")
+		c.logger.Panic().
+			Uint64("account_num", num).
+			Uint64("expected_account_num", c.accNum).
+			Msg("account number changed during nonce sync")
 	}
 
 	c.accSeq = seq
@@ -136,14 +134,13 @@ func (c *cosmosClient) syncNonce() {
 type cosmosClient struct {
 	ctx       client.Context
 	opts      *cosmosClientOptions
-	logger    log.Logger
+	logger    zerolog.Logger
 	conn      *grpc.ClientConn
 	txFactory tx.Factory
 
-	fromAddress sdk.AccAddress
-	doneC       chan bool
-	msgC        chan sdk.Msg
-	syncMux     *sync.Mutex
+	doneC   chan bool
+	msgC    chan sdk.Msg
+	syncMux *sync.Mutex
 
 	accNum uint64
 	accSeq uint64
@@ -191,12 +188,12 @@ func (c *cosmosClient) SyncBroadcastMsg(msgs ...sdk.Msg) (*sdk.TxResponse, error
 			c.syncNonce()
 			c.txFactory = c.txFactory.WithSequence(c.accSeq)
 			c.txFactory = c.txFactory.WithAccountNumber(c.accNum)
-			log.Debugln("retrying broadcastTx with nonce", c.accSeq)
+			c.logger.Debug().Uint64("nonce", c.accSeq).Msg("retrying broadcastTx with nonce")
 			res, err = c.broadcastTx(c.ctx, c.txFactory, true, msgs...)
 		}
 		if err != nil {
 			resJSON, _ := json.MarshalIndent(res, "", "\t")
-			c.logger.WithField("size", len(msgs)).WithError(err).Errorln("failed to commit msg batch:", string(resJSON))
+			c.logger.Err(err).Int("size", len(msgs)).RawJSON("tx_response", resJSON).Msg("failed to (sync) broadcast tx")
 			return nil, err
 		}
 	}
@@ -221,12 +218,12 @@ func (c *cosmosClient) AsyncBroadcastMsg(msgs ...sdk.Msg) (*sdk.TxResponse, erro
 			c.syncNonce()
 			c.txFactory = c.txFactory.WithSequence(c.accSeq)
 			c.txFactory = c.txFactory.WithAccountNumber(c.accNum)
-			log.Debugln("retrying broadcastTx with nonce", c.accSeq)
+			c.logger.Debug().Uint64("nonce", c.accSeq).Msg("retrying broadcastTx with nonce")
 			res, err = c.broadcastTx(c.ctx, c.txFactory, false, msgs...)
 		}
 		if err != nil {
 			resJSON, _ := json.MarshalIndent(res, "", "\t")
-			c.logger.WithField("size", len(msgs)).WithError(err).Errorln("failed to commit msg batch:", string(resJSON))
+			c.logger.Err(err).Int("size", len(msgs)).RawJSON("tx_response", resJSON).Msg("failed to (async) broadcast tx")
 			return nil, err
 		}
 	}
@@ -408,32 +405,35 @@ func (c *cosmosClient) runBatchBroadcast() {
 
 		c.txFactory = c.txFactory.WithSequence(c.accSeq)
 		c.txFactory = c.txFactory.WithAccountNumber(c.accNum)
-		log.Debugln("broadcastTx with nonce", c.accSeq)
+		c.logger.Debug().Uint64("nonce", c.accSeq).Msg("broadcastTx with nonce")
 		res, err := c.broadcastTx(c.ctx, c.txFactory, true, toSubmit...)
 		if err != nil {
 			if strings.Contains(err.Error(), "account sequence mismatch") {
 				c.syncNonce()
 				c.txFactory = c.txFactory.WithSequence(c.accSeq)
 				c.txFactory = c.txFactory.WithAccountNumber(c.accNum)
-				log.Debugln("retrying broadcastTx with nonce", c.accSeq)
+				c.logger.Debug().Uint64("nonce", c.accSeq).Msg("retrying broadcastTx with nonce")
 				res, err = c.broadcastTx(c.ctx, c.txFactory, true, toSubmit...)
 			}
 			if err != nil {
 				resJSON, _ := json.MarshalIndent(res, "", "\t")
-				c.logger.WithField("size", len(toSubmit)).WithError(err).Errorln("failed to commit msg batch:", string(resJSON))
+				c.logger.Err(err).
+					Int("size", len(toSubmit)).
+					RawJSON("tx_response", resJSON).
+					Msg("failed to (sync) broadcast batch tx")
 				return
 			}
 		}
 
 		if res.Code != 0 {
 			err = errors.Errorf("error %d (%s): %s", res.Code, res.Codespace, res.RawLog)
-			log.WithField("txHash", res.TxHash).WithError(err).Errorln("failed to commit msg batch")
+			c.logger.Err(err).Str("tx_hash", res.TxHash).Msg("failed to (sync) broadcast batch tx")
 		} else {
-			log.WithField("txHash", res.TxHash).Debugln("msg batch committed successfully")
+			c.logger.Debug().Str("tx_hash", res.TxHash).Msg("batch tx committed successfully")
 		}
 
 		c.accSeq++
-		log.Debugln("nonce incremented to", c.accSeq)
+		c.logger.Debug().Uint64("nonce", c.accSeq).Msg("nonce incremented")
 	}
 
 	for {

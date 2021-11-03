@@ -13,9 +13,9 @@ import (
 	"github.com/umee-network/umee/x/peggy/types"
 )
 
-/// EncodeValsetConfirm takes the required input data and produces the required signature to confirm a validator
-/// set update on the Peggy Ethereum contract. This value will then be signed before being
-/// submitted to Cosmos, verified, and then relayed to Ethereum
+// EncodeValsetConfirm takes the required input data and produces the required signature to confirm a validator
+// set update on the Peggy Ethereum contract. This value will then be signed before being
+// submitted to Cosmos, verified, and then relayed to Ethereum
 func EncodeValsetConfirm(peggyID common.Hash, valset *types.Valset) common.Hash {
 	// error case here should not occur outside of testing since the above is a constant
 	contractAbi, abiErr := abi.JSON(strings.NewReader(ValsetCheckpointABIJSON))
@@ -25,7 +25,7 @@ func EncodeValsetConfirm(peggyID common.Hash, valset *types.Valset) common.Hash 
 
 	checkpointBytes := []uint8("checkpoint")
 	var checkpoint [32]uint8
-	copy(checkpoint[:], checkpointBytes[:])
+	copy(checkpoint[:], checkpointBytes)
 
 	memberAddresses := make([]common.Address, len(valset.Members))
 	convertedPowers := make([]*big.Int, len(valset.Members))
@@ -80,7 +80,7 @@ func EncodeTxBatchConfirm(peggyID common.Hash, batch *types.OutgoingTxBatch) com
 	// Create the methodName argument which salts the signature
 	methodNameBytes := []uint8("transactionBatch")
 	var batchMethodName [32]uint8
-	copy(batchMethodName[:], methodNameBytes[:])
+	copy(batchMethodName[:], methodNameBytes)
 
 	// Run through the elements of the batch and serialize them
 	txAmounts := make([]*big.Int, len(batch.Transactions))
@@ -132,7 +132,7 @@ const (
 	//     ]
 	// }]`
 
-	// ValsetCheckpointABIJSON checks the ETH ABI for compatability of the Valset update message
+	// ValsetCheckpointABIJSON checks the ETH ABI for compatibility of the Valset update message
 	ValsetCheckpointABIJSON = `[{
 		"name": "checkpoint",
 		"stateMutability": "pure",

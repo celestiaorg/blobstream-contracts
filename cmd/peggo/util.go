@@ -31,20 +31,8 @@ func stdinConfirm(msg string) bool {
 	}
 }
 
-// duration parses duration from string with a provided default fallback.
-func duration(s string, defaults time.Duration) time.Duration {
-	dur, err := time.ParseDuration(s)
-	if err != nil {
-		dur = defaults
-	}
-
-	return dur
-}
-
 func hexToBytes(str string) ([]byte, error) {
-	if strings.HasPrefix(str, "0x") {
-		str = str[2:]
-	}
+	str = strings.TrimPrefix(str, "0x")
 
 	data, err := hex.DecodeString(str)
 	if err != nil {
@@ -73,12 +61,5 @@ func waitForService(ctx context.Context, clientconn *grpc.ClientConn) {
 
 			return
 		}
-	}
-}
-
-func orShutdown(err error) {
-	if err != nil && err != grpc.ErrServerStopped {
-		fmt.Fprintln(os.Stderr, "unable to start Peggo orchestrator")
-		os.Exit(1)
 	}
 }

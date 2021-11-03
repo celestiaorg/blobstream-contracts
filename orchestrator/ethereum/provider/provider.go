@@ -49,7 +49,13 @@ func NewEVMProvider(rc *rpc.Client) EVMProviderWithRet {
 	}
 }
 
-func (p *evmProviderWithRet) SendTransactionWithRet(ctx context.Context, tx *types.Transaction) (txHash common.Hash, err error) {
+func (p *evmProviderWithRet) SendTransactionWithRet(
+	ctx context.Context,
+	tx *types.Transaction,
+) (
+	txHash common.Hash,
+	err error,
+) {
 	data, err := rlp.EncodeToBytes(tx)
 	if err != nil {
 		return common.Hash{}, err

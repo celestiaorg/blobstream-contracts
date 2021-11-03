@@ -2,18 +2,22 @@ package coingecko
 
 import (
 	"math/big"
+	"os"
 	"testing"
 
 	cosmtypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 )
+
+var logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).Level(zerolog.DebugLevel).With().Timestamp().Logger()
 
 func TestFeeThresholdTwoDecimals(t *testing.T) {
 	// https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=0xe28b3b32b6c345a34ff64674606124dd5aceca30&vs_currencies=usd
 
 	injTokenContract := common.HexToAddress("0xe28b3b32b6c345a34ff64674606124dd5aceca30")
-	coingeckoFeed := NewCoingeckoPriceFeed(100, &Config{})
+	coingeckoFeed := NewCoingeckoPriceFeed(logger, 100, &Config{})
 	currentTokenPrice, _ := coingeckoFeed.QueryUSDPrice(injTokenContract) // "usd":9.35
 
 	minFeeInUSD := float64(23.5) // 23.5 USD to submit batch tx
@@ -34,7 +38,7 @@ func TestFeeThresholdTwoDecimals(t *testing.T) {
 func TestFeeThresholdNineDecimals(t *testing.T) {
 	// https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce&vs_currencies=usd
 	shibTokenContract := common.HexToAddress("0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce")
-	coingeckoFeed := NewCoingeckoPriceFeed(100, &Config{})
+	coingeckoFeed := NewCoingeckoPriceFeed(logger, 100, &Config{})
 	currentTokenPrice, _ := coingeckoFeed.QueryUSDPrice(shibTokenContract) // "usd":0.000008853
 
 	minFeeInUSD := float64(23.5) // 23.5 USD to submit batch tx

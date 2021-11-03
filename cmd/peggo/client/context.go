@@ -14,7 +14,7 @@ import (
 // NewClientContext creates a new Cosmos Client context, where chainID
 // corresponds to Cosmos chain ID, fromSpec is either name of the key, or bech32-address
 // of the Cosmos account. Keyring is required to contain the specified key.
-func NewClientContext(chainId, fromSpec string, kb keyring.Keyring) (client.Context, error) {
+func NewClientContext(chainID, fromSpec string, kb keyring.Keyring) (client.Context, error) {
 	var keyInfo keyring.Info
 
 	if kb != nil {
@@ -37,7 +37,7 @@ func NewClientContext(chainId, fromSpec string, kb keyring.Keyring) (client.Cont
 
 	encodingConfig := umeeapp.MakeEncodingConfig()
 	clientCtx := client.Context{
-		ChainID:           chainId,
+		ChainID:           chainID,
 		JSONCodec:         encodingConfig.Marshaler,
 		InterfaceRegistry: encodingConfig.InterfaceRegistry,
 		Output:            os.Stderr,

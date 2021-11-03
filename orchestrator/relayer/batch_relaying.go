@@ -6,7 +6,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"github.com/umee-network/umee/x/peggy/types"
-	log "github.com/xlab/suplog"
 )
 
 // RelayBatches checks the last validator set on Ethereum, if it's lower than our latest valida
@@ -20,7 +19,11 @@ func (s *peggyRelayer) RelayBatches(ctx context.Context) error {
 	var oldestSignedBatch *types.OutgoingTxBatch
 	var oldestSigs []*types.MsgConfirmBatch
 	for _, batch := range latestBatches {
-		sigs, err := s.cosmosQueryClient.TransactionBatchSignatures(ctx, batch.BatchNonce, common.HexToAddress(batch.TokenContract))
+		sigs, err := s.cosmosQueryClient.TransactionBatchSignatures(
+			ctx,
+			batch.BatchNonce,
+			common.HexToAddress(batch.TokenContract),
+		)
 		if err != nil {
 			return err
 		} else if len(sigs) == 0 {
@@ -31,7 +34,7 @@ func (s *peggyRelayer) RelayBatches(ctx context.Context) error {
 		oldestSigs = sigs
 	}
 	if oldestSignedBatch == nil {
-		log.Debugln("could not find batch with signatures, nothing to relay")
+		s.logger.Debug().Msg("could not find batch with signatures, nothing to relay")
 		return nil
 	}
 
@@ -51,7 +54,10 @@ func (s *peggyRelayer) RelayBatches(ctx context.Context) error {
 		return errors.New("latest valset not found")
 	}
 
-	log.WithFields(log.Fields{"oldestSignedBatchNonce": oldestSignedBatch.BatchNonce, "latestEthereumBatchNonce": latestEthereumBatch.Uint64()}).Debugln("Found Latest valsets")
+	s.logger.Debug().
+		Uint64("oldest_batch_nonce", oldestSignedBatch.BatchNonce).
+		Uint64("latest_batch_nonce", latestEthereumBatch.Uint64()).
+		Msg("found latest valsets")
 
 	if oldestSignedBatch.BatchNonce > latestEthereumBatch.Uint64() {
 
@@ -65,14 +71,17 @@ func (s *peggyRelayer) RelayBatches(ctx context.Context) error {
 		}
 		// Check if oldestSignedBatch already submitted by other validators in mean time
 		if oldestSignedBatch.BatchNonce > latestEthereumBatch.Uint64() {
-			log.Infof("We have detected latest batch %d but latest on Ethereum is %d sending an update!", oldestSignedBatch.BatchNonce, latestEthereumBatch)
+			s.logger.Info().
+				Uint64("latest_batch", oldestSignedBatch.BatchNonce).
+				Uint64("latest_ethereum_batch", latestEthereumBatch.Uint64()).
+				Msg("we have detected latest batch but Ethereum has a different one. Sending an update!")
 
 			// Send SendTransactionBatch to Ethereum
 			txHash, err := s.peggyContract.SendTransactionBatch(ctx, currentValset, oldestSignedBatch, oldestSigs)
 			if err != nil {
 				return err
 			}
-			log.WithField("tx_hash", txHash.Hex()).Infoln("Sent Ethereum Tx (TransactionBatch)")
+			s.logger.Info().Str("tx_hash", txHash.Hex()).Msg("sent Ethereum Tx (TransactionBatch)")
 		}
 	}
 

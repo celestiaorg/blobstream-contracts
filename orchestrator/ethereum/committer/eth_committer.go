@@ -9,14 +9,15 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"github.com/umee-network/peggo/orchestrator/ethereum/provider"
 	"github.com/umee-network/peggo/orchestrator/ethereum/util"
-	log "github.com/xlab/suplog"
 )
 
 // NewEthCommitter returns an instance of EVMCommitter, which
 // can be used to submit txns into Ethereum, Matic, and other EVM-compatible networks.
 func NewEthCommitter(
+	logger zerolog.Logger,
 	fromAddress common.Address,
 	ethGasPriceAdjustment float64,
 	fromSigner bind.SignerFn,
@@ -24,6 +25,7 @@ func NewEthCommitter(
 	committerOpts ...EVMCommitterOption,
 ) (EVMCommitter, error) {
 	committer := &ethCommitter{
+		logger:                logger.With().Str("module", "ethCommiter").Logger(),
 		committerOpts:         defaultOptions(),
 		ethGasPriceAdjustment: ethGasPriceAdjustment,
 		fromAddress:           fromAddress,
@@ -45,6 +47,7 @@ func NewEthCommitter(
 }
 
 type ethCommitter struct {
+	logger        zerolog.Logger
 	committerOpts *options
 
 	fromAddress common.Address
@@ -84,7 +87,10 @@ func (e *ethCommitter) SendTx(
 	}
 
 	// Suggested gas price is not accurate. Increment by multiplying with gasprice adjustment factor
-	incrementedPrice := big.NewFloat(0).Mul(new(big.Float).SetInt(suggestedGasPrice), big.NewFloat(e.ethGasPriceAdjustment))
+	incrementedPrice := big.NewFloat(0).Mul(
+		new(big.Float).SetInt(suggestedGasPrice),
+		big.NewFloat(e.ethGasPriceAdjustment),
+	)
 
 	// set gasprice to incremented gas price.
 	gasPrice := new(big.Int)
@@ -96,7 +102,7 @@ func (e *ethCommitter) SendTx(
 		e.nonceCache.Sync(from, func() (uint64, error) {
 			nonce, err := e.evmProvider.PendingNonceAt(context.TODO(), from)
 			if err != nil {
-				log.WithError(err).Warningln("unable to acquire nonce")
+				e.logger.Err(err).Msg("unable to acquire nonce")
 			}
 
 			return nonce, err
@@ -109,7 +115,9 @@ func (e *ethCommitter) SendTx(
 
 		for {
 			opts.Nonce = big.NewInt(nonce)
-			opts.Context, _ = context.WithTimeout(ctx, e.committerOpts.RPCTimeout)
+			var cancel context.CancelFunc
+			opts.Context, cancel = context.WithTimeout(ctx, e.committerOpts.RPCTimeout)
+			defer cancel()
 
 			tx := types.NewTransaction(opts.Nonce.Uint64(), recipient, nil, opts.GasLimit, opts.GasPrice, txData)
 			signedTx, err := opts.Signer(opts.From, tx)
@@ -126,12 +134,12 @@ func (e *ethCommitter) SendTx(
 				txHash = txHashRet
 				e.nonceCache.Incr(e.fromAddress)
 				return nil
-			} else {
-				log.WithFields(log.Fields{
-					"txHash":    txHash.Hex(),
-					"txHashRet": txHashRet.Hex(),
-				}).WithError(err).Warningln("SendTransaction failed with error")
 			}
+
+			e.logger.Err(err).
+				Str("tx_hash", txHash.Hex()).
+				Str("tx_hash_ret", txHashRet.Hex()).
+				Msg("sendTransaction failed")
 
 			switch {
 			case strings.Contains(err.Error(), "invalid sender"):
@@ -143,7 +151,10 @@ func (e *ethCommitter) SendTx(
 				strings.Contains(err.Error(), "the tx doesn't have the correct nonce"):
 
 				if resyncUsed {
-					log.Errorf("nonces synced, but still wrong nonce for %s: %d", e.fromAddress, nonce)
+					e.logger.Error().
+						Str("from_address", e.fromAddress.Hex()).
+						Int64("nonce", nonce).
+						Msg("nonces synced, but still wrong nonce for address")
 					err = errors.Wrapf(err, "nonce %d mismatch", nonce)
 					return err
 				}

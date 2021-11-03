@@ -5,7 +5,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/umee-network/umee/x/peggy/types"
-	log "github.com/xlab/suplog"
 )
 
 // RelayValsets checks the last validator set on Ethereum, if it's lower than our latest validator
@@ -36,7 +35,7 @@ func (s *peggyRelayer) RelayValsets(ctx context.Context) error {
 	}
 
 	if latestCosmosConfirmed == nil {
-		log.Debugln("no confirmed valsets found, nothing to relay")
+		s.logger.Debug().Msg("no confirmed valsets found, nothing to relay")
 		return nil
 	}
 
@@ -45,7 +44,11 @@ func (s *peggyRelayer) RelayValsets(ctx context.Context) error {
 		err = errors.Wrap(err, "couldn't find latest confirmed valset on Ethereum")
 		return err
 	}
-	log.WithFields(log.Fields{"currentEthValset": currentEthValset, "latestCosmosConfirmed": latestCosmosConfirmed}).Debugln("Found Latest valsets")
+
+	s.logger.Debug().
+		Interface("current_eth_valset", currentEthValset).
+		Interface("latest_cosmos_confirmed", latestCosmosConfirmed).
+		Msg("found latest valsets")
 
 	if latestCosmosConfirmed.Nonce > currentEthValset.Nonce {
 		latestEthereumValsetNonce, err := s.peggyContract.GetValsetNonce(ctx, s.peggyContract.FromAddress())
@@ -56,8 +59,10 @@ func (s *peggyRelayer) RelayValsets(ctx context.Context) error {
 
 		// Check if latestCosmosConfirmed already submitted by other validators in mean time
 		if latestCosmosConfirmed.Nonce > latestEthereumValsetNonce.Uint64() {
-			log.Infof("Detected latest cosmos valset nonce %d, but latest valset on Ethereum is %d. Sending update to Ethereum\n",
-				latestCosmosConfirmed.Nonce, latestEthereumValsetNonce.Uint64())
+			s.logger.Info().
+				Uint64("latest_cosmos_confirmed_nonce", latestCosmosConfirmed.Nonce).
+				Uint64("latest_ethereum_valset_nonce", latestEthereumValsetNonce.Uint64()).
+				Msg("detected latest cosmos valset nonce, but latest valset on Ethereum is different. Sending update to Ethereum")
 
 			// Send Valset Update to Ethereum
 			txHash, err := s.peggyContract.SendEthValsetUpdate(
@@ -70,7 +75,8 @@ func (s *peggyRelayer) RelayValsets(ctx context.Context) error {
 				return err
 			}
 
-			log.WithField("tx_hash", txHash.Hex()).Infoln("Sent Ethereum Tx (EthValsetUpdate)")
+			s.logger.Info().Str("tx_hash", txHash.Hex()).Msg("sent Ethereum Tx (EthValsetUpdate)")
+
 		}
 
 	}

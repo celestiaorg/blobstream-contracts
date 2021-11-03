@@ -26,7 +26,7 @@ type PeggyOrchestrator interface {
 	RelayerMainLoop(ctx context.Context) error
 
 	SetMinBatchFee(float64)
-	SetPriceFeeder(*coingecko.CoingeckoPriceFeed)
+	SetPriceFeeder(*coingecko.PriceFeed)
 }
 
 type peggyOrchestrator struct {
@@ -34,7 +34,7 @@ type peggyOrchestrator struct {
 	tmClient             tmclient.TendermintClient
 	cosmosQueryClient    sidechain.PeggyQueryClient
 	peggyBroadcastClient sidechain.PeggyBroadcastClient
-	peggyContract        peggy.PeggyContract
+	peggyContract        peggy.Contract
 	ethProvider          provider.EVMProvider
 	ethFrom              ethcmn.Address
 	ethSignerFn          keystore.SignerFn
@@ -43,7 +43,7 @@ type peggyOrchestrator struct {
 
 	// optional inputs with defaults
 	minBatchFeeUSD float64
-	priceFeeder    *coingecko.CoingeckoPriceFeed
+	priceFeeder    *coingecko.PriceFeed
 }
 
 func NewPeggyOrchestrator(
@@ -51,7 +51,7 @@ func NewPeggyOrchestrator(
 	cosmosQueryClient sidechain.PeggyQueryClient,
 	peggyBroadcastClient sidechain.PeggyBroadcastClient,
 	tmClient tmclient.TendermintClient,
-	peggyContract peggy.PeggyContract,
+	peggyContract peggy.Contract,
 	ethFrom ethcmn.Address,
 	ethSignerFn keystore.SignerFn,
 	ethPersonalSignFn keystore.PersonalSignFn,
@@ -59,8 +59,7 @@ func NewPeggyOrchestrator(
 	options ...func(PeggyOrchestrator),
 ) PeggyOrchestrator {
 
-	var orch PeggyOrchestrator
-	orch = &peggyOrchestrator{
+	orch := &peggyOrchestrator{
 		logger:               logger.With().Str("module", "orchestrator").Logger(),
 		tmClient:             tmClient,
 		cosmosQueryClient:    cosmosQueryClient,

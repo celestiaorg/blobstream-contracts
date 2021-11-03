@@ -1,3 +1,4 @@
+// nolint: lll
 package peggo
 
 import (
@@ -89,7 +90,7 @@ func parseServerConfig(cmd *cobra.Command) (*koanf.Koanf, error) {
 
 	// load from environment variables
 	if err := konfig.Load(env.Provider("PEGGO_", ".", func(s string) string {
-		return strings.Replace(strings.ToLower(strings.TrimPrefix(s, "PEGGO_")), "_", "-", -1)
+		return strings.ReplaceAll(strings.ToLower(strings.TrimPrefix(s, "PEGGO_")), "_", "-")
 	}), nil); err != nil {
 		return nil, err
 	}

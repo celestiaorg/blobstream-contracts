@@ -38,6 +38,11 @@ func getOrchestratorCmd() *cobra.Command {
 				return err
 			}
 
+			logger, err := getLogger(cmd)
+			if err != nil {
+				return err
+			}
+
 			cosmosUseLedger := konfig.Bool(flagCosmosUseLedger)
 			ethUseLedger := konfig.Bool(flagEthUseLedger)
 			if cosmosUseLedger || ethUseLedger {
@@ -50,7 +55,7 @@ func getOrchestratorCmd() *cobra.Command {
 			}
 
 			ethChainID := konfig.Int64(flagEthChainID)
-			ethKeyFromAddress, signerFn, personalSignFn, err := initEthereumAccountsManager(uint64(ethChainID), konfig)
+			ethKeyFromAddress, signerFn, personalSignFn, err := initEthereumAccountsManager(logger, uint64(ethChainID), konfig)
 			if err != nil {
 				return fmt.Errorf("failed to initialize Ethereum account: %w", err)
 			}
@@ -73,7 +78,7 @@ func getOrchestratorCmd() *cobra.Command {
 			fmt.Fprintf(os.Stderr, "Connected to Tendermint RPC: %s\n", tmRPCEndpoint)
 			clientCtx = clientCtx.WithClient(tmRPC).WithNodeURI(tmRPCEndpoint)
 
-			daemonClient, err := client.NewCosmosClient(clientCtx, cosmosGRPC, client.OptionGasPrices(cosmosGasPrices))
+			daemonClient, err := client.NewCosmosClient(clientCtx, logger, cosmosGRPC, client.OptionGasPrices(cosmosGasPrices))
 			if err != nil {
 				return err
 			}
@@ -94,6 +99,7 @@ func getOrchestratorCmd() *cobra.Command {
 
 			peggyQuerier := peggytypes.NewQueryClient(gRPCConn)
 			peggyBroadcaster := cosmos.NewPeggyBroadcastClient(
+				logger,
 				peggyQuerier,
 				daemonClient,
 				signerFn,
@@ -120,30 +126,31 @@ func getOrchestratorCmd() *cobra.Command {
 			ethProvider := provider.NewEVMProvider(ethRPC)
 
 			ethGasPriceAdjustment := konfig.Float64(flagEthGasAdjustment)
-			ethCommitter, err := committer.NewEthCommitter(ethKeyFromAddress, ethGasPriceAdjustment, signerFn, ethProvider)
+			ethCommitter, err := committer.NewEthCommitter(
+				logger,
+				ethKeyFromAddress,
+				ethGasPriceAdjustment,
+				signerFn,
+				ethProvider,
+			)
 			if err != nil && err != grpc.ErrServerStopped {
 				return fmt.Errorf("failed to create Ethereum committer: %w", err)
 			}
 
 			peggyAddress := ethcmn.HexToAddress(peggyParams.BridgeEthereumAddress)
-			peggyContract, err := peggy.NewPeggyContract(ethCommitter, peggyAddress)
+			peggyContract, err := peggy.NewPeggyContract(logger, ethCommitter, peggyAddress)
 			if err != nil {
 				return fmt.Errorf("failed to create Ethereum committer: %w", err)
 			}
 
 			relayValSets := konfig.Bool(flagRelayValsets)
 			relayBatches := konfig.Bool(flagRelayBatches)
-			relayer := relayer.NewPeggyRelayer(peggyQueryClient, peggyContract, relayValSets, relayBatches)
+			relayer := relayer.NewPeggyRelayer(logger, peggyQueryClient, peggyContract, relayValSets, relayBatches)
 
 			coingeckoAPI := konfig.String(flagCoinGeckoAPI)
-			coingeckoFeed := coingecko.NewCoingeckoPriceFeed(100, &coingecko.Config{
+			coingeckoFeed := coingecko.NewCoingeckoPriceFeed(logger, 100, &coingecko.Config{
 				BaseURL: coingeckoAPI,
 			})
-
-			logger, err := getLogger(cmd)
-			if err != nil {
-				return err
-			}
 
 			logger = logger.With().
 				Str("relayer_validator_addr", sdk.ValAddress(valAddress).String()).
@@ -154,7 +161,7 @@ func getOrchestratorCmd() *cobra.Command {
 				logger,
 				peggyQueryClient,
 				peggyBroadcaster,
-				tmclient.NewRPCClient(tmRPCEndpoint),
+				tmclient.NewRPCClient(logger, tmRPCEndpoint),
 				peggyContract,
 				ethKeyFromAddress,
 				signerFn,
@@ -180,7 +187,11 @@ func getOrchestratorCmd() *cobra.Command {
 
 	cmd.Flags().Bool(flagRelayValsets, false, "Relay validator set updates to Ethereum")
 	cmd.Flags().Bool(flagRelayBatches, false, "Relay transaction batches to Ethereum")
-	cmd.Flags().Float64(flagMinBatchFeeUSD, float64(0.0), "If non-zero, batch requests will only be made if fee threshold criteria is met")
+	cmd.Flags().Float64(
+		flagMinBatchFeeUSD,
+		float64(0.0),
+		"If non-zero, batch requests will only be made if fee threshold criteria is met",
+	)
 	cmd.Flags().String(flagCoinGeckoAPI, "https://api.coingecko.com/api/v3", "Specify the coingecko API endpoint")
 	cmd.Flags().AddFlagSet(cosmosFlagSet())
 	cmd.Flags().AddFlagSet(cosmosKeyringFlagSet())
@@ -191,7 +202,7 @@ func getOrchestratorCmd() *cobra.Command {
 }
 
 func trapSignal(cancel context.CancelFunc) {
-	var sigCh = make(chan os.Signal)
+	var sigCh = make(chan os.Signal, 1)
 
 	signal.Notify(sigCh, syscall.SIGTERM)
 	signal.Notify(sigCh, syscall.SIGINT)

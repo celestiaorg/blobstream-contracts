@@ -24,8 +24,9 @@ import (
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/knadh/koanf"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"github.com/umee-network/peggo/orchestrator/ethereum/keystore"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 const defaultKeyringKeyName = "validator"
@@ -167,7 +168,16 @@ func initCosmosKeyring(konfig *koanf.Koanf) (sdk.AccAddress, keyring.Keyring, er
 	}
 }
 
-func initEthereumAccountsManager(ethChainID uint64, konfig *koanf.Koanf) (ethcmn.Address, bind.SignerFn, keystore.PersonalSignFn, error) {
+func initEthereumAccountsManager(
+	logger zerolog.Logger,
+	ethChainID uint64,
+	konfig *koanf.Koanf,
+) (
+	ethcmn.Address,
+	bind.SignerFn,
+	keystore.PersonalSignFn,
+	error,
+) {
 	var (
 		signerFn          bind.SignerFn
 		ethKeyFromAddress ethcmn.Address
@@ -295,7 +305,7 @@ func initEthereumAccountsManager(ethChainID uint64, konfig *koanf.Koanf) (ethcmn
 			return emptyEthAddress, nil, nil, fmt.Errorf("failed to locate Ethereum keystore dir: %w", err)
 		}
 
-		ks, err := keystore.New(ethKeystoreDir)
+		ks, err := keystore.New(logger, ethKeystoreDir)
 		if err != nil {
 			return emptyEthAddress, nil, nil, fmt.Errorf("failed to load Ethereum keystore: %w", err)
 		}
@@ -329,7 +339,7 @@ func initEthereumAccountsManager(ethChainID uint64, konfig *koanf.Koanf) (ethcmn
 
 func ethPassFromStdin() (string, error) {
 	fmt.Fprintln(os.Stderr, "Passphrase for Ethereum account: ")
-	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+	bytePassword, err := term.ReadPassword(syscall.Stdin)
 	if err != nil {
 		return "", fmt.Errorf("failed to read password from STDIN: %w", err)
 	}

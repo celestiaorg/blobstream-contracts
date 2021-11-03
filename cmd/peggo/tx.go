@@ -38,7 +38,10 @@ func getRegisterEthKeyCmd() *cobra.Command {
 			}
 
 			if konfig.Bool(flagEthUseLedger) {
-				fmt.Fprintln(os.Stderr, "WARNING: Cannot use Ledger for orchestrator, so make sure the Ethereum key is accessible outside of it")
+				fmt.Fprintln(
+					os.Stderr,
+					"WARNING: Cannot use Ledger for orchestrator, so make sure the Ethereum key is accessible outside of it",
+				)
 			}
 
 			valAddress, cosmosKeyring, err := initCosmosKeyring(konfig)
@@ -46,7 +49,12 @@ func getRegisterEthKeyCmd() *cobra.Command {
 				return fmt.Errorf("failed to initialize Cosmos keyring: %w", err)
 			}
 
-			ethKeyFromAddress, _, personalSignFn, err := initEthereumAccountsManager(0, konfig)
+			logger, err := getLogger(cmd)
+			if err != nil {
+				return err
+			}
+
+			ethKeyFromAddress, _, personalSignFn, err := initEthereumAccountsManager(logger, 0, konfig)
 			if err != nil {
 				return fmt.Errorf("failed to initialize Ethereum account: %w", err)
 			}
@@ -78,7 +86,7 @@ func getRegisterEthKeyCmd() *cobra.Command {
 			fmt.Fprintf(os.Stderr, "Connected to Tendermint RPC: %s\n", tmRPCEndpoint)
 			clientCtx = clientCtx.WithClient(tmRPC).WithNodeURI(tmRPCEndpoint)
 
-			daemonClient, err := client.NewCosmosClient(clientCtx, cosmosGRPC, client.OptionGasPrices(cosmosGasPrices))
+			daemonClient, err := client.NewCosmosClient(clientCtx, logger, cosmosGRPC, client.OptionGasPrices(cosmosGasPrices))
 			if err != nil {
 				return err
 			}
@@ -98,7 +106,7 @@ func getRegisterEthKeyCmd() *cobra.Command {
 			waitForService(ctx, gRPCConn)
 
 			peggyQuerier := peggytypes.NewQueryClient(gRPCConn)
-			peggyBroadcaster := cosmos.NewPeggyBroadcastClient(peggyQuerier, daemonClient, nil, personalSignFn)
+			peggyBroadcaster := cosmos.NewPeggyBroadcastClient(logger, peggyQuerier, daemonClient, nil, personalSignFn)
 
 			ctx, cancel = context.WithTimeout(context.Background(), 15*time.Second)
 			defer cancel()
@@ -107,7 +115,11 @@ func getRegisterEthKeyCmd() *cobra.Command {
 				return fmt.Errorf("failed to broadcast transaction: %w", err)
 			}
 
-			fmt.Fprintf(os.Stderr, "Registered Ethereum Address %s for validator %s\n", ethKeyFromAddress, sdk.ValAddress(valAddress))
+			fmt.Fprintf(
+				os.Stderr, "Registered Ethereum Address %s for validator %s\n",
+				ethKeyFromAddress,
+				sdk.ValAddress(valAddress),
+			)
 			return nil
 		},
 	}

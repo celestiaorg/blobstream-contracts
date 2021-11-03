@@ -9,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
-	log "github.com/xlab/suplog"
 )
 
 func (s *peggyContract) SendToCosmos(
@@ -36,17 +35,19 @@ func (s *peggyContract) SendToCosmos(
 		// allowance not set or not max (a.k.a. unlocked token)
 		txData, err := erc20ABI.Pack("approve", s.peggyAddress, maxUintAllowance)
 		if err != nil {
-			log.WithError(err).Errorln("ABI Pack (ERC20 approve) method")
+			s.logger.Err(err).Msg("ABI Pack (ERC20 approve) method")
 			return nil, err
 		}
 
 		txHash, err := s.SendTx(ctx, erc20, txData)
 		if err != nil {
-			log.WithError(err).WithField("tx_hash", txHash.Hex()).Errorln("Failed to sign and submit (ERC20 approve) to EVM")
+			s.logger.Err(err).
+				Str("tx_hash", txHash.Hex()).
+				Msg("failed to sign and submit (ERC20 approve) to EVM")
 			return nil, err
 		}
 
-		log.Infoln("Sent Tx (ERC20 approve):", txHash.Hex())
+		s.logger.Info().Str("tx_hash", txHash.Hex()).Msg("sent Tx (ERC20 approve)")
 	}
 
 	// This code deals with some specifics of Ethereum byte encoding, Ethereum is BigEndian
@@ -60,17 +61,20 @@ func (s *peggyContract) SendToCosmos(
 
 	txData, err := peggyABI.Pack("sendToCosmos", erc20, cosmosDestAddressBytes, amount)
 	if err != nil {
-		log.WithError(err).Errorln("ABI Pack (Peggy sendToCosmos) method")
+		s.logger.Err(err).Msg("ABI Pack (Peggy sendToCosmos) method")
 		return nil, err
 	}
 
 	txHash, err := s.SendTx(ctx, s.peggyAddress, txData)
 	if err != nil {
-		log.WithError(err).WithField("tx_hash", txHash.Hex()).Errorln("Failed to sign and submit (Peggy sendToCosmos) to EVM")
+		s.logger.Err(err).
+			Str("tx_hash", txHash.Hex()).
+			Msg("failed to sign and submit (Peggy sendToCosmos) to EVM")
+
 		return nil, err
 	}
 
-	log.Infoln("Sent Tx (Peggy sendToCosmos):", txHash.Hex())
+	s.logger.Info().Str("tx_hash", txHash.Hex()).Msg("sent Tx (Peggy sendToCosmos)")
 
 	return &txHash, nil
 }
