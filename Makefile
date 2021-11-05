@@ -52,7 +52,13 @@ lint:
 	@echo "--> Running linter"
 	@go run github.com/golangci/golangci-lint/cmd/golangci-lint run --timeout=10m
 
-.PHONY: test-integration lint
+mocks:
+	@echo "--> Generating mocks"
+	@go run github.com/golang/mock/mockgen -destination=mocks/cosmos.go \
+			 -package=mocks github.com/umee-network/peggo/cmd/peggo/client \
+			  CosmosClient
+
+.PHONY: test-integration lint mocks
 
 ###############################################################################
 ##                                 Solidity                                  ##

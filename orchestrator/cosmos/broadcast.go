@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -54,6 +55,7 @@ type PeggyBroadcastClient interface {
 		withdraws []*wrappers.PeggyTransactionBatchExecutedEvent,
 		valsetUpdates []*wrappers.PeggyValsetUpdatedEvent,
 		erc20Deployed []*wrappers.PeggyERC20DeployedEvent,
+		loopDuration time.Duration,
 	) error
 
 	// SendToEth broadcasts a Tx that tokens from Cosmos to Ethereum.
@@ -70,6 +72,16 @@ type PeggyBroadcastClient interface {
 		ctx context.Context,
 		denom string,
 	) error
+}
+
+// sortableEvent exists with the only purpose to make a nicer sortable slice for Ethereum events.
+// It is only used in SendEthereumClaims
+type sortableEvent struct {
+	EventNonce         uint64
+	DepositEvent       *wrappers.PeggySendToCosmosEvent
+	WithdrawEvent      *wrappers.PeggyTransactionBatchExecutedEvent
+	ValsetUpdateEvent  *wrappers.PeggyValsetUpdatedEvent
+	ERC20DeployedEvent *wrappers.PeggyERC20DeployedEvent
 }
 
 func NewPeggyBroadcastClient(
@@ -371,47 +383,89 @@ func (s *peggyBroadcastClient) SendEthereumClaims(
 	withdraws []*wrappers.PeggyTransactionBatchExecutedEvent,
 	valsetUpdates []*wrappers.PeggyValsetUpdatedEvent,
 	erc20Deployed []*wrappers.PeggyERC20DeployedEvent,
+	loopDuration time.Duration,
 ) error {
-	totalClaimEvents := len(deposits) + len(withdraws) + len(valsetUpdates) + len(erc20Deployed)
-	var count, i, j, k, l int
+	allevents := []sortableEvent{}
 
-	// Individual arrays (deposits, withdraws, valsetUpdates) are sorted.
-	// Broadcast claim events sequentially starting with eventNonce = lastClaimEvent + 1.
-	for count < totalClaimEvents {
-		//nolint:gocritic // (we are already working on refactoring this!)
-		if i < len(deposits) && deposits[i].EventNonce.Uint64() == lastClaimEvent+1 {
-			// send deposit
-			if err := s.sendDepositClaims(deposits[i]); err != nil {
+	// We add all the events to the same list to be sorted.
+	// Only events that have a nonce higher than the last claim event will be appended.
+	for _, ev := range deposits {
+		if ev.EventNonce.Uint64() > lastClaimEvent {
+			allevents = append(allevents, sortableEvent{
+				EventNonce:   ev.EventNonce.Uint64(),
+				DepositEvent: ev,
+			})
+		}
+	}
+
+	for _, ev := range withdraws {
+		if ev.EventNonce.Uint64() > lastClaimEvent {
+			allevents = append(allevents, sortableEvent{
+				EventNonce:    ev.EventNonce.Uint64(),
+				WithdrawEvent: ev,
+			})
+		}
+	}
+
+	for _, ev := range valsetUpdates {
+		if ev.EventNonce.Uint64() > lastClaimEvent {
+			allevents = append(allevents, sortableEvent{
+				EventNonce:        ev.EventNonce.Uint64(),
+				ValsetUpdateEvent: ev,
+			})
+		}
+	}
+
+	for _, ev := range erc20Deployed {
+		if ev.EventNonce.Uint64() > lastClaimEvent {
+			allevents = append(allevents, sortableEvent{
+				EventNonce:         ev.EventNonce.Uint64(),
+				ERC20DeployedEvent: ev,
+			})
+		}
+	}
+
+	// Use SliceStable so we always get the same order
+	sort.SliceStable(allevents, func(i, j int) bool {
+		return allevents[i].EventNonce < allevents[j].EventNonce
+	})
+
+	// iterate through events and send them sequentially
+	for _, ev := range allevents {
+		// If the event nonce isn't sequential, we break from this loop
+		// given that the events are sorted, this should never happen.
+		if ev.EventNonce != lastClaimEvent+1 {
+			break
+		}
+
+		switch {
+		case ev.DepositEvent != nil:
+			err := s.sendDepositClaims(ev.DepositEvent)
+			if err != nil {
 				s.logger.Err(err).Msg("broadcasting MsgDepositClaim failed")
 				return err
 			}
-			i++
-		} else if j < len(withdraws) && withdraws[j].EventNonce.Uint64() == lastClaimEvent+1 {
-			// send withdraw claim
-			if err := s.sendWithdrawClaims(withdraws[j]); err != nil {
+		case ev.WithdrawEvent != nil:
+			err := s.sendWithdrawClaims(ev.WithdrawEvent)
+			if err != nil {
 				s.logger.Err(err).Msg("broadcasting MsgWithdrawClaim failed")
 				return err
 			}
-			j++
-		} else if k < len(valsetUpdates) && valsetUpdates[k].EventNonce.Uint64() == lastClaimEvent+1 {
-			// send valset update claim
-			if err := s.sendValsetUpdateClaims(valsetUpdates[k]); err != nil {
+		case ev.ValsetUpdateEvent != nil:
+			err := s.sendValsetUpdateClaims(ev.ValsetUpdateEvent)
+			if err != nil {
 				s.logger.Err(err).Msg("broadcasting MsgValsetUpdateClaim failed")
 				return err
 			}
-			k++
-		} else if l < len(erc20Deployed) && erc20Deployed[l].EventNonce.Uint64() == lastClaimEvent+1 {
-			// send erc20 deployed claim
-			if err := s.sendERC20DeployedClaims(erc20Deployed[l]); err != nil {
+		case ev.ERC20DeployedEvent != nil:
+			err := s.sendERC20DeployedClaims(ev.ERC20DeployedEvent)
+			if err != nil {
 				s.logger.Err(err).Msg("broadcasting MsgERC20DeployedClaim failed")
 				return err
 			}
-			l++
 		}
 
-		count++
 		lastClaimEvent++
-
 		// TODO: Evaluate this condition and if it needs to be configurable. For
 		// Umee, our block times will average around 6s.
 		//
@@ -421,9 +475,8 @@ func (s *peggyBroadcastClient) SendEthereumClaims(
 		// Otherwise it will through `non contiguous event nonce` failing CheckTx.
 		//
 		// time.Sleep(3 * time.Second)
-		time.Sleep(6 * time.Second)
+		time.Sleep(loopDuration)
 	}
-
 	return nil
 }
 
