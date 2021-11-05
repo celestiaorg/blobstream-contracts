@@ -107,11 +107,9 @@ func NewCoingeckoPriceFeed(logger zerolog.Logger, interval time.Duration, endpoi
 			},
 			Timeout: maxRespTime,
 		},
-		config: checkCoingeckoConfig(endpointConfig),
-
+		config:   checkCoingeckoConfig(endpointConfig),
 		interval: interval,
-
-		logger: logger.With().Str("module", "coingecko_pricefeed").Logger(),
+		logger:   logger.With().Str("module", "coingecko_pricefeed").Logger(),
 	}
 }
 

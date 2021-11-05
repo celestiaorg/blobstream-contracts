@@ -309,7 +309,7 @@ func (s *peggyBroadcastClient) sendValsetUpdateClaims(valsetUpdate *wrappers.Peg
 		Interface("powers", valsetUpdate.Powers).
 		Uint64("reward_amount", valsetUpdate.RewardAmount.Uint64()).
 		Str("reward_token", valsetUpdate.RewardToken.Hex()).
-		Msg("oracle observed a valset update event. Sending MsgValsetUpdateClaim")
+		Msg("oracle observed a valset update event; sending MsgValsetUpdateClaim")
 
 	members := make([]*types.BridgeValidator, len(valsetUpdate.Validators))
 	for i, val := range valsetUpdate.Validators {
@@ -349,7 +349,7 @@ func (s *peggyBroadcastClient) sendERC20DeployedClaims(event *wrappers.PeggyERC2
 		Str("event_nonce", event.EventNonce.String()).
 		Str("token_contract", event.TokenContract.Hex()).
 		Str("cosmos_denom", event.CosmosDenom).
-		Msg("oracle observed an ERC20 deployed event. Sending MsgERC20DeployedClaim")
+		Msg("oracle observed an ERC20 deployed event; sending MsgERC20DeployedClaim")
 
 	msg := &types.MsgERC20DeployedClaim{
 		EventNonce:    event.EventNonce.Uint64(),
