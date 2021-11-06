@@ -17,6 +17,16 @@ Get yourself `Go 1.15+` at <https://golang.org/dl/> first, then:
 go get github.com/celestiaorg/quantum-gravity-bridge/orchestrator/cmd/...
 ```
 
+### Building From Source
+
+Install the `solc` compiler:
+
+```sh
+sudo add-apt-repository ppa:ethereum/ethereum
+sudo apt update
+sudo apt-get install solc
+```
+
 ## `qgb_orchestrator`
 
 ### Configuration
