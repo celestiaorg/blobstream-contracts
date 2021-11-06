@@ -5,15 +5,15 @@ import (
 
 	ethcmn "github.com/ethereum/go-ethereum/common"
 
-	"github.com/InjectiveLabs/peggo/orchestrator/coingecko"
-	"github.com/InjectiveLabs/peggo/orchestrator/cosmos/tmclient"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/coingecko"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/cosmos/tmclient"
 
-	sidechain "github.com/InjectiveLabs/peggo/orchestrator/cosmos"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/keystore"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/provider"
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
-	"github.com/InjectiveLabs/peggo/orchestrator/relayer"
+	sidechain "github.com/celestiaorg/quantum-gravity-bridge/orchestrator/cosmos"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/keystore"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/peggy"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/provider"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/metrics"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/relayer"
 )
 
 type PeggyOrchestrator interface {

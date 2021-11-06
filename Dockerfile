@@ -21,4 +21,4 @@ VOLUME /apps/data
 WORKDIR /apps/data
 
 #default command
-CMD cd /root/.injectived/peggo/ && peggo orchestrator
+CMD cd /root/.celestiad/qgb/ && qgb orchestrator

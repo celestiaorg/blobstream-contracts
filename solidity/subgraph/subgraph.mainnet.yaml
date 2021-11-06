@@ -1,16 +1,16 @@
 specVersion: 0.0.2
-description: InjectiveLabs Peggo
-repository: https://github.com/InjectiveLabs/peggo
+description: Celestia QGB
+repository: https://github.com/celestiaorg/quantum-gravity-bridge
 schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: Peggy
+    name: Celestia
     network: "mainnet"
     source:
       address: "0xF955C57f9EA9Dc8781965FEaE0b6A2acE2BAD6f3"
       startBlock: 12705133
-      abi: Peggy
+      abi: Celestia
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -18,7 +18,7 @@ dataSources:
       entities:
         - Test
       abis:
-        - name: Peggy
+        - name: Celestia
           file: ../../test/ethereum/artifacts/solidity/contracts/Peggy.sol/Peggy.json
       eventHandlers:
         - event: ERC20DeployedEvent(string,indexed address,string,string,uint8,uint256)

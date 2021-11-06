@@ -37,7 +37,7 @@ let STATE_PEGGY_ID_MAINNET = Bytes.fromHexString(
 
 let STATE_STORE_ID = "1";
 
-function getInjectiveAddress(address: Bytes): string {
+function getCelestiaAddress(address: Bytes): string {
   return address.toHexString();
 
   // not working in assembly script
@@ -153,7 +153,7 @@ export function handleSendToCosmosEvent(event: SendToCosmosEvent): void {
 
   deposit.tokenContract = event.params._tokenContract;
   deposit.amount = event.params._amount;
-  deposit.destination = getInjectiveAddress(event.params._destination);
+  deposit.destination = getCelestiaAddress(event.params._destination);
   deposit.sender = event.params._sender;
   deposit.timestamp = event.block.timestamp.toI32();
   deposit.blockHeight = event.block.number.toI32();
@@ -233,7 +233,7 @@ export function handleSubmitBatch(call: SubmitBatchCall): void {
   let addressTypeDestinations = call.inputs._destinations;
   let destinations = new Array<string>(call.inputs._destinations.length);
   for (let i = 0; i < addressTypeDestinations.length; i++) {
-    destinations[i] = getInjectiveAddress(addressTypeDestinations[i] as Bytes);
+    destinations[i] = getCelestiaAddress(addressTypeDestinations[i] as Bytes);
   }
   batchWithdrawal.destinations = destinations;
   batchWithdrawal.sender = call.from;
@@ -262,7 +262,7 @@ export function handleSubmitBatch(call: SubmitBatchCall): void {
     let withdrawal = new Withdrawal(withdrawalID);
 
     withdrawal.amount = amounts[i];
-    withdrawal.destination = getInjectiveAddress(
+    withdrawal.destination = getCelestiaAddress(
       addressTypeDestinations[i] as Bytes
     );
     withdrawal.fee = fees[i];

@@ -1,4 +1,4 @@
-module github.com/InjectiveLabs/peggo
+module github.com/celestiaorg/quantum-gravity-bridge
 
 go 1.16
 

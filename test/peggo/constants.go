@@ -20,33 +20,33 @@ import (
 var cosmosCfg *cosmtypes.Config
 
 func init() {
-	if _, ok := os.LookupEnv("PEGGO_TEST_EVM_RPC"); !ok {
-		os.Setenv("PEGGO_TEST_EVM_RPC", "http://localhost:8545")
+	if _, ok := os.LookupEnv("QGB_TEST_EVM_RPC"); !ok {
+		os.Setenv("QGB_TEST_EVM_RPC", "http://localhost:8545")
 	}
-	if _, ok := os.LookupEnv("PEGGO_TEST_COVERAGE"); !ok {
-		os.Setenv("PEGGO_TEST_COVERAGE", "0")
+	if _, ok := os.LookupEnv("QGB_TEST_COVERAGE"); !ok {
+		os.Setenv("QGB_TEST_COVERAGE", "0")
 	}
-	if _, ok := os.LookupEnv("PEGGO_TEST_COVERAGE_MODE"); !ok {
-		os.Setenv("PEGGO_TEST_COVERAGE_MODE", "set")
+	if _, ok := os.LookupEnv("QGB_TEST_COVERAGE_MODE"); !ok {
+		os.Setenv("QGB_TEST_COVERAGE_MODE", "set")
 	}
-	if _, ok := os.LookupEnv("PEGGO_TEST_BECH32_PREFIX"); !ok {
-		os.Setenv("PEGGO_TEST_BECH32_PREFIX", "inj")
+	if _, ok := os.LookupEnv("QGB_TEST_BECH32_PREFIX"); !ok {
+		os.Setenv("QGB_TEST_BECH32_PREFIX", "inj")
 	}
-	if _, ok := os.LookupEnv("PEGGO_TEST_BIP44_COIN"); !ok {
-		os.Setenv("PEGGO_TEST_BIP44_COIN", "60")
+	if _, ok := os.LookupEnv("QGB_TEST_BIP44_COIN"); !ok {
+		os.Setenv("QGB_TEST_BIP44_COIN", "60")
 	}
-	if _, ok := os.LookupEnv("PEGGO_TEST_BIP44_HDPATH"); !ok {
-		os.Setenv("PEGGO_TEST_BIP44_HDPATH", "m/44'/60'/0'/0")
+	if _, ok := os.LookupEnv("QGB_TEST_BIP44_HDPATH"); !ok {
+		os.Setenv("QGB_TEST_BIP44_HDPATH", "m/44'/60'/0'/0")
 	}
-	if _, ok := os.LookupEnv("PEGGO_TEST_SIGNING_ALGO"); !ok {
-		os.Setenv("PEGGO_TEST_SIGNING_ALGO", "secp256k1")
+	if _, ok := os.LookupEnv("QGB_TEST_SIGNING_ALGO"); !ok {
+		os.Setenv("QGB_TEST_SIGNING_ALGO", "secp256k1")
 	}
 
 	readEnv()
 
 	var (
-		// Bech32Prefix defines the Bech32 prefix used for EthAccounts on the Injective Chain
-		Bech32Prefix = os.Getenv("PEGGO_TEST_BECH32_PREFIX")
+		// Bech32Prefix defines the Bech32 prefix used for EthAccounts on the Celestia Chain
+		Bech32Prefix = os.Getenv("QGB_TEST_BECH32_PREFIX")
 
 		// Bech32PrefixAccAddr defines the Bech32 prefix of an account's address
 		Bech32PrefixAccAddr = Bech32Prefix
@@ -62,9 +62,9 @@ func init() {
 		Bech32PrefixConsPub = Bech32Prefix + cosmtypes.PrefixValidator + cosmtypes.PrefixConsensus + cosmtypes.PrefixPublic
 
 		// Bip44CoinType satisfies EIP84. See https://github.com/ethereum/EIPs/issues/84 for more info.
-		Bip44CoinType, _ = strconv.Atoi(os.Getenv("PEGGO_TEST_BIP44_COIN"))
+		Bip44CoinType, _ = strconv.Atoi(os.Getenv("QGB_TEST_BIP44_COIN"))
 		// BIP44HDPath is the BIP44 HD path used on Ethereum.
-		BIP44HDPath = os.Getenv("PEGGO_TEST_BIP44_HDPATH")
+		BIP44HDPath = os.Getenv("QGB_TEST_BIP44_HDPATH")
 	)
 
 	cosmosCfg = cosmtypes.GetConfig()
@@ -177,7 +177,7 @@ func (a *Account) Parse() {
 	if len(a.Mnemonic) > 0 {
 		// derive address and privkey from the provided mnemonic
 
-		algo, err := keyring.NewSigningAlgoFromString(os.Getenv("PEGGO_TEST_SIGNING_ALGO"), keyring.SigningAlgoList{
+		algo, err := keyring.NewSigningAlgoFromString(os.Getenv("QGB_TEST_SIGNING_ALGO"), keyring.SigningAlgoList{
 			hd.Secp256k1,
 		})
 		orPanic(err)

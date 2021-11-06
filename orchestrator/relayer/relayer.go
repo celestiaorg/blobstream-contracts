@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
-	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/provider"
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/cosmos"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/peggy"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/provider"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/metrics"
 )
 
 type PeggyRelayer interface {

@@ -10,8 +10,8 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
-	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/metrics"
+	wrappers "github.com/celestiaorg/quantum-gravity-bridge/solidity/wrappers/Peggy.sol"
 )
 
 func (s *peggyContract) SendToCosmos(

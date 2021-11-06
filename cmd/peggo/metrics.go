@@ -4,7 +4,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/metrics"
 	cli "github.com/jawher/mow.cli"
 	"github.com/xlab/closer"
 	log "github.com/xlab/suplog"

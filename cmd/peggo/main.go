@@ -7,10 +7,10 @@ import (
 	cli "github.com/jawher/mow.cli"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/peggo/orchestrator/version"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/version"
 )
 
-var app = cli.App("peggo", "Peggo is a companion executable for orchestrating a Peggy validator.")
+var app = cli.App("qgb", "qgb is a companion executable for orchestrating a Celestia validator.")
 
 var (
 	envName        *string

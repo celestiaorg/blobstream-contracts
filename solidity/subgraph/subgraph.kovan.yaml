@@ -1,6 +1,6 @@
 specVersion: 0.0.2
-description: InjectiveLabs Peggo
-repository: https://github.com/InjectiveLabs/peggo
+description: Celestia QGB
+repository: https://github.com/celestiaorg/quantum-gravity-bridge
 schema:
   file: ./schema.graphql
 dataSources:

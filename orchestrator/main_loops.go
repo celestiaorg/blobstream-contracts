@@ -14,8 +14,8 @@ import (
 
 	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 
-	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
-	"github.com/InjectiveLabs/peggo/orchestrator/loops"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/cosmos"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/loops"
 
 	cosmtypes "github.com/cosmos/cosmos-sdk/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
@@ -58,7 +58,7 @@ func (s *peggyOrchestrator) EthOracleMainLoop(ctx context.Context) (err error) {
 		if lastCheckedBlock == 0 {
 			peggyParams, err := s.cosmosQueryClient.PeggyParams(ctx)
 			if err != nil {
-				log.WithError(err).Fatalln("failed to query peggy params, is injectived running?")
+				log.WithError(err).Fatalln("failed to query peggy params, is celestiad running?")
 			}
 			lastCheckedBlock = peggyParams.BridgeContractStartHeight
 		}
@@ -89,10 +89,10 @@ func (s *peggyOrchestrator) EthOracleMainLoop(ctx context.Context) (err error) {
 
 		/*
 			Auto re-sync to catch up the nonce. Reasons why event nonce fall behind.
-				1. It takes some time for events to be indexed on Ethereum. So if peggo queried events immediately as block produced, there is a chance the event is missed.
+				1. It takes some time for events to be indexed on Ethereum. So if qgb queried events immediately as block produced, there is a chance the event is missed.
 				   we need to re-scan this block to ensure events are not missed due to indexing delay.
 				2. if validator was in UnBonding state, the claims broadcasted in last iteration are failed.
-				3. if infura call failed while filtering events, the peggo missed to broadcast claim events occured in last iteration.
+				3. if infura call failed while filtering events, the qgb missed to broadcast claim events occured in last iteration.
 		**/
 		if time.Since(lastResync) >= 48*time.Hour {
 			if err := retry.Do(func() (err error) {

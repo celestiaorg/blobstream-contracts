@@ -8,12 +8,12 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/util"
 	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/util"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/metrics"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
+	wrappers "github.com/celestiaorg/quantum-gravity-bridge/solidity/wrappers/Peggy.sol"
 )
 
 const defaultBlocksToSearch = 2000

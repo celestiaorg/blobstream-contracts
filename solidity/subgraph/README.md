@@ -1,6 +1,6 @@
-# Injective Peggo Subgraph 🤖 🚀
+# Celestia QGB Subgraph 🤖 🚀
 
-This is the Subgraph for the Injective Peggo.
+This is the Subgraph for the Celestia QGB.
 
 ---
 
@@ -9,13 +9,13 @@ This is the Subgraph for the Injective Peggo.
 ### 0. Install dependencies
 
 ```bash
-$ yarn install
+yarn install
 ```
 
 ### 1. Run local ganache
 
 ```bash
-$ yarn run ganache -h 0.0.0.0
+yarn run ganache -h 0.0.0.0
 ```
 
 ### 2. Deploy contracts
@@ -24,7 +24,7 @@ See deploy script.
 
 ### 3. Run local Graph Node
 
-Follow the instructions here: https://github.com/InjectiveLabs/graph-node#quick-start. You might have to use an older IPFS version, see [here](https://github.com/graphprotocol/graph-node/issues/1799#issuecomment-661433084).
+Follow the instructions here: <https://github.com/InjectiveLabs/graph-node#quick-start>. You might have to use an older IPFS version, see [here](https://github.com/graphprotocol/graph-node/issues/1799#issuecomment-661433084).
 
 ```bash
 $ cd $GOPATH/src/github.com/InjectiveLabs
@@ -34,13 +34,13 @@ $ cd graph-node
 $ cargo build
 ```
 
-### 3a (OPTIONAL). Install The Graph dependencies.
+### 3a (OPTIONAL). Install The Graph dependencies
 
 First install Rust .
 
 ```bash
-$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-$ source $HOME/.cargo/env
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
 ```
 
 Next, install PostgreSQL.
@@ -48,8 +48,8 @@ Next, install PostgreSQL.
 On **MacOS**, you can install using brew.
 
 ```bash
-$ brew install postgresql
-$ brew services start postgresql
+brew install postgresql
+brew services start postgresql
 ```
 
 Alternatively, you can use the [graphical installer](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads).
@@ -71,9 +71,9 @@ $ sudo apt-get install postgresql
 Next, start the PostgreSQL database
 
 ```bash
-$ initdb -D .postgres
-$ pg_ctl -D .postgres -l logfile start
-$ createdb graph-node
+initdb -D .postgres
+pg_ctl -D .postgres -l logfile start
+createdb graph-node
 ```
 
 Next, install **IPFS**. Note: you might have to use an older IPFS version, see [here](https://github.com/graphprotocol/graph-node/issues/1799#issuecomment-661433084).
@@ -107,33 +107,33 @@ $ cargo run -p graph-node --release -- --postgres-url postgresql://$USER[:$PASSW
 ### 4. Create Subgraph
 
 ```bash
-$ yarn codegen-local
-$ yarn create-local
+yarn codegen-local
+yarn create-local
 ```
 
 ### 5. Deploy Subgraph
 
 ```bash
-$ yarn deploy-local
+yarn deploy-local
 ```
 
-## Injective Subgraph deployment
+## Celestia Subgraph deployment
 
 Optional: Deploy Peggy contracts if required. Make sure to update the hard-coded peggy state id inside `mapping.ts`.
 
 1. Update Subgraph
 
 ```bash
-$ yarn codegen:mainnet
-$ yarn deploy:mainnet
+yarn codegen:mainnet
+yarn deploy:mainnet
 ```
 
 ## ⛑ Support
 
 Reach out to us at one of the following places!
 
-- Website at <a href="https://injectiveprotocol.com" target="_blank">`injectiveprotocol.com`</a>
-- Twitter at <a href="https://twitter.com/InjectiveLabs" target="_blank">`@InjectiveLabs`</a>
+- Website at <a href="https://celestia.org" target="_blank">`celestia.org`</a>
+- Twitter at <a href="https://twitter.com/CelestiaOrg" target="_blank">`@CelestiaOrg`</a>
 
 ---
 

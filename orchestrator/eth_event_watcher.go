@@ -8,14 +8,14 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
-	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/metrics"
+	wrappers "github.com/celestiaorg/quantum-gravity-bridge/solidity/wrappers/Peggy.sol"
 )
 
-// Considering blocktime of up to 3 seconds approx on the Injective Chain and an oracle loop duration = 1 minute,
-// we broadcast only 20 events in each iteration.
-// So better to search only 20 blocks to ensure all the events are broadcast to Injective Chain without misses.
-const defaultBlocksToSearch = 20
+// Considering blocktime of up to 30 seconds approx on the Celestia chain and an oracle loop duration = 1 minute,
+// we broadcast only 2 events in each iteration.
+// So better to search only 2 blocks to ensure all the events are broadcast to Celestia without misses.
+const defaultBlocksToSearch = 2
 
 const ethBlockConfirmationDelay = 12
 

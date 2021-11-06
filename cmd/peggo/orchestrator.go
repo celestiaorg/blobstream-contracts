@@ -14,14 +14,14 @@ import (
 	"github.com/InjectiveLabs/sdk-go/chain/client"
 	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
 
-	"github.com/InjectiveLabs/peggo/orchestrator"
-	"github.com/InjectiveLabs/peggo/orchestrator/coingecko"
-	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
-	"github.com/InjectiveLabs/peggo/orchestrator/cosmos/tmclient"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/committer"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/provider"
-	"github.com/InjectiveLabs/peggo/orchestrator/relayer"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/coingecko"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/cosmos"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/cosmos/tmclient"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/committer"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/peggy"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/provider"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/relayer"
 
 	ctypes "github.com/InjectiveLabs/sdk-go/chain/types"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -30,7 +30,7 @@ import (
 // startOrchestrator action runs an infinite loop,
 // listening for events and performing hooks.
 //
-// $ peggo orchestrator
+// $ qgb orchestrator
 func orchestratorCmd(cmd *cli.Cmd) {
 	// orchestrator-specific CLI options
 	var (
@@ -178,10 +178,10 @@ func orchestratorCmd(cmd *cli.Cmd) {
 		if err != nil {
 			log.WithError(err).WithFields(log.Fields{
 				"endpoint": *cosmosGRPC,
-			}).Fatalln("failed to connect to daemon, is injectived running?")
+			}).Fatalln("failed to connect to daemon, is celestiad running?")
 		}
 
-		log.Infoln("Waiting for injectived GRPC")
+		log.Infoln("Waiting for celestiad GRPC")
 		time.Sleep(1 * time.Second)
 
 		daemonWaitCtx, cancelWait := context.WithTimeout(context.Background(), time.Minute)
@@ -203,7 +203,7 @@ func orchestratorCmd(cmd *cli.Cmd) {
 
 		peggyParams, err := cosmosQueryClient.PeggyParams(ctx)
 		if err != nil {
-			log.WithError(err).Fatalln("failed to query peggy params, is injectived running?")
+			log.WithError(err).Fatalln("failed to query peggy params, is celestiad running?")
 		}
 
 		peggyAddress := ethcmn.HexToAddress(peggyParams.BridgeEthereumAddress)

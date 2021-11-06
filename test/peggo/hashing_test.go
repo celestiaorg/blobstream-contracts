@@ -13,7 +13,7 @@ import (
 
 	"github.com/InjectiveLabs/etherman/deployer"
 	"github.com/InjectiveLabs/etherman/sol"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/peggy"
 )
 
 var _ = Describe("Contract Tests", func() {

@@ -8,8 +8,8 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
 	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/metrics"
 )
 
 func (s *peggyContract) SendTransactionBatch(

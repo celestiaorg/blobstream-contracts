@@ -9,15 +9,15 @@ import (
 	"github.com/xlab/closer"
 	log "github.com/xlab/suplog"
 
-	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
 	"github.com/InjectiveLabs/sdk-go/chain/client"
 	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/cosmos"
 )
 
 // txCmdSubset contains actions that can sign and send messages to Cosmos module
 // as well as Ethereum transactions to Peggy contract.
 //
-// $ peggo tx
+// $ qgb tx
 func txCmdSubset(cmd *cli.Cmd) {
 	cmd.Command(
 		"register-eth-key",
@@ -148,7 +148,7 @@ func registerEthKeyCmd(cmd *cli.Cmd) {
 			}).Fatalln("failed to connect to Cosmos daemon")
 		}
 
-		log.Infoln("Waiting for injectived GRPC")
+		log.Infoln("Waiting for celestiad GRPC")
 		time.Sleep(1 * time.Second)
 
 		daemonWaitCtx, cancelWait := context.WithTimeout(context.Background(), time.Minute)

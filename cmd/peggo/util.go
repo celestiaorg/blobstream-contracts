@@ -154,6 +154,6 @@ func waitForService(ctx context.Context, clientconn *grpc.ClientConn) {
 // orShutdown fatals the app if there was an error.
 func orShutdown(err error) {
 	if err != nil && err != grpc.ErrServerStopped {
-		log.WithError(err).Fatalln("unable to start peggo orchestrator")
+		log.WithError(err).Fatalln("unable to start qgb orchestrator")
 	}
 }
