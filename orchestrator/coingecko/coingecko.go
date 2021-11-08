@@ -91,7 +91,10 @@ func (cp *PriceFeed) QueryUSDPrice(erc20Contract common.Address) (float64, error
 	m := f.(map[string]interface{})
 
 	v := m[strings.ToLower(erc20Contract.String())]
-	n := v.(map[string]interface{})
+	n, ok := v.(map[string]interface{})
+	if !ok {
+		return zeroPrice, errors.Errorf("failed to get price for token %s", erc20Contract.Hex())
+	}
 
 	tokenPriceInUSD := n["usd"].(float64)
 	return tokenPriceInUSD, nil

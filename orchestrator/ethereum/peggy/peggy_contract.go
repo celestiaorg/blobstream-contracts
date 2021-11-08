@@ -66,6 +66,12 @@ type Contract interface {
 		erc20ContractAddress common.Address,
 		callerAddress common.Address,
 	) (symbol string, err error)
+
+	GetERC20Decimals(
+		ctx context.Context,
+		erc20ContractAddress common.Address,
+		callerAddress common.Address,
+	) (decimals uint8, err error)
 }
 
 func NewPeggyContract(

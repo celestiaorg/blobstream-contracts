@@ -4,10 +4,10 @@ import (
 	"context"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
 )
 
 // Gets the latest transaction batch nonce
@@ -74,20 +74,47 @@ func (s *peggyContract) GetERC20Symbol(
 	callerAddress common.Address,
 ) (symbol string, err error) {
 
-	erc20Wrapper := bind.NewBoundContract(erc20ContractAddress, erc20ABI, s.ethProvider, nil, nil)
+	erc20Wrapper, err := wrappers.NewERC20(erc20ContractAddress, s.EVMCommitter.Provider())
+	if err != nil {
+		err = errors.Wrap(err, "failed to get ERC20 wrapper")
+		return "", err
+	}
 
 	callOpts := &bind.CallOpts{
 		From:    callerAddress,
 		Context: ctx,
 	}
-	var out []interface{}
-	err = erc20Wrapper.Call(callOpts, &out, "symbol")
+
+	symbol, err = erc20Wrapper.Symbol(callOpts)
 	if err != nil {
 		err = errors.Wrap(err, "ERC20 [symbol] call failed")
 		return "", err
 	}
 
-	symbol = *abi.ConvertType(out[0], new(string)).(*string)
-
 	return symbol, nil
+}
+
+func (s *peggyContract) GetERC20Decimals(
+	ctx context.Context,
+	erc20ContractAddress common.Address,
+	callerAddress common.Address,
+) (decimals uint8, err error) {
+	erc20Wrapper, err := wrappers.NewERC20(erc20ContractAddress, s.EVMCommitter.Provider())
+	if err != nil {
+		err = errors.Wrap(err, "failed to get ERC20 wrapper")
+		return 0, err
+	}
+
+	callOpts := &bind.CallOpts{
+		From:    callerAddress,
+		Context: ctx,
+	}
+
+	decimals, err = erc20Wrapper.Decimals(callOpts)
+	if err != nil {
+		err = errors.Wrap(err, "ERC20 'decimals' call failed")
+		return 0, err
+	}
+
+	return decimals, nil
 }
