@@ -40,6 +40,8 @@ const (
 	flagEthGasPrice          = "eth-gas-price"
 	flagEthGasLimit          = "eth-gas-limit"
 	flagPowerThreshold       = "power-threshold"
+	flagRelayerLoopDuration  = "relayer-loop-duration"
+	flagOrchLoopDuration     = "orch-loop-duration"
 )
 
 func cosmosFlagSet() *pflag.FlagSet {

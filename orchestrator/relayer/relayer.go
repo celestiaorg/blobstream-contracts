@@ -2,6 +2,7 @@ package relayer
 
 import (
 	"context"
+	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/umee-network/peggo/orchestrator/cosmos"
@@ -25,6 +26,7 @@ type peggyRelayer struct {
 	ethProvider        provider.EVMProvider
 	valsetRelayEnabled bool
 	batchRelayEnabled  bool
+	loopDuration       time.Duration
 }
 
 func NewPeggyRelayer(
@@ -33,6 +35,7 @@ func NewPeggyRelayer(
 	peggyContract peggy.Contract,
 	valsetRelayEnabled bool,
 	batchRelayEnabled bool,
+	loopDuration time.Duration,
 ) PeggyRelayer {
 	return &peggyRelayer{
 		logger:             logger.With().Str("module", "peggy_relayer").Logger(),
@@ -41,5 +44,6 @@ func NewPeggyRelayer(
 		ethProvider:        peggyContract.Provider(),
 		valsetRelayEnabled: valsetRelayEnabled,
 		batchRelayEnabled:  batchRelayEnabled,
+		loopDuration:       loopDuration,
 	}
 }

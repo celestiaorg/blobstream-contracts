@@ -2,19 +2,16 @@ package relayer
 
 import (
 	"context"
-	"time"
 
 	retry "github.com/avast/retry-go"
 
 	"github.com/umee-network/peggo/orchestrator/loops"
 )
 
-const defaultLoopDur = 5 * time.Minute
-
 func (s *peggyRelayer) Start(ctx context.Context) error {
 	logger := s.logger.With().Str("loop", "RelayerMainLoop").Logger()
 
-	return loops.RunLoop(ctx, defaultLoopDur, func() error {
+	return loops.RunLoop(ctx, s.loopDuration, func() error {
 		var pg loops.ParanoidGroup
 		if s.valsetRelayEnabled {
 			logger.Info().Msg("valset relay enabled; starting to relay valsets to Ethereum")

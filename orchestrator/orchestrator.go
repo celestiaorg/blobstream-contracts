@@ -2,6 +2,7 @@ package orchestrator
 
 import (
 	"context"
+	"time"
 
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
@@ -40,6 +41,7 @@ type peggyOrchestrator struct {
 	ethSignerFn          keystore.SignerFn
 	ethPersonalSignFn    keystore.PersonalSignFn
 	relayer              relayer.PeggyRelayer
+	loopsDuration        time.Duration
 
 	// optional inputs with defaults
 	minBatchFeeUSD float64
@@ -56,6 +58,7 @@ func NewPeggyOrchestrator(
 	ethSignerFn keystore.SignerFn,
 	ethPersonalSignFn keystore.PersonalSignFn,
 	relayer relayer.PeggyRelayer,
+	loopDuration time.Duration,
 	options ...func(PeggyOrchestrator),
 ) PeggyOrchestrator {
 
@@ -70,6 +73,7 @@ func NewPeggyOrchestrator(
 		ethSignerFn:          ethSignerFn,
 		ethPersonalSignFn:    ethPersonalSignFn,
 		relayer:              relayer,
+		loopsDuration:        loopDuration,
 	}
 
 	for _, option := range options {

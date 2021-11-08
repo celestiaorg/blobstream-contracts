@@ -14,8 +14,6 @@ import (
 	"github.com/umee-network/umee/x/peggy/types"
 )
 
-const defaultLoopDur = 60 * time.Second
-
 // Start combines the all major roles required to make
 // up the Orchestrator, all of these are async loops.
 func (p *peggyOrchestrator) Start(ctx context.Context) error {
@@ -65,7 +63,7 @@ func (p *peggyOrchestrator) EthOracleMainLoop(ctx context.Context) (err error) {
 
 	logger.Info().Uint64("last_checked_block", lastCheckedBlock).Msg("start scanning for events")
 
-	return loops.RunLoop(ctx, defaultLoopDur, func() error {
+	return loops.RunLoop(ctx, p.loopsDuration, func() error {
 		// Relays events from Ethereum -> Cosmos
 		var currentBlock uint64
 		if err := retry.Do(func() (err error) {
@@ -129,7 +127,7 @@ func (p *peggyOrchestrator) EthSignerMainLoop(ctx context.Context) (err error) {
 	}
 	logger.Debug().Hex("peggyID", peggyID[:]).Msg("received peggyID")
 
-	return loops.RunLoop(ctx, defaultLoopDur, func() error {
+	return loops.RunLoop(ctx, p.loopsDuration, func() error {
 		var oldestUnsignedValsets []*types.Valset
 		if err := retry.Do(func() error {
 			oldestValsets, err := p.cosmosQueryClient.OldestUnsignedValsets(ctx, p.peggyBroadcastClient.AccFromAddress())
@@ -209,7 +207,7 @@ func (p *peggyOrchestrator) EthSignerMainLoop(ctx context.Context) (err error) {
 func (p *peggyOrchestrator) BatchRequesterLoop(ctx context.Context) (err error) {
 	logger := p.logger.With().Str("loop", "BatchRequesterLoop").Logger()
 
-	return loops.RunLoop(ctx, defaultLoopDur, func() error {
+	return loops.RunLoop(ctx, p.loopsDuration, func() error {
 		// Each loop performs the following:
 		//
 		// - get All the denominations
