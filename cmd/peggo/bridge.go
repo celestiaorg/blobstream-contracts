@@ -27,6 +27,12 @@ import (
 	"google.golang.org/grpc"
 )
 
+var (
+	// nolint: lll
+	maxUint256     = new(big.Int).SetBytes(ethcmn.Hex2Bytes("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"))
+	halfMaxUint256 = new(big.Int).Div(maxUint256, big.NewInt(2))
+)
+
 func getBridgeCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bridge",
@@ -435,7 +441,7 @@ Transaction: %s
 }
 
 func sendToCosmosCmd() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "send-to-cosmos [token-address] [recipient] [amount]",
 		Args:  cobra.ExactArgs(3),
 		Short: "Send tokens from an Ethereum account to a recipient on Cosmos via Peggy (Gravity Bridge)",
@@ -498,17 +504,26 @@ func sendToCosmosCmd() *cobra.Command {
 				return err
 			}
 
-			peggyContract, err := getPeggyContract(ethRPC, peggyParams.BridgeEthereumAddress)
+			peggyAddr := peggyParams.BridgeEthereumAddress
+
+			peggyContract, err := getPeggyContract(ethRPC, peggyAddr)
 			if err != nil {
 				return err
+			}
+
+			tokenAddrStr := args[0]
+			tokenAddr := ethcmn.HexToAddress(tokenAddrStr)
+
+			if konfig.Bool(flagAutoApprove) {
+				if err := approveERC20(konfig, ethRPC, tokenAddrStr, peggyAddr); err != nil {
+					return err
+				}
 			}
 
 			auth, err := buildTransactOpts(konfig, ethRPC)
 			if err != nil {
 				return err
 			}
-
-			tokenAddr := ethcmn.HexToAddress(args[0])
 
 			recipientAddr, err := sdk.AccAddressFromBech32(args[1])
 			if err != nil {
@@ -545,6 +560,10 @@ Transaction: %s
 			return nil
 		},
 	}
+
+	cmd.Flags().Bool(flagAutoApprove, true, "Auto approve the ERC20 for Peggy to spend from (using max uint256)")
+
+	return cmd
 }
 
 func buildTransactOpts(konfig *koanf.Koanf, ethClient *ethclient.Client) (*bind.TransactOpts, error) {
@@ -635,4 +654,39 @@ func getPeggyContract(ethRPC *ethclient.Client, peggyAddr string) (*wrappers.Peg
 	}
 
 	return contract, nil
+}
+
+func approveERC20(konfig *koanf.Koanf, ethRPC *ethclient.Client, erc20AddrStr, peggyAddrStr string) error {
+	contract, err := wrappers.NewERC20(ethcmn.HexToAddress(erc20AddrStr), ethRPC)
+	if err != nil {
+		return fmt.Errorf("failed to create ERC20 contract instance: %w", err)
+	}
+
+	auth, err := buildTransactOpts(konfig, ethRPC)
+	if err != nil {
+		return err
+	}
+
+	peggyAddr := ethcmn.HexToAddress(peggyAddrStr)
+
+	// Check if the allowance remaining is greater than half of a Uint256 - it's
+	// as good a test as any. If so, we skip approving Peggy as the spender and
+	// assume it's already approved.
+	allowance, err := contract.Allowance(nil, auth.From, peggyAddr)
+	if err != nil {
+		return fmt.Errorf("failed to get ERC20 allowance: %w", err)
+	}
+
+	if allowance.Cmp(halfMaxUint256) > 0 {
+		_, _ = fmt.Fprintln(os.Stderr, "Skipping ERC20 contract approval")
+		return nil
+	}
+
+	tx, err := contract.Approve(auth, peggyAddr, maxUint256)
+	if err != nil {
+		return fmt.Errorf("failed to approve ERC20 contract: %w", err)
+	}
+
+	_, _ = fmt.Fprintf(os.Stderr, "Approved ERC20 contract: %s\n", tx.Hash().Hex())
+	return nil
 }

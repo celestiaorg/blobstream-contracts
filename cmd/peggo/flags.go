@@ -40,6 +40,7 @@ const (
 	flagEthGasPrice          = "eth-gas-price"
 	flagEthGasLimit          = "eth-gas-limit"
 	flagPowerThreshold       = "power-threshold"
+	flagAutoApprove          = "auto-approve"
 	flagRelayerLoopDuration  = "relayer-loop-duration"
 	flagOrchLoopDuration     = "orch-loop-duration"
 )
