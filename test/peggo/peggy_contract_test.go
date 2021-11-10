@@ -211,7 +211,7 @@ var _ = Describe("Contract Tests", func() {
 					)
 					Ω(err).Should(BeNil())
 
-					offchainCheckpoint := makeValsetCheckpoint(peggyID, validators, powers, big.NewInt(0))
+					offchainCheckpoint := makeValsetCheckpoint(peggyID, validators, powers, big.NewInt(0), big.NewInt(0), zeroAddress)
 
 					err = outAbi.Copy(&state_lastValsetCheckpoint, out)
 					Ω(err).Should(BeNil())
@@ -296,6 +296,8 @@ var _ = Describe("Contract Tests", func() {
 							newValidators,
 							newPowers,
 							nextValsetNonce,
+							big.NewInt(0),
+							zeroAddress,
 						)
 
 						sigsV, sigsR, sigsS, signValsetErr = signDigest(
@@ -421,6 +423,8 @@ var _ = Describe("Contract Tests", func() {
 							validators,
 							powers,
 							nextValsetNonce,
+							big.NewInt(0),
+							zeroAddress,
 						)
 
 						sigsV, sigsR, sigsS, signValsetErr = signDigest(
