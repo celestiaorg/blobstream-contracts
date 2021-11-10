@@ -383,7 +383,7 @@ func (s *peggyBroadcastClient) SendEthereumClaims(
 	withdraws []*wrappers.PeggyTransactionBatchExecutedEvent,
 	valsetUpdates []*wrappers.PeggyValsetUpdatedEvent,
 	erc20Deployed []*wrappers.PeggyERC20DeployedEvent,
-	loopDuration time.Duration,
+	cosmosBlockTime time.Duration,
 ) error {
 	allevents := []sortableEvent{}
 
@@ -466,17 +466,9 @@ func (s *peggyBroadcastClient) SendEthereumClaims(
 		}
 
 		lastClaimEvent++
-		// TODO: Evaluate this condition and if it needs to be configurable. For
-		// Umee, our block times will average around 6s.
-		//
-		// Original comment:
-		// Considering blockTime=2.8s on Injective chain, Adding Sleep to make sure
-		// new event is sent only after previous event is executed successfully.
-		// Otherwise it will through `non contiguous event nonce` failing CheckTx.
-		//
-		// time.Sleep(3 * time.Second)
-		time.Sleep(loopDuration)
+		time.Sleep(cosmosBlockTime)
 	}
+
 	return nil
 }
 

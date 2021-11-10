@@ -143,19 +143,13 @@ func getOrchestratorCmd() *cobra.Command {
 				return fmt.Errorf("failed to create Ethereum committer: %w", err)
 			}
 
-			orchLoopDur := konfig.Duration(flagOrchLoopDuration)
-			relayLoopDur := konfig.Duration(flagRelayerLoopDuration)
-
-			relayValSets := konfig.Bool(flagRelayValsets)
-			relayBatches := konfig.Bool(flagRelayBatches)
-
 			relayer := relayer.NewPeggyRelayer(
 				logger,
 				peggyQueryClient,
 				peggyContract,
-				relayValSets,
-				relayBatches,
-				relayLoopDur,
+				konfig.Bool(flagRelayValsets),
+				konfig.Bool(flagRelayBatches),
+				konfig.Duration(flagRelayerLoopDuration),
 			)
 
 			coingeckoAPI := konfig.String(flagCoinGeckoAPI)
@@ -178,7 +172,8 @@ func getOrchestratorCmd() *cobra.Command {
 				signerFn,
 				personalSignFn,
 				relayer,
-				orchLoopDur,
+				konfig.Duration(flagOrchLoopDuration),
+				konfig.Duration(flagCosmosBlockTime),
 				orchestrator.SetMinBatchFee(konfig.Float64(flagMinBatchFeeUSD)),
 				orchestrator.SetPriceFeeder(coingeckoFeed),
 			)
@@ -201,6 +196,7 @@ func getOrchestratorCmd() *cobra.Command {
 	cmd.Flags().Bool(flagRelayBatches, false, "Relay transaction batches to Ethereum")
 	cmd.Flags().Duration(flagRelayerLoopDuration, 5*time.Minute, "Duration between relayer loops")
 	cmd.Flags().Duration(flagOrchLoopDuration, 1*time.Minute, "Duration between orchestrator loops")
+	cmd.Flags().Duration(flagCosmosBlockTime, 5*time.Second, "Average block time of the cosmos chain")
 	cmd.Flags().Float64(
 		flagMinBatchFeeUSD,
 		float64(0.0),

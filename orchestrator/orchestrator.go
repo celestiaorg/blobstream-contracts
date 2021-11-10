@@ -42,6 +42,7 @@ type peggyOrchestrator struct {
 	ethPersonalSignFn    keystore.PersonalSignFn
 	relayer              relayer.PeggyRelayer
 	loopsDuration        time.Duration
+	cosmosBlockTime      time.Duration
 
 	// optional inputs with defaults
 	minBatchFeeUSD float64
@@ -59,6 +60,7 @@ func NewPeggyOrchestrator(
 	ethPersonalSignFn keystore.PersonalSignFn,
 	relayer relayer.PeggyRelayer,
 	loopDuration time.Duration,
+	cosmosBlockTime time.Duration,
 	options ...func(PeggyOrchestrator),
 ) PeggyOrchestrator {
 
@@ -74,6 +76,7 @@ func NewPeggyOrchestrator(
 		ethPersonalSignFn:    ethPersonalSignFn,
 		relayer:              relayer,
 		loopsDuration:        loopDuration,
+		cosmosBlockTime:      cosmosBlockTime,
 	}
 
 	for _, option := range options {
