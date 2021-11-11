@@ -290,6 +290,8 @@ github.com/cosmos/iavl v0.17.1 h1:b/Cl8h1PRMvsu24+TYNlKchIu7W6tmxIBGe6E9u2Ybw=
 github.com/cosmos/iavl v0.17.1/go.mod h1:7aisPZK8yCpQdy3PMvKeO+bhq1NwDjUwjzxwwROUxFk=
 github.com/cosmos/ibc-go v1.2.2 h1:bs6TZ8Es1kycIu2AHlRZ9dzJ+mveqlLN/0sjWtRH88o=
 github.com/cosmos/ibc-go v1.2.2/go.mod h1:XmYjsRFOs6Q9Cz+CSsX21icNoH27vQKb3squgnCOCbs=
+github.com/cosmos/ibc-go/v2 v2.0.0 h1:BMRg73JcdV9wGPI51j89ihm7VBZQsDLkqQ+tmzdeA9Y=
+github.com/cosmos/ibc-go/v2 v2.0.0/go.mod h1:n53VhNSUxCtMLysvgyNhwrGHL8OW+318LMjtSmaVe9Q=
 github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76 h1:DdzS1m6o/pCqeZ8VOAit/gyATedRgjvkVI+UCrLpyuU=
 github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76/go.mod h1:0mkLWIoZuQ7uBoospo5Q9zIpqq6rYCPJDSUdeCJvPM8=
 github.com/cosmos/ledger-cosmos-go v0.11.1 h1:9JIYsGnXP613pb2vPjFeMMjBI5lEDsEaF6oYorTy6J4=
@@ -1378,6 +1380,8 @@ github.com/ultraware/whitespace v0.0.4 h1:If7Va4cM03mpgrNH9k49/VOicWpGoG70XPBFFO
 github.com/ultraware/whitespace v0.0.4/go.mod h1:aVMh/gQve5Maj9hQ/hg+F75lr/X5A89uZnzAmWSineA=
 github.com/umee-network/umee v0.4.0-rc2 h1:s8l0foZFyiOW35nU4z+0HHyYxqJDBY3s8+THnN8Hj2Q=
 github.com/umee-network/umee v0.4.0-rc2/go.mod h1:vNHHRrKD27tHpzHsSuKXy8tbh2v3l0iVyYzDCm73anU=
+github.com/umee-network/umee v0.4.0-rc3 h1:UCAt8hieLKBjj8iKQezT6oGOvb1QossdHn2pG6IvyPI=
+github.com/umee-network/umee v0.4.0-rc3/go.mod h1:G8KfMjY1jEwaO4E5sjyQjCJkXE2477fAT8hY4K0OZs0=
 github.com/urfave/cli v1.20.0/go.mod h1:70zkFmudgCuE/ngEzBv17Jvp/497gISqfk5gWijbERA=
 github.com/urfave/cli v1.22.1/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
 github.com/urfave/cli/v2 v2.3.0/go.mod h1:LJmUH05zAU44vOAcrfzZQKsZbVcdbOG8rtL3/XcUArI=

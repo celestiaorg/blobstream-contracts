@@ -34,7 +34,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/tendermint/tendermint v0.34.14
 	github.com/tyler-smith/go-bip39 v1.1.0 // indirect
-	github.com/umee-network/umee v0.4.0-rc2
+	github.com/umee-network/umee v0.4.0-rc3
 	github.com/xlab/closer v0.0.0-20190328110542-03326addb7c2 // indirect
 	github.com/xlab/suplog v1.3.1
 	go.etcd.io/bbolt v1.3.6 // indirect
@@ -75,6 +75,7 @@ require (
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/iavl v0.17.1 // indirect
 	github.com/cosmos/ibc-go v1.2.2 // indirect
+	github.com/cosmos/ibc-go/v2 v2.0.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.11.1 // indirect
 	github.com/cosmos/ledger-go v0.9.2 // indirect
 	github.com/daixiang0/gci v0.2.9 // indirect
