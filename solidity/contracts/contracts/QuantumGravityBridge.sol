@@ -36,8 +36,7 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
 
     bytes32 public s_lastValidatorSetCheckpoint;
     uint256 public s_powerThreshold;
-    mapping(address => uint256) public s_lastBatchNonces;
-    mapping(bytes32 => uint256) public s_invalidationMapping;
+    mapping(address => uint256) public s_lastMessageRootNonces;
     uint256 public s_lastValidatorSetNonce;
     uint256 public s_lastMessageRootNonce;
 
@@ -52,18 +51,28 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
 
     /// @notice Emitted when the validator set is updated.
     /// @param nonce Nonce.
-    /// @param validatorSetRoot Merkle root of new validator set.
-    event ValidatorSetUpdatedEvent(uint256 indexed nonce, bytes32 validatorSetRoot);
+    /// @param powerThreshold New voting power threshold.
+    /// @param validatorSetHash Hash of new validator set.
+    event ValidatorSetUpdatedEvent(uint256 indexed nonce, uint256 powerThreshold, bytes32 validatorSetHash);
 
     ////////////
     // Errors //
     ////////////
 
+    /// @notice Malformed current validator set.
     error MalformedCurrentValidatorSet();
 
+    /// @notice Validator signature does not match.
     error InvalidSignature();
 
+    /// @notice Submitted validator set signatures do not have enough power.
     error InsufficientVotingPower();
+
+    /// @notice New validator set nonce must be greater than the current nonce.
+    error InvalidValidatorSetNonce();
+
+    /// @notice Supplied current validators and powers do not match checkpoint.
+    error SuppliedValidatorSetInvalid();
 
     ///////////////
     // Functions //
@@ -71,11 +80,11 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
 
     /// @param _bridge_id Identifier of the bridge, used in signatures.
     /// @param _powerThreshold Initial voting power that is needed to approve operations.
-    /// @param _validatorSetRoot Initial validator set root.
+    /// @param _validatorSetHash Initial validator set hash.
     constructor(
         bytes32 _bridge_id,
         uint256 _powerThreshold,
-        bytes32 _validatorSetRoot
+        bytes32 _validatorSetHash
     ) {
         __Ownable_init_unchained();
 
@@ -84,7 +93,7 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         // CHECKS
 
         uint256 nonce = 0;
-        bytes32 newCheckpoint = makeCheckpoint(nonce, _validatorSetRoot);
+        bytes32 newCheckpoint = makeCheckpoint(nonce, _validatorSetHash);
 
         // EFFECTS
 
@@ -113,12 +122,17 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
     /// @dev     keccak256(bridge_id, bytes32("checkpoint"), nonce, validator_set_root)
     /// @dev The leaves in the validator set tree should be monotonically decreasing by power.
     /// @param _nonce Nonce.
-    /// @param _validatorSetRoot Validator set root.
-    function makeCheckpoint(uint256 _nonce, bytes32 _validatorSetRoot) private pure returns (bytes32) {
+    /// @param _powerThreshold The voting power threshold.
+    /// @param _validatorSetHash Validator set hash.
+    function makeCheckpoint(
+        uint256 _nonce,
+        uint256 _powerThreshold,
+        bytes32 _validatorSetHash
+    ) private pure returns (bytes32) {
         // bytes32 encoding of the string "checkpoint"
         bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-        bytes32 checkpoint = keccak256(abi.encode(BRIDGE_ID, methodName, _nonce, _validatorSetRoot));
+        bytes32 checkpoint = keccak256(abi.encode(BRIDGE_ID, methodName, _nonce, _powerThreshold, _validatorSetHash));
 
         return checkpoint;
     }
@@ -162,84 +176,58 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         }
     }
 
-    // This updates the valset by checking that the validators in the current valset have signed off on the
-    // new valset. The signatures supplied are the signatures of the current valset over the checkpoint hash
-    // generated from the new valset.
-    // Anyone can call this function, but they must supply valid signatures of state_powerThreshold of the current valset over
-    // the new valset.
-    function updateValset(
-        // The new version of the validator set
-        bytes32 _newValidatorSetRoot,
+    /// @notice This updates the validator set by checking that the validators
+    /// in the current validator set have signed off on the new validator set.
+    /// The signatures supplied are the signatures of the current validator set
+    /// over the checkpoint hash generated from the new validator set. Anyone
+    /// can call this function, but they must supply valid signatures of the
+    /// current validator set over the new validator set.
+    /// @param _newValidatorSetHash The hash of the new validator set
+    /// @param _newNonce The new nonce.
+    /// @param _currentValidatorSet The current validator set.
+    /// @param _sigs Signatures.
+    function updateValidatorSet(
         uint256 _newNonce,
-        // The current validators that approve the change
+        uint256 _newPowerThreshold,
+        bytes32 _newValidatorSetHash,
         Validator[] calldata _currentValidatorSet,
-        uint256 _currentNonce,
-        // These are arrays of the parts of the current validator's signatures
         Signature[] calldata _sigs
     ) external {
         // CHECKS
 
-        // Check that the valset nonce is greater than the old one
-        require(
-            _newValset.valsetNonce > _currentValset.valsetNonce,
-            "New valset nonce must be greater than the current nonce"
-        );
+        uint256 currentNonce = s_lastValidatorSetNonce;
+        uint256 currentPowerThreshold = s_powerThreshold;
 
-        // Check that new validators and powers set is well-formed
-        require(_newValset.validators.length == _newValset.powers.length, "Malformed new validator set");
+        // Check that the valset nonce is greater than the old one.
+        if (_newNonce <= currentNonce) {
+            revert InvalidValidatorSetNonce();
+        }
 
-        // Check that current validators, powers, and signatures (v,r,s) set is well-formed
-        require(
-            _currentValset.validators.length == _currentValset.powers.length &&
-                _currentValset.validators.length == _v.length &&
-                _currentValset.validators.length == _r.length &&
-                _currentValset.validators.length == _s.length,
-            "Malformed current validator set"
-        );
+        // Check that current validators and signatures are well-formed.
+        if (_currentValidatorSet.length != _sigs.length) {
+            revert MalformedCurrentValidatorSet();
+        }
 
+        // TODO function to hash the validator set, hash current validator set
         // Check that the supplied current validator set matches the saved checkpoint
-        require(
-            makeCheckpoint(_currentValset, state_peggyId) == state_lastValsetCheckpoint,
-            "Supplied current validators and powers do not match checkpoint."
-        );
+        bytes32 _currentValsetHash;
+        if (makeCheckpoint(currentNonce, currentPowerThreshold, _currentValsetHash) != s_lastValidatorSetCheckpoint) {
+            revert SuppliedValidatorSetInvalid();
+        }
 
         // Check that enough current validators have signed off on the new validator set
-        bytes32 newCheckpoint = makeCheckpoint(_newValset, state_peggyId);
-        checkValidatorSignatures(
-            _currentValset.validators,
-            _currentValset.powers,
-            _v,
-            _r,
-            _s,
-            newCheckpoint,
-            state_powerThreshold
-        );
+        bytes32 newCheckpoint = makeCheckpoint(currentNonce, _newPowerThreshold, _newValidatorSetHash);
+        checkValidatorSignatures(_currentValidatorSet, _sigs, newCheckpoint, currentPowerThreshold);
 
         // EFFECTS
 
-        // Stored to be used next time to validate that the valset
-        // supplied by the caller is correct.
-        state_lastValsetCheckpoint = newCheckpoint;
-
-        // Store new nonce
-        state_lastValsetNonce = _newValset.valsetNonce;
-
-        // Send submission reward to msg.sender if reward token is a valid value
-        if (_newValset.rewardToken != address(0) && _newValset.rewardAmount != 0) {
-            IERC20(_newValset.rewardToken).safeTransfer(msg.sender, _newValset.rewardAmount);
-        }
+        s_lastValidatorSetCheckpoint = newCheckpoint;
+        s_powerThreshold = _newPowerThreshold;
+        s_lastValidatorSetNonce = _newValset.valsetNonce;
 
         // LOGS
 
-        state_lastEventNonce = state_lastEventNonce + 1;
-        emit ValsetUpdatedEvent(
-            _newValset.valsetNonce,
-            state_lastEventNonce,
-            _newValset.rewardAmount,
-            _newValset.rewardToken,
-            _newValset.validators,
-            _newValset.powers
-        );
+        emit ValsetUpdatedEvent(_newNonce, _newPowerThreshold, _newValidatorSetHash);
     }
 
     // submitBatch processes a batch of Cosmos -> Ethereum transactions by sending the tokens in the transactions
