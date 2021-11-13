@@ -1,7 +1,7 @@
 import { ethers } from 'hardhat';
 
 async function main() {
-  const qgbFactory = await ethers.getContractFactory('Peggy');
+  const qgbFactory = await ethers.getContractFactory('QuantumGravityBridge');
   const qgb = await qgbFactory.deploy();
   await qgb.deployed();
 }
