@@ -74,7 +74,7 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
     /// @notice Supplied current validators and powers do not match checkpoint.
     error SuppliedValidatorSetInvalid();
 
-    /// @notice New batch nonce must be greater than the current nonce.
+    /// @notice Message root nonce nonce must be greater than the current nonce.
     error InvalidMessageRootNonce();
 
     ///////////////
