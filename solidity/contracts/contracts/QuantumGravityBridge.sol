@@ -137,9 +137,9 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         // bytes32 encoding of the string "checkpoint"
         bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-        bytes32 checkpoint = keccak256(abi.encode(_bridge_id, methodName, _nonce, _powerThreshold, _validatorSetHash));
+        bytes32 c = keccak256(abi.encode(_bridge_id, methodName, _nonce, _powerThreshold, _validatorSetHash));
 
-        return checkpoint;
+        return c;
     }
 
     /// @dev Make a domain-separated commitment to a message root.
@@ -157,9 +157,9 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         // bytes32 encoding of the string "transactionBatch"
         bytes32 methodName = 0x7472616e73616374696f6e426174636800000000000000000000000000000000;
 
-        bytes32 checkpoint = keccak256(abi.encode(_bridge_id, methodName, _nonce, _messageRoot));
+        bytes32 c = keccak256(abi.encode(_bridge_id, methodName, _nonce, _messageRoot));
 
-        return checkpoint;
+        return c;
     }
 
     /// @dev Checks that enough voting power signed over a digest.
@@ -299,8 +299,8 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         }
 
         // Check that enough current validators have signed off on the message root and nonce
-        bytes32 h = domainSeparateMessageRoot(BRIDGE_ID, _nonce, _messageRoot);
-        checkValidatorSignatures(_currentValidatorSet, _sigs, h, currentPowerThreshold);
+        bytes32 c = domainSeparateMessageRoot(BRIDGE_ID, _nonce, _messageRoot);
+        checkValidatorSignatures(_currentValidatorSet, _sigs, c, currentPowerThreshold);
 
         // EFFECTS
 
