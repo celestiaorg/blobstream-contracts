@@ -36,9 +36,9 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
 
     bytes32 public s_lastValidatorSetCheckpoint;
     uint256 public s_powerThreshold;
-    mapping(address => uint256) public s_lastMessageRootNonces;
     uint256 public s_lastValidatorSetNonce;
     uint256 public s_lastMessageRootNonce;
+    mapping(uint256 => bytes32) public s_messageRoots;
 
     ////////////
     // Events //
@@ -74,6 +74,9 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
     /// @notice Supplied current validators and powers do not match checkpoint.
     error SuppliedValidatorSetInvalid();
 
+    /// @notice New batch nonce must be greater than the current nonce.
+    error InvalidMessageRootNonce();
+
     ///////////////
     // Functions //
     ///////////////
@@ -93,7 +96,7 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         // CHECKS
 
         uint256 nonce = 0;
-        bytes32 newCheckpoint = makeCheckpoint(nonce, _validatorSetHash);
+        bytes32 newCheckpoint = domainSeparateValidatorSetHash(_bridge_id, nonce, _powerThreshold, _validatorSetHash);
 
         // EFFECTS
 
@@ -102,7 +105,7 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
 
         // LOGS
 
-        emit ValidatorSetUpdatedEvent(nonce, _validatorSetRoot);
+        emit ValidatorSetUpdatedEvent(nonce, _powerThreshold, _validatorSetHash);
     }
 
     /// @notice Utility function to verify EIP-191 signatures
@@ -116,15 +119,17 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         return _signer == ECDSA.recover(digest_eip191, _sig.v, _sig.r, _sig.s);
     }
 
-    /// @dev Make a new checkpoint from the supplied validator set.
-    /// @dev A checkpoint is a hash of all relevant information about the valset.
-    /// @dev The format of the checkpoint is:
-    /// @dev     keccak256(bridge_id, bytes32("checkpoint"), nonce, validator_set_root)
-    /// @dev The leaves in the validator set tree should be monotonically decreasing by power.
+    /// @dev Make a domain-separated commitment to the validator set.
+    /// A hash of all relevant information about the validator set.
+    /// The format of the hash is:
+    ///     keccak256(bridge_id, bytes32("checkpoint"), nonce, power_threshold, validator_set_hash)
+    /// The elements in the validator set should be monotonically decreasing by power.
+    /// @param _bridge_id Bridge ID.
     /// @param _nonce Nonce.
     /// @param _powerThreshold The voting power threshold.
     /// @param _validatorSetHash Validator set hash.
-    function makeCheckpoint(
+    function domainSeparateValidatorSetHash(
+        bytes32 _bridge_id,
         uint256 _nonce,
         uint256 _powerThreshold,
         bytes32 _validatorSetHash
@@ -132,7 +137,27 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         // bytes32 encoding of the string "checkpoint"
         bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-        bytes32 checkpoint = keccak256(abi.encode(BRIDGE_ID, methodName, _nonce, _powerThreshold, _validatorSetHash));
+        bytes32 checkpoint = keccak256(abi.encode(_bridge_id, methodName, _nonce, _powerThreshold, _validatorSetHash));
+
+        return checkpoint;
+    }
+
+    /// @dev Make a domain-separated commitment to a message root.
+    /// A hash of all relevant information about a message root.
+    /// The format of the hash is:
+    ///     keccak256(bridge_id, bytes32("transactionBatch"), nonce, message_root)
+    /// @param _bridge_id Bridge ID.
+    /// @param _nonce Nonce.
+    /// @param _messageRoot Message root.
+    function domainSeparateMessageRoot(
+        bytes32 _bridge_id,
+        uint256 _nonce,
+        bytes32 _messageRoot
+    ) private pure returns (bytes32) {
+        // bytes32 encoding of the string "transactionBatch"
+        bytes32 methodName = 0x7472616e73616374696f6e426174636800000000000000000000000000000000;
+
+        bytes32 checkpoint = keccak256(abi.encode(_bridge_id, methodName, _nonce, _messageRoot));
 
         return checkpoint;
     }
@@ -208,129 +233,89 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
             revert MalformedCurrentValidatorSet();
         }
 
-        // TODO function to hash the validator set, hash current validator set
         // Check that the supplied current validator set matches the saved checkpoint
-        bytes32 _currentValsetHash;
-        if (makeCheckpoint(currentNonce, currentPowerThreshold, _currentValsetHash) != s_lastValidatorSetCheckpoint) {
+        bytes32 currentValsetHash = keccak256(abi.encode(_currentValidatorSet));
+        if (
+            domainSeparateValidatorSetHash(BRIDGE_ID, currentNonce, currentPowerThreshold, currentValsetHash) !=
+            s_lastValidatorSetCheckpoint
+        ) {
             revert SuppliedValidatorSetInvalid();
         }
 
         // Check that enough current validators have signed off on the new validator set
-        bytes32 newCheckpoint = makeCheckpoint(currentNonce, _newPowerThreshold, _newValidatorSetHash);
+        bytes32 newCheckpoint = domainSeparateValidatorSetHash(
+            BRIDGE_ID,
+            currentNonce,
+            _newPowerThreshold,
+            _newValidatorSetHash
+        );
         checkValidatorSignatures(_currentValidatorSet, _sigs, newCheckpoint, currentPowerThreshold);
 
         // EFFECTS
 
         s_lastValidatorSetCheckpoint = newCheckpoint;
         s_powerThreshold = _newPowerThreshold;
-        s_lastValidatorSetNonce = _newValset.valsetNonce;
+        s_lastValidatorSetNonce = _newNonce;
 
         // LOGS
 
-        emit ValsetUpdatedEvent(_newNonce, _newPowerThreshold, _newValidatorSetHash);
+        emit ValidatorSetUpdatedEvent(_newNonce, _newPowerThreshold, _newValidatorSetHash);
     }
 
-    // submitBatch processes a batch of Cosmos -> Ethereum transactions by sending the tokens in the transactions
-    // to the destination addresses. It is approved by the current Cosmos validator set.
-    // Anyone can call this function, but they must supply valid signatures of state_powerThreshold of the current valset over
-    // the batch.
-    function submitBatch(
-        // The validators that approve the batch
-        ValsetArgs memory _currentValset,
-        // These are arrays of the parts of the validators signatures
-        uint8[] memory _v,
-        bytes32[] memory _r,
-        bytes32[] memory _s,
-        // The batch of transactions
-        uint256[] memory _amounts,
-        address[] memory _destinations,
-        uint256[] memory _fees,
-        uint256 _batchNonce,
-        address _tokenContract,
-        // a block height beyond which this batch is not valid
-        // used to provide a fee-free timeout
-        uint256 _batchTimeout
+    /// @notice Relays a batch of Celestia -> Ethereum messages. Anyone can
+    // call this function, but they must supply valid signatures of the current
+    // validator set over the batch.
+    /// @param _nonce The message root nonce.
+    /// @param _messageRoot The Merkle root of messages.
+    /// @param _currentValidatorSet The current validator set.
+    /// @param _sigs Signatures.
+    function submitMessageRoot(
+        uint256 _nonce,
+        bytes32 _messageRoot,
+        Validator[] calldata _currentValidatorSet,
+        Signature[] calldata _sigs
     ) external {
         // CHECKS scoped to reduce stack depth
         {
+            uint256 currentPowerThreshold = s_powerThreshold;
+
             // Check that the batch nonce is higher than the last nonce for this token
-            require(
-                state_lastBatchNonces[_tokenContract] < _batchNonce,
-                "New batch nonce must be greater than the current nonce"
-            );
+            if (_nonce <= s_lastMessageRootNonce) {
+                revert InvalidMessageRootNonce();
+            }
 
-            // Check that the block height is less than the timeout height
-            require(block.number < _batchTimeout, "Batch timeout must be greater than the current block height");
-
-            // Check that current validators, powers, and signatures (v,r,s) set is well-formed
-            require(
-                _currentValset.validators.length == _currentValset.powers.length &&
-                    _currentValset.validators.length == _v.length &&
-                    _currentValset.validators.length == _r.length &&
-                    _currentValset.validators.length == _s.length,
-                "Malformed current validator set"
-            );
+            // Check that current validators and signatures are well-formed.
+            if (_currentValidatorSet.length != _sigs.length) {
+                revert MalformedCurrentValidatorSet();
+            }
 
             // Check that the supplied current validator set matches the saved checkpoint
-            require(
-                makeCheckpoint(_currentValset, state_peggyId) == state_lastValsetCheckpoint,
-                "Supplied current validators and powers do not match checkpoint."
-            );
+            bytes32 currentValsetHash = keccak256(abi.encode(_currentValidatorSet));
+            if (
+                domainSeparateValidatorSetHash(
+                    BRIDGE_ID,
+                    s_lastValidatorSetNonce,
+                    currentPowerThreshold,
+                    currentValsetHash
+                ) != s_lastValidatorSetCheckpoint
+            ) {
+                revert SuppliedValidatorSetInvalid();
+            }
 
-            // Check that the transaction batch is well-formed
-            require(
-                _amounts.length == _destinations.length && _amounts.length == _fees.length,
-                "Malformed batch of transactions"
-            );
-
-            // Check that enough current validators have signed off on the transaction batch and valset
-            checkValidatorSignatures(
-                _currentValset.validators,
-                _currentValset.powers,
-                _v,
-                _r,
-                _s,
-                // Get hash of the transaction batch and checkpoint
-                keccak256(
-                    abi.encode(
-                        state_peggyId,
-                        // bytes32 encoding of "transactionBatch"
-                        0x7472616e73616374696f6e426174636800000000000000000000000000000000,
-                        _amounts,
-                        _destinations,
-                        _fees,
-                        _batchNonce,
-                        _tokenContract,
-                        _batchTimeout
-                    )
-                ),
-                state_powerThreshold
-            );
+            // Check that enough current validators have signed off on the message root and nonce
+            bytes32 h = domainSeparateMessageRoot(BRIDGE_ID, _nonce, _messageRoot);
+            checkValidatorSignatures(_currentValidatorSet, _sigs, h, currentPowerThreshold);
 
             // EFFECTS
 
-            // Store batch nonce
-            state_lastBatchNonces[_tokenContract] = _batchNonce;
-
-            {
-                // Send transaction amounts to destinations
-                uint256 totalFee;
-                for (uint256 i = 0; i < _amounts.length; i++) {
-                    IERC20(_tokenContract).safeTransfer(_destinations[i], _amounts[i]);
-                    totalFee = totalFee + _fees[i];
-                }
-
-                if (totalFee > 0) {
-                    // Send transaction fees to msg.sender
-                    IERC20(_tokenContract).safeTransfer(msg.sender, totalFee);
-                }
-            }
+            s_lastMessageRootNonce = _nonce;
+            // Store message root, nonce pair
+            s_messageRoots[_nonce] = _messageRoot;
         }
 
         // LOGS scoped to reduce stack depth
         {
-            state_lastEventNonce = state_lastEventNonce + 1;
-            emit TransactionBatchExecutedEvent(_batchNonce, _tokenContract, state_lastEventNonce);
+            emit MessageRootEvent(_nonce, _messageRoot);
         }
     }
 }
