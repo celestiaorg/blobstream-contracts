@@ -177,21 +177,17 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         uint256 cumulativePower = 0;
 
         for (uint256 i = 0; i < _currentValidators.length; i++) {
-            // If v is set to 0, this signifies that it was not possible to get a signature from this validator and we skip evaluation.
-            // (In a valid signature, it is either 27 or 28).
-            if (_sigs[i].v != 0) {
-                // Check that the current validator has signed off on the hash.
-                if (!verifySig(_currentValidators[i].addr, _digest, _sigs[i])) {
-                    revert InvalidSignature();
-                }
+            // Check that the current validator has signed off on the hash.
+            if (!verifySig(_currentValidators[i].addr, _digest, _sigs[i])) {
+                revert InvalidSignature();
+            }
 
-                // Sum up cumulative power.
-                cumulativePower += _currentValidators[i].power;
+            // Sum up cumulative power.
+            cumulativePower += _currentValidators[i].power;
 
-                // Break early to avoid wasting gas.
-                if (cumulativePower >= _powerThreshold) {
-                    break;
-                }
+            // Break early to avoid wasting gas.
+            if (cumulativePower >= _powerThreshold) {
+                break;
             }
         }
 
