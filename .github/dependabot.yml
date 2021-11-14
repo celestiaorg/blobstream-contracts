@@ -13,7 +13,7 @@ updates:
       prefix: "chore"
     open-pull-requests-limit: 10
     reviewers:
-      - alexanderbez
+      - liamsi
     labels:
       - "A:Automerge"
       - "T:Dependencies"
