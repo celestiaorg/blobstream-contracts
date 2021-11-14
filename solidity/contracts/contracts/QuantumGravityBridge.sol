@@ -275,47 +275,44 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         Validator[] calldata _currentValidatorSet,
         Signature[] calldata _sigs
     ) external {
-        // CHECKS scoped to reduce stack depth
-        {
-            uint256 currentPowerThreshold = s_powerThreshold;
+        // CHECKS
 
-            // Check that the batch nonce is higher than the last nonce for this token
-            if (_nonce <= s_lastMessageRootNonce) {
-                revert InvalidMessageRootNonce();
-            }
+        uint256 currentPowerThreshold = s_powerThreshold;
 
-            // Check that current validators and signatures are well-formed.
-            if (_currentValidatorSet.length != _sigs.length) {
-                revert MalformedCurrentValidatorSet();
-            }
-
-            // Check that the supplied current validator set matches the saved checkpoint
-            bytes32 currentValsetHash = keccak256(abi.encode(_currentValidatorSet));
-            if (
-                domainSeparateValidatorSetHash(
-                    BRIDGE_ID,
-                    s_lastValidatorSetNonce,
-                    currentPowerThreshold,
-                    currentValsetHash
-                ) != s_lastValidatorSetCheckpoint
-            ) {
-                revert SuppliedValidatorSetInvalid();
-            }
-
-            // Check that enough current validators have signed off on the message root and nonce
-            bytes32 h = domainSeparateMessageRoot(BRIDGE_ID, _nonce, _messageRoot);
-            checkValidatorSignatures(_currentValidatorSet, _sigs, h, currentPowerThreshold);
-
-            // EFFECTS
-
-            s_lastMessageRootNonce = _nonce;
-            // Store message root, nonce pair
-            s_messageRoots[_nonce] = _messageRoot;
+        // Check that the batch nonce is higher than the last nonce for this token
+        if (_nonce <= s_lastMessageRootNonce) {
+            revert InvalidMessageRootNonce();
         }
 
-        // LOGS scoped to reduce stack depth
-        {
-            emit MessageRootEvent(_nonce, _messageRoot);
+        // Check that current validators and signatures are well-formed.
+        if (_currentValidatorSet.length != _sigs.length) {
+            revert MalformedCurrentValidatorSet();
         }
+
+        // Check that the supplied current validator set matches the saved checkpoint
+        bytes32 currentValsetHash = keccak256(abi.encode(_currentValidatorSet));
+        if (
+            domainSeparateValidatorSetHash(
+                BRIDGE_ID,
+                s_lastValidatorSetNonce,
+                currentPowerThreshold,
+                currentValsetHash
+            ) != s_lastValidatorSetCheckpoint
+        ) {
+            revert SuppliedValidatorSetInvalid();
+        }
+
+        // Check that enough current validators have signed off on the message root and nonce
+        bytes32 h = domainSeparateMessageRoot(BRIDGE_ID, _nonce, _messageRoot);
+        checkValidatorSignatures(_currentValidatorSet, _sigs, h, currentPowerThreshold);
+
+        // EFFECTS
+
+        s_lastMessageRootNonce = _nonce;
+        s_messageRoots[_nonce] = _messageRoot;
+
+        // LOGS
+
+        emit MessageRootEvent(_nonce, _messageRoot);
     }
 }
