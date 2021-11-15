@@ -137,7 +137,7 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
     /// @dev Make a domain-separated commitment to the validator set.
     /// A hash of all relevant information about the validator set.
     /// The format of the hash is:
-    ///     keccak256(bridge_id, bytes32("checkpoint"), nonce, power_threshold, validator_set_hash)
+    ///     keccak256(bridge_id, VALIDATOR_SET_HASH_DOMAIN_SEPARATOR, nonce, power_threshold, validator_set_hash)
     /// The elements in the validator set should be monotonically decreasing by power.
     /// @param _bridge_id Bridge ID.
     /// @param _nonce Nonce.
@@ -159,7 +159,7 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
     /// @dev Make a domain-separated commitment to a message root.
     /// A hash of all relevant information about a message root.
     /// The format of the hash is:
-    ///     keccak256(bridge_id, bytes32("transactionBatch"), nonce, message_root)
+    ///     keccak256(bridge_id, MESSAGE_ROOT_DOMAIN_SEPARATOR, nonce, message_root)
     /// @param _bridge_id Bridge ID.
     /// @param _nonce Nonce.
     /// @param _messageRoot Message root.
@@ -240,16 +240,16 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
             revert MalformedCurrentValidatorSet();
         }
 
-        // Check that the supplied current validator set matches the saved checkpoint
-        bytes32 currentValsetHash = keccak256(abi.encode(_currentValidatorSet));
+        // Check that the supplied current validator set matches the saved checkpoint.
+        bytes32 currentValidatorSetHash = keccak256(abi.encode(_currentValidatorSet));
         if (
-            domainSeparateValidatorSetHash(BRIDGE_ID, currentNonce, currentPowerThreshold, currentValsetHash) !=
+            domainSeparateValidatorSetHash(BRIDGE_ID, currentNonce, currentPowerThreshold, currentValidatorSetHash) !=
             s_lastValidatorSetCheckpoint
         ) {
             revert SuppliedValidatorSetInvalid();
         }
 
-        // Check that enough current validators have signed off on the new validator set
+        // Check that enough current validators have signed off on the new validator set.
         bytes32 newCheckpoint = domainSeparateValidatorSetHash(
             BRIDGE_ID,
             currentNonce,
@@ -269,9 +269,9 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         emit ValidatorSetUpdatedEvent(_newNonce, _newPowerThreshold, _newValidatorSetHash);
     }
 
-    /// @notice Relays a batch of Celestia -> Ethereum messages. Anyone can
+    /// @notice Relays a root of Celestia -> Ethereum messages. Anyone can
     // call this function, but they must supply valid signatures of the current
-    // validator set over the batch.
+    // validator set over the message root.
     /// @param _nonce The message root nonce.
     /// @param _messageRoot The Merkle root of messages.
     /// @param _currentValidatorSet The current validator set.
@@ -286,7 +286,7 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
 
         uint256 currentPowerThreshold = s_powerThreshold;
 
-        // Check that the batch nonce is higher than the last nonce for this token
+        // Check that the message root nonce is higher than the last nonce.
         if (_nonce <= s_lastMessageRootNonce) {
             revert InvalidMessageRootNonce();
         }
@@ -296,20 +296,20 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
             revert MalformedCurrentValidatorSet();
         }
 
-        // Check that the supplied current validator set matches the saved checkpoint
-        bytes32 currentValsetHash = keccak256(abi.encode(_currentValidatorSet));
+        // Check that the supplied current validator set matches the saved checkpoint.
+        bytes32 currentValidatorSetHash = keccak256(abi.encode(_currentValidatorSet));
         if (
             domainSeparateValidatorSetHash(
                 BRIDGE_ID,
                 s_lastValidatorSetNonce,
                 currentPowerThreshold,
-                currentValsetHash
+                currentValidatorSetHash
             ) != s_lastValidatorSetCheckpoint
         ) {
             revert SuppliedValidatorSetInvalid();
         }
 
-        // Check that enough current validators have signed off on the message root and nonce
+        // Check that enough current validators have signed off on the message root and nonce.
         bytes32 c = domainSeparateMessageRoot(BRIDGE_ID, _nonce, _messageRoot);
         checkValidatorSignatures(_currentValidatorSet, _sigs, c, currentPowerThreshold);
 
