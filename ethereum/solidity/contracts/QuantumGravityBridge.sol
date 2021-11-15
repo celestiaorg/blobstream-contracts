@@ -81,9 +81,13 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
     // Functions //
     ///////////////
 
-    /// @param _bridge_id Identifier of the bridge, used in signatures.
-    /// @param _powerThreshold Initial voting power that is needed to approve operations.
-    /// @param _validatorSetHash Initial validator set hash.
+    /// @param _bridge_id Identifier of the bridge, used in signatures for
+    /// domain separation.
+    /// @param _powerThreshold Initial voting power that is needed to approve
+    /// operations.
+    /// @param _validatorSetHash Initial validator set hash. This does not need
+    /// to be the genesis validator set of the bridged chain, only the initial
+    /// validator set of the bridge.
     constructor(
         bytes32 _bridge_id,
         uint256 _powerThreshold,
