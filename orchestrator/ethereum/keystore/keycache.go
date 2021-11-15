@@ -2,6 +2,7 @@ package keystore
 
 import (
 	"crypto/ecdsa"
+	// #nosec G505
 	"crypto/sha1"
 	"io/ioutil"
 	"math/big"
@@ -83,9 +84,8 @@ func (k *keyCache) PrivateKey(account common.Address, password string) (*ecdsa.P
 	}
 
 	path := v.(string)
-	if strings.HasPrefix(path, "keystore://") {
-		path = strings.TrimPrefix(path, "keystore://")
-	}
+
+	path = strings.TrimPrefix(path, "keystore://")
 
 	keyJSON, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -144,6 +144,7 @@ func (k *keyCache) PersonalSignFn(account common.Address, password string) (Pers
 var hashSep = []byte("-")
 
 func hashAccountPass(account common.Address, password string) []byte {
+	// #nosec G401
 	h := sha1.New()
 	h.Write(account[:])
 	h.Write(hashSep)

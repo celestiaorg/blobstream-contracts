@@ -4,16 +4,12 @@ import (
 	"context"
 	"sort"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
-	log "github.com/xlab/suplog"
-
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/util"
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
+	"github.com/umee-network/peggo/orchestrator/ethereum/util"
+	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
+	"github.com/umee-network/umee/x/peggy/types"
 )
 
 const defaultBlocksToSearch = 2000
@@ -24,13 +20,8 @@ const defaultBlocksToSearch = 2000
 // backwards in time. In the case that the validator set has not been updated for a very long time
 // this will take longer.
 func (s *peggyRelayer) FindLatestValset(ctx context.Context) (*types.Valset, error) {
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
-
 	latestHeader, err := s.ethProvider.HeaderByNumber(ctx, nil)
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to get latest header")
 		return nil, err
 	}
@@ -38,28 +29,26 @@ func (s *peggyRelayer) FindLatestValset(ctx context.Context) (*types.Valset, err
 
 	peggyFilterer, err := wrappers.NewPeggyFilterer(s.peggyContract.Address(), s.ethProvider)
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to init Peggy events filterer")
 		return nil, err
 	}
 
 	latestEthereumValsetNonce, err := s.peggyContract.GetValsetNonce(ctx, s.peggyContract.FromAddress())
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to get latest Valset nonce")
 		return nil, err
 	}
 
 	cosmosValset, err := s.cosmosQueryClient.ValsetAt(ctx, latestEthereumValsetNonce.Uint64())
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "failed to get cosmos Valset")
 		return nil, err
 	}
 
 	for currentBlock > 0 {
-		log.WithField("current_block", currentBlock).
-			Debugln("About to submit a Valset or Batch looking back into the history to find the last Valset Update")
+		s.logger.Debug().
+			Uint64("block", currentBlock).
+			Msg("about to submit a Valset or Batch looking back into the history to find the last Valset Update")
 
 		var endSearchBlock uint64
 		if currentBlock <= defaultBlocksToSearch {
@@ -73,17 +62,17 @@ func (s *peggyRelayer) FindLatestValset(ctx context.Context) (*types.Valset, err
 			Start: endSearchBlock,
 			End:   &currentBlock,
 		}, nil)
+
 		if err != nil {
-			metrics.ReportFuncError(s.svcTags)
 			err = errors.Wrap(err, "failed to filter past ValsetUpdated events from Ethereum")
 			return nil, err
-		} else {
-			for iter.Next() {
-				valsetUpdatedEvents = append(valsetUpdatedEvents, iter.Event)
-			}
-
-			iter.Close()
 		}
+
+		for iter.Next() {
+			valsetUpdatedEvents = append(valsetUpdatedEvents, iter.Event)
+		}
+
+		iter.Close()
 
 		// by default the lowest found valset goes first, we want the highest
 		//
@@ -91,7 +80,9 @@ func (s *peggyRelayer) FindLatestValset(ctx context.Context) (*types.Valset, err
 		// we could access just the latest element later.
 		sort.Sort(sort.Reverse(PeggyValsetUpdatedEvents(valsetUpdatedEvents)))
 
-		log.Debugln("found events", valsetUpdatedEvents)
+		s.logger.Debug().
+			Interface("valset_updated_events", valsetUpdatedEvents).
+			Msg("found ValsetUpdated events")
 
 		// we take only the first event if we find any at all.
 		if len(valsetUpdatedEvents) > 0 {
@@ -144,26 +135,26 @@ func (s *peggyRelayer) checkIfValsetsDiffer(cosmosValset, ethereumValset *types.
 		// bootstrapping case
 		return
 	} else if cosmosValset == nil {
-		log.WithField(
-			"eth_valset_nonce",
-			ethereumValset.Nonce,
-		).Errorln("Cosmos does not have a valset for nonce from Ethereum chain. Possible bridge hijacking!")
+		s.logger.Error().
+			Uint64("eth_valset_nonce", ethereumValset.Nonce).
+			Msg("cosmos does not have a valset for nonce from Ethereum chain. Possible bridge hijacking!")
 		return
 	}
 
 	if cosmosValset.Nonce != ethereumValset.Nonce {
-		log.WithFields(log.Fields{
-			"cosmos_valset_nonce": cosmosValset.Nonce,
-			"eth_valset_nonce":    ethereumValset.Nonce,
-		}).Errorln("Cosmos does have a wrong valset nonce, differs from Ethereum chain. Possible bridge hijacking!")
+
+		s.logger.Error().
+			Uint64("eth_valset_nonce", ethereumValset.Nonce).
+			Uint64("cosmos_valset_nonce", cosmosValset.Nonce).
+			Msg("cosmos does have a wrong valset nonce, differs from Ethereum chain. Possible bridge hijacking!")
 		return
 	}
 
 	if len(cosmosValset.Members) != len(ethereumValset.Members) {
-		log.WithFields(log.Fields{
-			"cosmos_valset": len(cosmosValset.Members),
-			"eth_valset":    len(ethereumValset.Members),
-		}).Errorln("Cosmos and Ethereum Valsets have different length. Possible bridge hijacking!")
+		s.logger.Error().
+			Int("eth_valset", len(ethereumValset.Members)).
+			Int("cosmos_valset", len(cosmosValset.Members)).
+			Msg("cosmos and Ethereum Valsets have different length. Possible bridge hijacking!")
 		return
 	}
 
@@ -172,10 +163,10 @@ func (s *peggyRelayer) checkIfValsetsDiffer(cosmosValset, ethereumValset *types.
 
 	for idx, member := range cosmosValset.Members {
 		if ethereumValset.Members[idx].EthereumAddress != member.EthereumAddress {
-			log.Errorln("Valsets are different, a sorting error?")
+			s.logger.Error().Msg("valsets are different, a sorting error?")
 		}
 		if ethereumValset.Members[idx].Power != member.Power {
-			log.Errorln("Valsets are different, a sorting error?")
+			s.logger.Error().Msg("valsets are different, a sorting error?")
 		}
 	}
 }

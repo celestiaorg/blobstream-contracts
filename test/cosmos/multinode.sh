@@ -15,7 +15,7 @@ CHAIN_DIR="${CHAIN_DIR:-$CWD/data}"
 DENOM="${DENOM:-uatom}"
 STAKE_DENOM="${STAKE_DENOM:-$DENOM}"
 CLEANUP="${CLEANUP:-0}"
-LOG_LEVEL="${LOG_LEVEL:-main:info,state:info,statesync:info,*:error}"
+LOG_LEVEL="${LOG_LEVEL:-info}"
 SCALE_FACTOR="${SCALE_FACTOR:-000000000000000000}"
 
 # Default 3 account keys + 1 user key with no special grants
@@ -126,7 +126,8 @@ if [[ ! -d "$hdir" ]]; then
 	# $NODE_BIN $home1 keys add val $kbt &>/dev/null
 	# $NODE_BIN $home2 keys add val $kbt &>/dev/null
 
-	# Import keys from mnemonics
+	echo "Importing keys from mnemonics..."
+	echo "$VAL0_MNEMONIC$NEWLINE"
 	yes "$VAL0_MNEMONIC$NEWLINE" | $NODE_BIN $home0 keys add $VAL0_KEY $kbt --recover
 	yes "$VAL1_MNEMONIC$NEWLINE" | $NODE_BIN $home1 keys add $VAL1_KEY $kbt --recover
 	yes "$VAL2_MNEMONIC$NEWLINE" | $NODE_BIN $home2 keys add $VAL2_KEY $kbt --recover
@@ -134,41 +135,49 @@ if [[ ! -d "$hdir" ]]; then
 	yes "$USER_MNEMONIC$NEWLINE" | $NODE_BIN $home1 keys add $USER_KEY $kbt --recover &>/dev/null
 	yes "$USER_MNEMONIC$NEWLINE" | $NODE_BIN $home2 keys add $USER_KEY $kbt --recover &>/dev/null
 
-	# Add addresses to genesis
+	echo "Adding addresses to genesis..."
+	$NODE_BIN $home0 keys show $VAL0_KEY -a $kbt
+	$NODE_BIN $home1 keys show $VAL1_KEY -a $kbt
+	$NODE_BIN $home2 keys show $VAL2_KEY -a $kbt
+	$NODE_BIN $home0 keys show $USER_KEY -a $kbt
 	$NODE_BIN $home0 add-genesis-account $($NODE_BIN $home0 keys show $VAL0_KEY -a $kbt) $coins &>/dev/null
 	$NODE_BIN $home0 add-genesis-account $($NODE_BIN $home1 keys show $VAL1_KEY -a $kbt) $coins &>/dev/null
 	$NODE_BIN $home0 add-genesis-account $($NODE_BIN $home2 keys show $VAL2_KEY -a $kbt) $coins &>/dev/null
 	$NODE_BIN $home0 add-genesis-account $($NODE_BIN $home0 keys show $USER_KEY -a $kbt) $coins_user &>/dev/null
 
-	# Patch genesis.json to better configure stuff for testing purposes
+	echo "Patch genesis.json to better configure stuff for testing purposes..."
 	if [[ "$STAKE_DENOM" == "$DENOM" ]]; then
 		cat $n0cfgDir/genesis.json | jq '.app_state["staking"]["params"]["bond_denom"]="'$DENOM'"' > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
 		cat $n0cfgDir/genesis.json | jq '.app_state["crisis"]["constant_fee"]["denom"]="'$DENOM'"' > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
 		cat $n0cfgDir/genesis.json | jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="'$DENOM'"' > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
 		cat $n0cfgDir/genesis.json | jq '.app_state["mint"]["params"]["mint_denom"]="'$DENOM'"' > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
+		cat $n0cfgDir/genesis.json | jq '.consensus_params["block"]["time_iota_ms]="5000"' > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
+		cat $n0cfgDir/genesis.json | jq '.app_state["peggy"]["params"]["bridge_ethereum_address"]="0x93b5122922F9dCd5458Af42Ba69Bd7baEc546B3c"' > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
+		cat $n0cfgDir/genesis.json | jq '.app_state["peggy"]["params"]["bridge_chain_id"]="5"' > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
+		cat $n0cfgDir/genesis.json | jq '.app_state["peggy"]["params"]["bridge_contract_start_height"]="5763150"' > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
 	fi
 
 	echo "NOTE: Setting Governance Voting Period to 10 seconds for rapid testing"
 	cat $n0cfgDir/genesis.json | jq '.app_state["gov"]["voting_params"]["voting_period"]="10s"' > $n0cfgDir/tmp_genesis.json && mv $n0cfgDir/tmp_genesis.json $n0cfgDir/genesis.json
 
-	# Copy genesis around to sign
+	echo "Copy genesis around to sign"
 	cp $n0cfgDir/genesis.json $n1cfgDir/genesis.json
 	cp $n0cfgDir/genesis.json $n2cfgDir/genesis.json
 
-	# Create gentxs and collect them in n0
-	$NODE_BIN $home0 gentx $VAL0_KEY --amount=1000$SCALE_FACTOR$STAKE_DENOM $kbt $cid &>/dev/null
-	$NODE_BIN $home1 gentx $VAL1_KEY --amount=1000$SCALE_FACTOR$STAKE_DENOM $kbt $cid &>/dev/null
-	$NODE_BIN $home2 gentx $VAL2_KEY --amount=1000$SCALE_FACTOR$STAKE_DENOM $kbt $cid &>/dev/null
+	echo "Create gentxs and collect them in n0"
+	$NODE_BIN $home0 gentx $VAL0_KEY 1000$SCALE_FACTOR$STAKE_DENOM $kbt $cid
+	$NODE_BIN $home1 gentx $VAL1_KEY 1000$SCALE_FACTOR$STAKE_DENOM $kbt $cid
+	$NODE_BIN $home2 gentx $VAL2_KEY 1000$SCALE_FACTOR$STAKE_DENOM $kbt $cid 
 
 	cp $n1cfgDir/gentx/*.json $n0cfgDir/gentx/
 	cp $n2cfgDir/gentx/*.json $n0cfgDir/gentx/
 	$NODE_BIN $home0 collect-gentxs &>/dev/null
 
-	# Copy genesis file into n1 and n2s
+	echo "Copy genesis file into n1 and n2s"
 	cp $n0cfgDir/genesis.json $n1cfgDir/genesis.json
 	cp $n0cfgDir/genesis.json $n2cfgDir/genesis.json
 
-	# Run this to ensure everything worked and that the genesis file is setup correctly
+	echo "Run this to ensure everything worked and that the genesis file is setup correctly"
 	$NODE_BIN $home0 validate-genesis
 	$NODE_BIN $home1 validate-genesis
 	$NODE_BIN $home2 validate-genesis
@@ -179,54 +188,53 @@ if [[ ! -d "$hdir" ]]; then
 
 	echo "regex replacing config variables"
 
-	$REGEX_REPLACE 's|addr_book_strict = true|addr_book_strict = false|g' $n0cfg
-	$REGEX_REPLACE 's|external_address = ""|external_address = "tcp://127.0.0.1:26657"|g' $n0cfg
-	$REGEX_REPLACE 's|"tcp://127.0.0.1:26657"|"tcp://0.0.0.0:26657"|g' $n0cfg
-	$REGEX_REPLACE 's|allow_duplicate_ip = false|allow_duplicate_ip = true|g' $n0cfg
-	$REGEX_REPLACE 's|log_level = "info"|log_level = "'$LOG_LEVEL'"|g' $n0cfg
-	$REGEX_REPLACE 's|timeout_commit = ".*?"|timeout_commit = "1s"|g' $n0cfg
+	perl -i -pe 's|addr_book_strict = true|addr_book_strict = false|g' $n0cfg
+	perl -i -pe 's|external_address = ""|external_address = "tcp://127.0.0.1:26657"|g' $n0cfg
+	perl -i -pe 's|"tcp://127.0.0.1:26657"|"tcp://0.0.0.0:26657"|g' $n0cfg
+	perl -i -pe 's|allow_duplicate_ip = false|allow_duplicate_ip = true|g' $n0cfg
+	perl -i -pe 's|log_level = "info"|log_level = "'$LOG_LEVEL'"|g' $n0cfg
+	perl -i -pe 's|timeout_commit = ".*?"|timeout_commit = "1s"|g' $n0cfg
 
-	$REGEX_REPLACE 's|addr_book_strict = true|addr_book_strict = false|g' $n1cfg
-	$REGEX_REPLACE 's|external_address = ""|external_address = "tcp://127.0.0.1:26667"|g' $n1cfg
-	$REGEX_REPLACE 's|"tcp://127.0.0.1:26657"|"tcp://0.0.0.0:26667"|g' $n1cfg
-	$REGEX_REPLACE 's|"tcp://0.0.0.0:26656"|"tcp://0.0.0.0:26666"|g' $n1cfg
-	$REGEX_REPLACE 's|"localhost:6060"|"localhost:6061"|g' $n1cfg
-	$REGEX_REPLACE 's|"tcp://0.0.0.0:10337"|"tcp://0.0.0.0:11337"|g' $n1app
-	$REGEX_REPLACE 's|"0.0.0.0:1317"|"0.0.0.0:1417"|g' $n1app
-	$REGEX_REPLACE 's|"0.0.0.0:9090"|"0.0.0.0:9091"|g' $n1app
-	$REGEX_REPLACE 's|allow_duplicate_ip = false|allow_duplicate_ip = true|g' $n1cfg
-	$REGEX_REPLACE 's|log_level = "info"|log_level = "'$LOG_LEVEL'"|g' $n1cfg
-	$REGEX_REPLACE 's|timeout_commit = ".*?"|timeout_commit = "1s"|g' $n1cfg
+	perl -i -pe 's|addr_book_strict = true|addr_book_strict = false|g' $n1cfg
+	perl -i -pe 's|external_address = ""|external_address = "tcp://127.0.0.1:26667"|g' $n1cfg
+	perl -i -pe 's|"tcp://127.0.0.1:26657"|"tcp://0.0.0.0:26667"|g' $n1cfg
+	perl -i -pe 's|"tcp://0.0.0.0:26656"|"tcp://0.0.0.0:26666"|g' $n1cfg
+	perl -i -pe 's|"localhost:6060"|"localhost:6061"|g' $n1cfg
+	perl -i -pe 's|"tcp://0.0.0.0:10337"|"tcp://0.0.0.0:11337"|g' $n1app
+	perl -i -pe 's|"0.0.0.0:1317"|"0.0.0.0:1417"|g' $n1app
+	perl -i -pe 's|"0.0.0.0:9090"|"0.0.0.0:9091"|g' $n1app
+	perl -i -pe 's|allow_duplicate_ip = false|allow_duplicate_ip = true|g' $n1cfg
+	perl -i -pe 's|log_level = "info"|log_level = "'$LOG_LEVEL'"|g' $n1cfg
+	perl -i -pe 's|timeout_commit = ".*?"|timeout_commit = "1s"|g' $n1cfg
 
-	$REGEX_REPLACE 's|addr_book_strict = true|addr_book_strict = false|g' $n2cfg
-	$REGEX_REPLACE 's|external_address = ""|external_address = "tcp://127.0.0.1:26677"|g' $n2cfg
-	$REGEX_REPLACE 's|"tcp://127.0.0.1:26657"|"tcp://0.0.0.0:26677"|g' $n2cfg
-	$REGEX_REPLACE 's|"tcp://0.0.0.0:26656"|"tcp://0.0.0.0:26676"|g' $n2cfg
-	$REGEX_REPLACE 's|"localhost:6060"|"localhost:6062"|g' $n2cfg
-	$REGEX_REPLACE 's|"tcp://0.0.0.0:10337"|"tcp://0.0.0.0:12337"|g' $n2app
-	$REGEX_REPLACE 's|"0.0.0.0:1317"|"0.0.0.0:1517"|g' $n2app
-	$REGEX_REPLACE 's|"0.0.0.0:9090"|"0.0.0.0:9092"|g' $n2app
-	$REGEX_REPLACE 's|allow_duplicate_ip = false|allow_duplicate_ip = true|g' $n2cfg
-	$REGEX_REPLACE 's|log_level = "info"|log_level = "'$LOG_LEVEL'"|g' $n2cfg
-	$REGEX_REPLACE 's|timeout_commit = ".*?"|timeout_commit = "1s"|g' $n2cfg
+	perl -i -pe 's|addr_book_strict = true|addr_book_strict = false|g' $n2cfg
+	perl -i -pe 's|external_address = ""|external_address = "tcp://127.0.0.1:26677"|g' $n2cfg
+	perl -i -pe 's|"tcp://127.0.0.1:26657"|"tcp://0.0.0.0:26677"|g' $n2cfg
+	perl -i -pe 's|"tcp://0.0.0.0:26656"|"tcp://0.0.0.0:26676"|g' $n2cfg
+	perl -i -pe 's|"localhost:6060"|"localhost:6062"|g' $n2cfg
+	perl -i -pe 's|"tcp://0.0.0.0:10337"|"tcp://0.0.0.0:12337"|g' $n2app
+	perl -i -pe 's|"0.0.0.0:1317"|"0.0.0.0:1517"|g' $n2app
+	perl -i -pe 's|"0.0.0.0:9090"|"0.0.0.0:9092"|g' $n2app
+	perl -i -pe 's|allow_duplicate_ip = false|allow_duplicate_ip = true|g' $n2cfg
+	perl -i -pe 's|log_level = "info"|log_level = "'$LOG_LEVEL'"|g' $n2cfg
+	perl -i -pe 's|timeout_commit = ".*?"|timeout_commit = "1s"|g' $n2cfg
 
-	# Set peers for all three nodes
-	peer0="$($NODE_BIN $home0 tendermint show-node-id)\@127.0.0.1:26656"
-	peer1="$($NODE_BIN $home1 tendermint show-node-id)\@127.0.0.1:26666"
-	peer2="$($NODE_BIN $home2 tendermint show-node-id)\@127.0.0.1:26676"
-	$REGEX_REPLACE 's|persistent_peers = ""|persistent_peers = "'$peer1','$peer2'"|g' $n0cfg
-	$REGEX_REPLACE 's|persistent_peers = ""|persistent_peers = "'$peer0','$peer2'"|g' $n1cfg
-	$REGEX_REPLACE 's|persistent_peers = ""|persistent_peers = "'$peer0','$peer1'"|g' $n2cfg
+	echo "Set peers for all three nodes"
+	#There's a bug or something that requires --log_lever to be set explicitly
+	peer0="$($NODE_BIN tendermint show-node-id $home0 --log_level info)\@127.0.0.1:26656"
+	peer1="$($NODE_BIN tendermint show-node-id $home1 --log_level info)\@127.0.0.1:26666"
+	peer2="$($NODE_BIN tendermint show-node-id $home2 --log_level info)\@127.0.0.1:26676"
+	perl -i -pe 's|persistent_peers = ""|persistent_peers = "'$peer1','$peer2'"|g' $n0cfg
+	perl -i -pe 's|persistent_peers = ""|persistent_peers = "'$peer0','$peer2'"|g' $n1cfg
+	perl -i -pe 's|persistent_peers = ""|persistent_peers = "'$peer0','$peer1'"|g' $n2cfg
 fi # data dir check
 
 # Start the instances
 echo "Starting nodes..."
 
-echo $NODE_BIN $home0 start --grpc.address="0.0.0.0:9090"
-
-$NODE_BIN $home0 start --grpc.address="0.0.0.0:9090" > $hdir.n0.log 2>&1 &
-$NODE_BIN $home1 start --grpc.address="0.0.0.0:9091" > $hdir.n1.log 2>&1 &
-$NODE_BIN $home2 start --grpc.address="0.0.0.0:9092" > $hdir.n2.log 2>&1 &
+$NODE_BIN $home0 start --grpc.address="0.0.0.0:9090" --grpc-web.enable=false --log_level info > $hdir.n0.log 2>&1 &
+$NODE_BIN $home1 start --grpc.address="0.0.0.0:9091" --grpc-web.enable=false --log_level info > $hdir.n1.log 2>&1 &
+$NODE_BIN $home2 start --grpc.address="0.0.0.0:9092" --grpc-web.enable=false --log_level info > $hdir.n2.log 2>&1 &
 
 # Wait for chains to start
 echo "Waiting for chains to start..."

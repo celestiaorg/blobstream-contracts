@@ -3,29 +3,28 @@ package cosmos
 import (
 	"context"
 	"fmt"
+	"os"
+	"sort"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
-	log "github.com/xlab/suplog"
-
-	"github.com/InjectiveLabs/sdk-go/chain/client"
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
-
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/keystore"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
-
-	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
+	"github.com/rs/zerolog"
+	"github.com/umee-network/peggo/cmd/peggo/client"
+	"github.com/umee-network/peggo/orchestrator/ethereum/keystore"
+	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
+	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
+	umeeapp "github.com/umee-network/umee/app"
+	"github.com/umee-network/umee/x/peggy/types"
 )
 
 type PeggyBroadcastClient interface {
 	ValFromAddress() sdk.ValAddress
 	AccFromAddress() sdk.AccAddress
 
-	/// Send a transaction updating the eth address for the sending
-	/// Cosmos address. The sending Cosmos address should be a validator
+	// Send a transaction updating the eth address for the sending
+	// Cosmos address. The sending Cosmos address should be a validator
 	UpdatePeggyOrchestratorAddresses(
 		ctx context.Context,
 		ethFrom ethcmn.Address,
@@ -55,6 +54,8 @@ type PeggyBroadcastClient interface {
 		deposits []*wrappers.PeggySendToCosmosEvent,
 		withdraws []*wrappers.PeggyTransactionBatchExecutedEvent,
 		valsetUpdates []*wrappers.PeggyValsetUpdatedEvent,
+		erc20Deployed []*wrappers.PeggyERC20DeployedEvent,
+		loopDuration time.Duration,
 	) error
 
 	// SendToEth broadcasts a Tx that tokens from Cosmos to Ethereum.
@@ -73,21 +74,29 @@ type PeggyBroadcastClient interface {
 	) error
 }
 
+// sortableEvent exists with the only purpose to make a nicer sortable slice for Ethereum events.
+// It is only used in SendEthereumClaims
+type sortableEvent struct {
+	EventNonce         uint64
+	DepositEvent       *wrappers.PeggySendToCosmosEvent
+	WithdrawEvent      *wrappers.PeggyTransactionBatchExecutedEvent
+	ValsetUpdateEvent  *wrappers.PeggyValsetUpdatedEvent
+	ERC20DeployedEvent *wrappers.PeggyERC20DeployedEvent
+}
+
 func NewPeggyBroadcastClient(
+	logger zerolog.Logger,
 	queryClient types.QueryClient,
 	broadcastClient client.CosmosClient,
 	ethSignerFn keystore.SignerFn,
 	ethPersonalSignFn keystore.PersonalSignFn,
 ) PeggyBroadcastClient {
 	return &peggyBroadcastClient{
+		logger:            logger.With().Str("module", "peggy_broadcast_client").Logger(),
 		daemonQueryClient: queryClient,
 		broadcastClient:   broadcastClient,
 		ethSignerFn:       ethSignerFn,
 		ethPersonalSignFn: ethPersonalSignFn,
-
-		svcTags: metrics.Tags{
-			"svc": "peggy_broadcast",
-		},
 	}
 }
 
@@ -100,12 +109,11 @@ func (s *peggyBroadcastClient) AccFromAddress() sdk.AccAddress {
 }
 
 type peggyBroadcastClient struct {
+	logger            zerolog.Logger
 	daemonQueryClient types.QueryClient
 	broadcastClient   client.CosmosClient
 	ethSignerFn       keystore.SignerFn
 	ethPersonalSignFn keystore.PersonalSignFn
-
-	svcTags metrics.Tags
 }
 
 func (s *peggyBroadcastClient) UpdatePeggyOrchestratorAddresses(
@@ -113,9 +121,6 @@ func (s *peggyBroadcastClient) UpdatePeggyOrchestratorAddresses(
 	ethFrom ethcmn.Address,
 	orchestratorAddr sdk.AccAddress,
 ) error {
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
 	// SetOrchestratorAddresses
 
 	// This message allows validators to delegate their voting responsibilities
@@ -135,9 +140,8 @@ func (s *peggyBroadcastClient) UpdatePeggyOrchestratorAddresses(
 	}
 
 	res, err := s.broadcastClient.SyncBroadcastMsg(msg)
-	fmt.Println("Response of set eth address", "res", res)
+	fmt.Fprintf(os.Stderr, "Broadcast MsgSetOrchestratorAddresses response: \n%v\n", res)
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "broadcasting MsgSetOrchestratorAddresses failed")
 		return err
 	}
@@ -151,14 +155,10 @@ func (s *peggyBroadcastClient) SendValsetConfirm(
 	peggyID ethcmn.Hash,
 	valset *types.Valset,
 ) error {
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
 
 	confirmHash := peggy.EncodeValsetConfirm(peggyID, valset)
 	signature, err := s.ethPersonalSignFn(ethFrom, confirmHash.Bytes())
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.New("failed to sign validator address")
 		return err
 	}
@@ -184,7 +184,6 @@ func (s *peggyBroadcastClient) SendValsetConfirm(
 		Signature:    ethcmn.Bytes2Hex(signature),
 	}
 	if err = s.broadcastClient.QueueBroadcastMsg(msg); err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "broadcasting MsgValsetConfirm failed")
 		return err
 	}
@@ -198,14 +197,10 @@ func (s *peggyBroadcastClient) SendBatchConfirm(
 	peggyID ethcmn.Hash,
 	batch *types.OutgoingTxBatch,
 ) error {
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
 
 	confirmHash := peggy.EncodeTxBatchConfirm(peggyID, batch)
 	signature, err := s.ethPersonalSignFn(ethFrom, confirmHash.Bytes())
 	if err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.New("failed to sign validator address")
 		return err
 	}
@@ -226,7 +221,6 @@ func (s *peggyBroadcastClient) SendBatchConfirm(
 		TokenContract: batch.TokenContract,
 	}
 	if err = s.broadcastClient.QueueBroadcastMsg(msg); err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "broadcasting MsgConfirmBatch failed")
 		return err
 	}
@@ -234,25 +228,21 @@ func (s *peggyBroadcastClient) SendBatchConfirm(
 	return nil
 }
 
-func (s *peggyBroadcastClient) sendDepositClaims(
-	ctx context.Context,
-	deposit *wrappers.PeggySendToCosmosEvent,
-) error {
+func (s *peggyBroadcastClient) sendDepositClaims(deposit *wrappers.PeggySendToCosmosEvent) error {
 	// EthereumBridgeDepositClaim
 	// When more than 66% of the active validator set has
 	// claimed to have seen the deposit enter the ethereum blockchain coins are
 	// issued to the Cosmos address in question
 	// -------------
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
 
-	log.WithFields(log.Fields{
-		"sender":      deposit.Sender.Hex(),
-		"destination": sdk.AccAddress(deposit.Destination[12:32]).String(),
-		"amount":      deposit.Amount.String(),
-		"event_nonce": deposit.EventNonce.String(),
-	}).Infoln("Oracle observed a deposit event. Sending MsgDepositClaim")
+	recipientBz := deposit.Destination[:umeeapp.MaxAddrLen]
+
+	s.logger.Info().
+		Str("sender", deposit.Sender.Hex()).
+		Str("recipient", sdk.AccAddress(recipientBz).String()).
+		Str("amount", deposit.Amount.String()).
+		Str("event_nonce", deposit.EventNonce.String()).
+		Msg("oracle observed a deposit event. Sending MsgDepositClaim")
 
 	msg := &types.MsgDepositClaim{
 		EventNonce:     deposit.EventNonce.Uint64(),
@@ -260,37 +250,31 @@ func (s *peggyBroadcastClient) sendDepositClaims(
 		TokenContract:  deposit.TokenContract.Hex(),
 		Amount:         sdk.NewIntFromBigInt(deposit.Amount),
 		EthereumSender: deposit.Sender.Hex(),
-		CosmosReceiver: sdk.AccAddress(deposit.Destination[12:32]).String(),
+		CosmosReceiver: sdk.AccAddress(recipientBz).String(),
 		Orchestrator:   s.broadcastClient.FromAddress().String(),
 	}
 
-	if txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg); err != nil {
-		metrics.ReportFuncError(s.svcTags)
-		log.WithError(err).Errorln("broadcasting MsgDepositClaim failed")
+	txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg)
+	if err != nil {
+		s.logger.Err(err).Msg("broadcasting MsgDepositClaim failed")
 		return err
-	} else {
-		log.WithFields(log.Fields{
-			"event_nonce": deposit.EventNonce.String(),
-			"txHash":      txResponse.TxHash,
-		}).Infoln("Oracle sent deposit event succesfully")
 	}
+
+	s.logger.Info().
+		Str("tx_hash", txResponse.TxHash).
+		Str("event_nonce", deposit.EventNonce.String()).
+		Msg("oracle sent deposit event successfully")
 
 	return nil
 }
 
-func (s *peggyBroadcastClient) sendWithdrawClaims(
-	ctx context.Context,
-	withdraw *wrappers.PeggyTransactionBatchExecutedEvent,
-) error {
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
+func (s *peggyBroadcastClient) sendWithdrawClaims(withdraw *wrappers.PeggyTransactionBatchExecutedEvent) error {
 
-	log.WithFields(log.Fields{
-		"nonce":          withdraw.BatchNonce.String(),
-		"token_contract": withdraw.Token.Hex(),
-		"event_nonce":    withdraw.EventNonce.String(),
-	}).Infoln("Oracle observed a withdraw batch event. Sending MsgWithdrawClaim")
+	s.logger.Info().
+		Str("nonce", withdraw.BatchNonce.String()).
+		Str("token_contract", withdraw.Token.Hex()).
+		Str("event_nonce", withdraw.EventNonce.String()).
+		Msg("oracle observed a withdraw event. Sending MsgWithdrawClaim")
 
 	// WithdrawClaim claims that a batch of withdrawal
 	// operations on the bridge contract was executed.
@@ -302,36 +286,30 @@ func (s *peggyBroadcastClient) sendWithdrawClaims(
 		Orchestrator:  s.AccFromAddress().String(),
 	}
 
-	if txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg); err != nil {
-		metrics.ReportFuncError(s.svcTags)
-		log.WithError(err).Errorln("broadcasting MsgWithdrawClaim failed")
+	txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg)
+	if err != nil {
+		s.logger.Err(err).Msg("broadcasting MsgWithdrawClaim failed")
 		return err
-	} else {
-		log.WithFields(log.Fields{
-			"event_nonce": withdraw.EventNonce.String(),
-			"txHash":      txResponse.TxHash,
-		}).Infoln("Oracle sent Withdraw event succesfully")
 	}
+
+	s.logger.Info().
+		Str("tx_hash", txResponse.TxHash).
+		Str("event_nonce", withdraw.EventNonce.String()).
+		Msg("oracle sent Withdraw event successfully")
 
 	return nil
 }
 
-func (s *peggyBroadcastClient) sendValsetUpdateClaims(
-	ctx context.Context,
-	valsetUpdate *wrappers.PeggyValsetUpdatedEvent,
-) error {
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
+func (s *peggyBroadcastClient) sendValsetUpdateClaims(valsetUpdate *wrappers.PeggyValsetUpdatedEvent) error {
 
-	log.WithFields(log.Fields{
-		"EventNonce":   valsetUpdate.EventNonce.Uint64(),
-		"ValsetNonce":  valsetUpdate.NewValsetNonce.Uint64(),
-		"_validators":  valsetUpdate.Validators,
-		"_powers":      valsetUpdate.Powers,
-		"rewardAmount": valsetUpdate.RewardAmount,
-		"rewardToken":  valsetUpdate.RewardToken.Hex(),
-	}).Infoln("Oracle observed a valsetUpdate event. Sending MsgValsetUpdatedClaim")
+	s.logger.Info().
+		Str("event_nonce", valsetUpdate.EventNonce.String()).
+		Uint64("valset_nonce", valsetUpdate.NewValsetNonce.Uint64()).
+		Int("validators", len(valsetUpdate.Validators)).
+		Interface("powers", valsetUpdate.Powers).
+		Uint64("reward_amount", valsetUpdate.RewardAmount.Uint64()).
+		Str("reward_token", valsetUpdate.RewardToken.Hex()).
+		Msg("oracle observed a valset update event; sending MsgValsetUpdateClaim")
 
 	members := make([]*types.BridgeValidator, len(valsetUpdate.Validators))
 	for i, val := range valsetUpdate.Validators {
@@ -351,16 +329,49 @@ func (s *peggyBroadcastClient) sendValsetUpdateClaims(
 		Orchestrator: s.AccFromAddress().String(),
 	}
 
-	if txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg); err != nil {
-		metrics.ReportFuncError(s.svcTags)
-		log.WithError(err).Errorln("broadcasting MsgValsetUpdatedClaim failed")
+	txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg)
+	if err != nil {
+		s.logger.Err(err).Msg("broadcasting MsgValsetUpdatedClaim failed")
 		return err
-	} else {
-		log.WithFields(log.Fields{
-			"event_nonce": valsetUpdate.EventNonce.String(),
-			"txHash":      txResponse.TxHash,
-		}).Infoln("Oracle sent ValsetUpdate event succesfully")
 	}
+
+	s.logger.Info().
+		Str("tx_hash", txResponse.TxHash).
+		Str("event_nonce", valsetUpdate.EventNonce.String()).
+		Msg("oracle sent ValsetUpdate event successfully")
+
+	return nil
+}
+
+func (s *peggyBroadcastClient) sendERC20DeployedClaims(event *wrappers.PeggyERC20DeployedEvent) error {
+
+	s.logger.Info().
+		Str("event_nonce", event.EventNonce.String()).
+		Str("token_contract", event.TokenContract.Hex()).
+		Str("cosmos_denom", event.CosmosDenom).
+		Msg("oracle observed an ERC20 deployed event; sending MsgERC20DeployedClaim")
+
+	msg := &types.MsgERC20DeployedClaim{
+		EventNonce:    event.EventNonce.Uint64(),
+		BlockHeight:   event.Raw.BlockNumber,
+		Orchestrator:  s.AccFromAddress().String(),
+		CosmosDenom:   event.CosmosDenom,
+		TokenContract: event.TokenContract.Hex(),
+		Name:          event.Name,
+		Decimals:      uint64(event.Decimals),
+		Symbol:        event.Symbol,
+	}
+
+	txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg)
+	if err != nil {
+		s.logger.Err(err).Msg("broadcasting ERC20DeployedClaim failed")
+		return err
+	}
+
+	s.logger.Info().
+		Str("tx_hash", txResponse.TxHash).
+		Str("event_nonce", event.EventNonce.String()).
+		Msg("oracle sent ERC20Deployed event successfully")
 
 	return nil
 }
@@ -371,50 +382,93 @@ func (s *peggyBroadcastClient) SendEthereumClaims(
 	deposits []*wrappers.PeggySendToCosmosEvent,
 	withdraws []*wrappers.PeggyTransactionBatchExecutedEvent,
 	valsetUpdates []*wrappers.PeggyValsetUpdatedEvent,
+	erc20Deployed []*wrappers.PeggyERC20DeployedEvent,
+	cosmosBlockTime time.Duration,
 ) error {
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
+	allevents := []sortableEvent{}
 
-	totalClaimEvents := len(deposits) + len(withdraws) + len(valsetUpdates)
-	var count, i, j, k int
-
-	// Individual arrays (deposits, withdraws, valsetUpdates) are sorted.
-	// Broadcast claim events sequentially starting with eventNonce = lastClaimEvent + 1.
-	for count < totalClaimEvents {
-		if i < len(deposits) && deposits[i].EventNonce.Uint64() == lastClaimEvent+1 {
-			// send deposit
-			if err := s.sendDepositClaims(ctx, deposits[i]); err != nil {
-				metrics.ReportFuncError(s.svcTags)
-				log.WithError(err).Errorln("broadcasting MsgDepositClaim failed")
-				return err
-			}
-			i++
-		} else if j < len(withdraws) && withdraws[j].EventNonce.Uint64() == lastClaimEvent+1 {
-			// send withdraw claim
-			if err := s.sendWithdrawClaims(ctx, withdraws[j]); err != nil {
-				metrics.ReportFuncError(s.svcTags)
-				log.WithError(err).Errorln("broadcasting MsgWithdrawClaim failed")
-				return err
-			}
-			j++
-		} else if k < len(valsetUpdates) && valsetUpdates[k].EventNonce.Uint64() == lastClaimEvent+1 {
-			// send valset update claim
-			if err := s.sendValsetUpdateClaims(ctx, valsetUpdates[k]); err != nil {
-				metrics.ReportFuncError(s.svcTags)
-				log.WithError(err).Errorln("broadcasting MsgValsetUpdateClaim failed")
-				return err
-			}
-			k++
+	// We add all the events to the same list to be sorted.
+	// Only events that have a nonce higher than the last claim event will be appended.
+	for _, ev := range deposits {
+		if ev.EventNonce.Uint64() > lastClaimEvent {
+			allevents = append(allevents, sortableEvent{
+				EventNonce:   ev.EventNonce.Uint64(),
+				DepositEvent: ev,
+			})
 		}
-		count = count + 1
-		lastClaimEvent = lastClaimEvent + 1
-
-		// Considering blockTime=2.8s on Injective chain, Adding Sleep to make sure new event is
-		// sent only after previous event is executed successfully.
-		// Otherwise it will through `non contiguous event nonce` failing CheckTx.
-		time.Sleep(3 * time.Second)
 	}
+
+	for _, ev := range withdraws {
+		if ev.EventNonce.Uint64() > lastClaimEvent {
+			allevents = append(allevents, sortableEvent{
+				EventNonce:    ev.EventNonce.Uint64(),
+				WithdrawEvent: ev,
+			})
+		}
+	}
+
+	for _, ev := range valsetUpdates {
+		if ev.EventNonce.Uint64() > lastClaimEvent {
+			allevents = append(allevents, sortableEvent{
+				EventNonce:        ev.EventNonce.Uint64(),
+				ValsetUpdateEvent: ev,
+			})
+		}
+	}
+
+	for _, ev := range erc20Deployed {
+		if ev.EventNonce.Uint64() > lastClaimEvent {
+			allevents = append(allevents, sortableEvent{
+				EventNonce:         ev.EventNonce.Uint64(),
+				ERC20DeployedEvent: ev,
+			})
+		}
+	}
+
+	// Use SliceStable so we always get the same order
+	sort.SliceStable(allevents, func(i, j int) bool {
+		return allevents[i].EventNonce < allevents[j].EventNonce
+	})
+
+	// iterate through events and send them sequentially
+	for _, ev := range allevents {
+		// If the event nonce isn't sequential, we break from this loop
+		// given that the events are sorted, this should never happen.
+		if ev.EventNonce != lastClaimEvent+1 {
+			break
+		}
+
+		switch {
+		case ev.DepositEvent != nil:
+			err := s.sendDepositClaims(ev.DepositEvent)
+			if err != nil {
+				s.logger.Err(err).Msg("broadcasting MsgDepositClaim failed")
+				return err
+			}
+		case ev.WithdrawEvent != nil:
+			err := s.sendWithdrawClaims(ev.WithdrawEvent)
+			if err != nil {
+				s.logger.Err(err).Msg("broadcasting MsgWithdrawClaim failed")
+				return err
+			}
+		case ev.ValsetUpdateEvent != nil:
+			err := s.sendValsetUpdateClaims(ev.ValsetUpdateEvent)
+			if err != nil {
+				s.logger.Err(err).Msg("broadcasting MsgValsetUpdateClaim failed")
+				return err
+			}
+		case ev.ERC20DeployedEvent != nil:
+			err := s.sendERC20DeployedClaims(ev.ERC20DeployedEvent)
+			if err != nil {
+				s.logger.Err(err).Msg("broadcasting MsgERC20DeployedClaim failed")
+				return err
+			}
+		}
+
+		lastClaimEvent++
+		time.Sleep(cosmosBlockTime)
+	}
+
 	return nil
 }
 
@@ -435,9 +489,6 @@ func (s *peggyBroadcastClient) SendToEth(
 	// the fee paid for the bridge, distinct from the fee paid to the chain to
 	// actually send this message in the first place. So a successful send has
 	// two layers of fees for the user
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
 
 	msg := &types.MsgSendToEth{
 		Sender:    s.AccFromAddress().String(),
@@ -446,7 +497,6 @@ func (s *peggyBroadcastClient) SendToEth(
 		BridgeFee: fee, // TODO: use exactly that fee for transaction
 	}
 	if err := s.broadcastClient.QueueBroadcastMsg(msg); err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "broadcasting MsgSendToEth failed")
 		return err
 	}
@@ -467,16 +517,12 @@ func (s *peggyBroadcastClient) SendRequestBatch(
 	// batch, sign it, submit the signatures with a MsgConfirmBatch before a relayer
 	// can finally submit the batch
 	// -------------
-	metrics.ReportFuncCall(s.svcTags)
-	doneFn := metrics.ReportFuncTiming(s.svcTags)
-	defer doneFn()
-	
+
 	msg := &types.MsgRequestBatch{
 		Denom:        denom,
 		Orchestrator: s.AccFromAddress().String(),
 	}
 	if err := s.broadcastClient.QueueBroadcastMsg(msg); err != nil {
-		metrics.ReportFuncError(s.svcTags)
 		err = errors.Wrap(err, "broadcasting MsgRequestBatch failed")
 		return err
 	}

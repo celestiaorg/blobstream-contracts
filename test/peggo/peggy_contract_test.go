@@ -5,18 +5,16 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/InjectiveLabs/etherman/deployer"
+	"github.com/InjectiveLabs/etherman/sol"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	ctypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"github.com/InjectiveLabs/etherman/deployer"
-
-	"github.com/InjectiveLabs/etherman/sol"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
-	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
+	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
+	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
 )
 
 var _ = Describe("Contract Tests", func() {
@@ -213,7 +211,7 @@ var _ = Describe("Contract Tests", func() {
 					)
 					Ω(err).Should(BeNil())
 
-					offchainCheckpoint := makeValsetCheckpoint(peggyID, validators, powers, big.NewInt(0))
+					offchainCheckpoint := makeValsetCheckpoint(peggyID, validators, powers, big.NewInt(0), big.NewInt(0), zeroAddress)
 
 					err = outAbi.Copy(&state_lastValsetCheckpoint, out)
 					Ω(err).Should(BeNil())
@@ -298,6 +296,8 @@ var _ = Describe("Contract Tests", func() {
 							newValidators,
 							newPowers,
 							nextValsetNonce,
+							big.NewInt(0),
+							zeroAddress,
 						)
 
 						sigsV, sigsR, sigsS, signValsetErr = signDigest(
@@ -311,17 +311,27 @@ var _ = Describe("Contract Tests", func() {
 							return
 						}
 
+						// TODO: add reward amount and reward token
+						currentValsetArgs := peggy.ValsetArgs{
+							Validators:   validators,
+							Powers:       powers,
+							ValsetNonce:  state_lastValsetNonce,
+							RewardAmount: &big.Int{},
+							RewardToken:  common.Address{},
+						}
+
+						newValsetArgs := peggy.ValsetArgs{
+							Validators:   newValidators,
+							Powers:       newPowers,
+							ValsetNonce:  nextValsetNonce,
+							RewardAmount: &big.Int{},
+							RewardToken:  common.Address{},
+						}
+
 						updateValsetTxHash, _, updateValsetErr = ContractDeployer.Tx(context.Background(), peggyTxOpts,
 							"updateValset", withArgsFn(
-								// The new version of the validator set
-								newValidators,   // address[] memory _newValidators,
-								newPowers,       // uint256[] memory _newPowers,
-								nextValsetNonce, // uint256 _newValsetNonce,
-								// The current validators that approve the change
-								validators,            // address[] memory _currentValidators,
-								powers,                // uint256[] memory _currentPowers,
-								state_lastValsetNonce, // uint256 _currentValsetNonce,
-								// These are arrays of the parts of the current validator's signatures
+								newValsetArgs,
+								currentValsetArgs,
 								sigsV, // uint8[] memory _v,
 								sigsR, // bytes32[] memory _r,
 								sigsS, // bytes32[] memory _s
@@ -413,23 +423,38 @@ var _ = Describe("Contract Tests", func() {
 							validators,
 							powers,
 							nextValsetNonce,
+							big.NewInt(0),
+							zeroAddress,
 						)
 
 						sigsV, sigsR, sigsS, signValsetErr = signDigest(
 							valsetCheckpointHash, getSigningKeysForAddresses(newValidators, CosmosAccounts[:3]...)...)
 						orFail(signValsetErr)
 
+						// TODO: add reward amount and reward token
+						currentValsetArgs := peggy.ValsetArgs{
+							Validators:   validators,
+							Powers:       powers,
+							ValsetNonce:  nextValsetNonce,
+							RewardAmount: &big.Int{},
+							RewardToken:  common.Address{},
+						}
+
+						newValsetArgs := peggy.ValsetArgs{
+							Validators:   newValidators,
+							Powers:       newPowers,
+							ValsetNonce:  state_lastValsetNonce,
+							RewardAmount: &big.Int{},
+							RewardToken:  common.Address{},
+						}
+
 						// NOTE: this is a rollback, the current valset was the "new valset".
 						rollbackValsetTxHash, _, rollbackValsetErr = ContractDeployer.Tx(context.Background(), peggyTxOpts,
 							"updateValset", withArgsFn(
 								// The new version of the validator set
-								validators,      // address[] memory _newValidators,
-								powers,          // uint256[] memory _newPowers,
-								nextValsetNonce, // uint256 _newValsetNonce,
+								currentValsetArgs,
 								// The current validators that approve the change
-								newValidators,         // address[] memory _currentValidators,
-								newPowers,             // uint256[] memory _currentPowers,
-								state_lastValsetNonce, // uint256 _currentValsetNonce,
+								newValsetArgs,
 								// These are arrays of the parts of the current validator's signatures
 								sigsV, // uint8[] memory _v,
 								sigsR, // bytes32[] memory _r,
@@ -530,7 +555,7 @@ var _ = Describe("Contract Tests", func() {
 					}
 
 					erc20DeployTxHash, _, erc20DeployErr = ContractDeployer.Tx(context.Background(), peggyTxOpts,
-						"deployERC20", withArgsFn("inj", "INJ", "INJ", byte(18)),
+						"deployERC20", withArgsFn("uumee", "UMEE", "UMEE", byte(18)),
 					)
 					orFail(erc20DeployErr)
 				})
@@ -566,9 +591,9 @@ var _ = Describe("Contract Tests", func() {
 
 					_ = Describe("ERC20DeployedEvent", func() {
 						It("Should have valid token params", func() {
-							Ω(erc20DeployedEvent.CosmosDenom).Should(Equal("inj"))
-							Ω(erc20DeployedEvent.Symbol).Should(Equal("INJ"))
-							Ω(erc20DeployedEvent.Name).Should(Equal("INJ"))
+							Ω(erc20DeployedEvent.CosmosDenom).Should(Equal("uumee"))
+							Ω(erc20DeployedEvent.Symbol).Should(Equal("UMEE"))
+							Ω(erc20DeployedEvent.Name).Should(Equal("UMEE"))
 							Ω(erc20DeployedEvent.Decimals).Should(BeEquivalentTo(18))
 						})
 
@@ -670,12 +695,19 @@ var _ = Describe("Contract Tests", func() {
 									return
 								}
 
+								// TODO: add reward amount and reward token
+								currentValsetArgs := peggy.ValsetArgs{
+									Validators:   validators,
+									Powers:       powers,
+									ValsetNonce:  state_lastValsetNonce,
+									RewardAmount: &big.Int{},
+									RewardToken:  common.Address{},
+								}
+
 								submitBatchTxHash, _, submitBatchErr = ContractDeployer.Tx(context.Background(), peggyTxOpts,
 									"submitBatch", withArgsFn(
 										// The validators that approve the batch
-										validators,            // 	address[] memory _currentValidators,
-										powers,                // 	uint256[] memory _currentPowers,
-										state_lastValsetNonce, // 	uint256 _currentValsetNonce,
+										currentValsetArgs,
 
 										// These are arrays of the parts of the validators signatures
 										sigsV, // 	uint8[] memory _v,

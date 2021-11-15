@@ -10,16 +10,15 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	"github.com/shopspring/decimal"
-
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/committer"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/provider"
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
-	wrappers "github.com/InjectiveLabs/peggo/solidity/wrappers/Peggy.sol"
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
+	"github.com/umee-network/peggo/orchestrator/ethereum/committer"
+	"github.com/umee-network/peggo/orchestrator/ethereum/provider"
+	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
+	"github.com/umee-network/umee/x/peggy/types"
 )
 
-type PeggyContract interface {
+type Contract interface {
 	committer.EVMCommitter
 
 	Address() common.Address
@@ -67,38 +66,41 @@ type PeggyContract interface {
 		erc20ContractAddress common.Address,
 		callerAddress common.Address,
 	) (symbol string, err error)
+
+	GetERC20Decimals(
+		ctx context.Context,
+		erc20ContractAddress common.Address,
+		callerAddress common.Address,
+	) (decimals uint8, err error)
 }
 
 func NewPeggyContract(
+	logger zerolog.Logger,
 	ethCommitter committer.EVMCommitter,
 	peggyAddress common.Address,
-) (PeggyContract, error) {
+) (Contract, error) {
 	ethPeggy, err := wrappers.NewPeggy(peggyAddress, ethCommitter.Provider())
 	if err != nil {
 		return nil, err
 	}
 
 	svc := &peggyContract{
+		logger:       logger.With().Str("module", "peggy_contract").Logger(),
 		EVMCommitter: ethCommitter,
 		peggyAddress: peggyAddress,
 		ethPeggy:     ethPeggy,
-
-		svcTags: metrics.Tags{
-			"svc": "peggy_contract",
-		},
 	}
 
 	return svc, nil
 }
 
 type peggyContract struct {
+	logger zerolog.Logger
 	committer.EVMCommitter
 
 	ethProvider  provider.EVMProvider
 	peggyAddress common.Address
 	ethPeggy     *wrappers.Peggy
-
-	svcTags metrics.Tags
 }
 
 func (s *peggyContract) Address() common.Address {
