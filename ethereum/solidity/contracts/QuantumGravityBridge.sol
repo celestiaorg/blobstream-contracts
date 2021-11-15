@@ -24,6 +24,17 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
     // Inherited contracts contain storage slots and must be accounted for in any upgrades
     // always test an exact upgrade on testnet and localhost before mainnet upgrades.
 
+    ///////////////
+    // Constants //
+    ///////////////
+
+    // bytes32 encoding of the string "checkpoint"
+    bytes32 constant VALIDATOR_SET_HASH_DOMAIN_SEPARATOR =
+        0x636865636b706f696e7400000000000000000000000000000000000000000000;
+
+    // bytes32 encoding of the string "transactionBatch"
+    bytes32 constant MESSAGE_ROOT_DOMAIN_SEPARATOR = 0x7472616e73616374696f6e426174636800000000000000000000000000000000;
+
     ////////////////
     // Immutables //
     ////////////////
@@ -138,10 +149,9 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         uint256 _powerThreshold,
         bytes32 _validatorSetHash
     ) private pure returns (bytes32) {
-        // bytes32 encoding of the string "checkpoint"
-        bytes32 methodName = 0x636865636b706f696e7400000000000000000000000000000000000000000000;
-
-        bytes32 c = keccak256(abi.encode(_bridge_id, methodName, _nonce, _powerThreshold, _validatorSetHash));
+        bytes32 c = keccak256(
+            abi.encode(_bridge_id, VALIDATOR_SET_HASH_DOMAIN_SEPARATOR, _nonce, _powerThreshold, _validatorSetHash)
+        );
 
         return c;
     }
@@ -158,10 +168,7 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         uint256 _nonce,
         bytes32 _messageRoot
     ) private pure returns (bytes32) {
-        // bytes32 encoding of the string "transactionBatch"
-        bytes32 methodName = 0x7472616e73616374696f6e426174636800000000000000000000000000000000;
-
-        bytes32 c = keccak256(abi.encode(_bridge_id, methodName, _nonce, _messageRoot));
+        bytes32 c = keccak256(abi.encode(_bridge_id, MESSAGE_ROOT_DOMAIN_SEPARATOR, _nonce, _messageRoot));
 
         return c;
     }
