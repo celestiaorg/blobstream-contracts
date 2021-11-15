@@ -275,9 +275,9 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         emit ValidatorSetUpdatedEvent(_newNonce, _newPowerThreshold, _newValidatorSetHash);
     }
 
-    /// @notice Relays a root of Celestia -> Ethereum messages. Anyone can
-    // call this function, but they must supply valid signatures of the current
-    // validator set over the message root.
+    /// @notice Relays a root of Celestia -> Ethereum messages. Anyone can call
+    /// this function, but they must supply valid signatures of the current
+    /// validator set over the message root.
     /// @param _nonce The message root nonce.
     /// @param _messageRoot The Merkle root of messages.
     /// @param _currentValidatorSet The current validator set.
