@@ -134,6 +134,12 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         return _signer == ECDSA.recover(digest_eip191, _sig.v, _sig.r, _sig.s);
     }
 
+    /// @dev Computes the hash of a validator set.
+    /// @param _validators The validator set to hash.
+    function computeValidatorSetHash(Validator[] calldata _validators) private pure returns (bytes32) {
+        return keccak256(abi.encode(_validators));
+    }
+
     /// @dev Make a domain-separated commitment to the validator set.
     /// A hash of all relevant information about the validator set.
     /// The format of the hash is:
@@ -241,7 +247,7 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         }
 
         // Check that the supplied current validator set matches the saved checkpoint.
-        bytes32 currentValidatorSetHash = keccak256(abi.encode(_currentValidatorSet));
+        bytes32 currentValidatorSetHash = computeValidatorSetHash(_currentValidatorSet);
         if (
             domainSeparateValidatorSetHash(BRIDGE_ID, currentNonce, currentPowerThreshold, currentValidatorSetHash) !=
             s_lastValidatorSetCheckpoint
@@ -297,7 +303,7 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         }
 
         // Check that the supplied current validator set matches the saved checkpoint.
-        bytes32 currentValidatorSetHash = keccak256(abi.encode(_currentValidatorSet));
+        bytes32 currentValidatorSetHash = computeValidatorSetHash(_currentValidatorSet);
         if (
             domainSeparateValidatorSetHash(
                 BRIDGE_ID,
