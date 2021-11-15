@@ -14,9 +14,9 @@ import (
 
 const (
 	// PeggyDenomPrefix indicates the prefix for all assests minted by this module
-	PeggyDenomPrefix = "inj"
+	PeggyDenomPrefix = "umee"
 
-	// PeggyDenomSeperator is the seperator for peggy denoms
+	// PeggyDenomSeperator is the separator for peggy denoms
 	PeggyDenomSeperator = "/"
 
 	ETHContractAddressLen = 42
@@ -27,7 +27,7 @@ const (
 
 // EthAddrLessThan migrates the Ethereum address less than function
 func EthAddrLessThan(e, o string) bool {
-	return bytes.Compare([]byte(e)[:], []byte(o)[:]) == -1
+	return bytes.Compare([]byte(e), []byte(o)) == -1
 }
 
 var hexRx = regexp.MustCompile("^0x[0-9a-fA-F]{40}$")

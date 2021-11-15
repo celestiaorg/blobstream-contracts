@@ -55,43 +55,57 @@ func BindContract(client *ethclient.Client, contract *Contract) (*BoundContract,
 	return bound, nil
 }
 
-func (contract *BoundContract) SetTransact(fn TransactFunc) {
-	contract.transactFn = fn
+func (c *BoundContract) SetTransact(fn TransactFunc) {
+	c.transactFn = fn
 }
 
-func (contract *BoundContract) SetClient(client *ethclient.Client) {
-	contract.client = client
-	contract.BoundContract = bind.NewBoundContract(
-		contract.address, contract.abi, client, client, client)
+func (c *BoundContract) SetClient(client *ethclient.Client) {
+	c.client = client
+	c.BoundContract = bind.NewBoundContract(
+		c.address, c.abi, client, client, client)
 }
 
-func (contract *BoundContract) Client() *ethclient.Client {
-	return contract.client
+func (c *BoundContract) Client() *ethclient.Client {
+	return c.client
 }
 
-func (contract *BoundContract) Address() common.Address {
-	return contract.address
+func (c *BoundContract) Address() common.Address {
+	return c.address
 }
 
-func (contract *BoundContract) SetAddress(address common.Address) {
-	contract.address = address
-	contract.BoundContract = bind.NewBoundContract(
-		address, contract.abi, contract.client, contract.client, contract.client)
+func (c *BoundContract) SetAddress(address common.Address) {
+	c.address = address
+	c.BoundContract = bind.NewBoundContract(
+		address, c.abi, c.client, c.client, c.client)
 }
 
-func (contract *BoundContract) Source() *Contract {
-	return contract.src
+func (c *BoundContract) Source() *Contract {
+	return c.src
 }
 
-func (contract *BoundContract) ABI() abi.ABI {
-	return contract.abi
+func (c *BoundContract) ABI() abi.ABI {
+	return c.abi
 }
 
-func (c *BoundContract) DeployContract(opts *bind.TransactOpts, params ...interface{}) (common.Address, *types.Transaction, error) {
+func (c *BoundContract) DeployContract(
+	opts *bind.TransactOpts,
+	params ...interface{},
+) (
+	common.Address,
+	*types.Transaction,
+	error,
+) {
 	panic("not implemented")
 }
 
-func (c *BoundContract) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+func (c *BoundContract) Transact(
+	opts *bind.TransactOpts,
+	method string,
+	params ...interface{},
+) (
+	*types.Transaction,
+	error,
+) {
 	if c.transactFn == nil {
 		return c.BoundContract.Transact(opts, method, params...)
 	}

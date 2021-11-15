@@ -2,12 +2,13 @@ package relayer
 
 import (
 	"context"
+	"time"
 
-	"github.com/InjectiveLabs/sdk-go/chain/peggy/types"
-	"github.com/InjectiveLabs/peggo/orchestrator/cosmos"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/provider"
-	"github.com/InjectiveLabs/peggo/orchestrator/metrics"
+	"github.com/rs/zerolog"
+	"github.com/umee-network/peggo/orchestrator/cosmos"
+	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
+	"github.com/umee-network/peggo/orchestrator/ethereum/provider"
+	"github.com/umee-network/umee/x/peggy/types"
 )
 
 type PeggyRelayer interface {
@@ -19,29 +20,30 @@ type PeggyRelayer interface {
 }
 
 type peggyRelayer struct {
-	svcTags metrics.Tags
-
+	logger             zerolog.Logger
 	cosmosQueryClient  cosmos.PeggyQueryClient
-	peggyContract      peggy.PeggyContract
+	peggyContract      peggy.Contract
 	ethProvider        provider.EVMProvider
 	valsetRelayEnabled bool
 	batchRelayEnabled  bool
+	loopDuration       time.Duration
 }
 
 func NewPeggyRelayer(
+	logger zerolog.Logger,
 	cosmosQueryClient cosmos.PeggyQueryClient,
-	peggyContract peggy.PeggyContract,
+	peggyContract peggy.Contract,
 	valsetRelayEnabled bool,
 	batchRelayEnabled bool,
+	loopDuration time.Duration,
 ) PeggyRelayer {
 	return &peggyRelayer{
+		logger:             logger.With().Str("module", "peggy_relayer").Logger(),
 		cosmosQueryClient:  cosmosQueryClient,
 		peggyContract:      peggyContract,
 		ethProvider:        peggyContract.Provider(),
 		valsetRelayEnabled: valsetRelayEnabled,
 		batchRelayEnabled:  batchRelayEnabled,
-		svcTags: metrics.Tags{
-			"svc": "peggy_relayer",
-		},
+		loopDuration:       loopDuration,
 	}
 }

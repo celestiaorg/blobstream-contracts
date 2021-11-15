@@ -15,7 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	log "github.com/xlab/suplog"
+	"github.com/rs/zerolog"
 )
 
 type PersonalSignFn func(account common.Address, data []byte) (sig []byte, err error)
@@ -33,8 +33,9 @@ type EthKeyStore interface {
 	Paths() []string
 }
 
-func New(paths ...string) (EthKeyStore, error) {
+func New(logger zerolog.Logger, paths ...string) (EthKeyStore, error) {
 	ks := &keyStore{
+		logger:   logger.With().Str("module", "eth_key_store").Logger(),
 		cache:    NewKeyCache(),
 		paths:    make(map[string]struct{}),
 		pathsMux: new(sync.RWMutex),
@@ -49,6 +50,7 @@ func New(paths ...string) (EthKeyStore, error) {
 }
 
 type keyStore struct {
+	logger   zerolog.Logger
 	cache    KeyCache
 	paths    map[string]struct{}
 	pathsMux *sync.RWMutex
@@ -79,24 +81,33 @@ func (ks *keyStore) Accounts() []common.Address {
 			accounts = append(accounts, spec.AddressFromHex())
 			return nil
 		}); err != nil {
-			log.WithField("keystore", keystorePath).WithError(err).Warningln("failed to read keystore files")
+			ks.logger.Err(err).
+				Str("keystore_path", keystorePath).
+				Msg("failed to read keystore files")
 		}
 	}
 
 	return accounts
 }
 
-var errRangeStop = errors.New("stop")
-
 func (ks *keyStore) forEachWallet(keystorePath string, fn func(spec *WalletSpec) error) error {
 	return filepath.Walk(keystorePath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
+		switch {
+		case err != nil:
 			return err
-		} else if path == keystorePath {
+		case path == keystorePath:
 			return nil
-		} else if info.IsDir() {
+		case info.IsDir():
 			return filepath.SkipDir
 		}
+		// Original
+		// if err != nil {
+		// 	return err
+		// } else if path == keystorePath {
+		// 	return nil
+		// } else if info.IsDir() {
+		// 	return filepath.SkipDir
+		// }
 		var spec *WalletSpec
 		if data, err := ioutil.ReadFile(path); err != nil {
 			return err
@@ -138,7 +149,9 @@ func (ks *keyStore) reloadPathsCache() {
 			return nil
 		})
 		if err != nil {
-			log.WithField("keystore", keystorePath).WithError(err).Warningln("failed to read keystore files")
+			ks.logger.Err(err).
+				Str("keystore_path", keystorePath).
+				Msg("failed to read keystore files")
 		}
 	}
 }
@@ -156,7 +169,7 @@ func (ks *keyStore) Paths() []string {
 		paths = append(paths, p)
 	}
 	ks.pathsMux.RUnlock()
-	sort.Sort(sort.StringSlice(paths))
+	sort.Strings(paths)
 	return paths
 }
 

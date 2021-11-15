@@ -1,11 +1,18 @@
-package main
+package peggo
 
-import cli "github.com/jawher/mow.cli"
+import (
+	"github.com/spf13/cobra"
+)
 
-// queryCmdSubset contains actions that query stuff from Peggy module
-// and the Ethereum contract
-//
-// $ peggo q
-func queryCmdSubset(cmd *cli.Cmd) {
+func getQueryCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "query",
+		Aliases: []string{"q"},
+		Short:   "Query commands that can get state info from Peggy",
+	}
 
+	// TODO: Add commands. Injective's Peggo doesn't have any at the moment.
+	cmd.AddCommand()
+
+	return cmd
 }

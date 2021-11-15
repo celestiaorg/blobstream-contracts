@@ -6,11 +6,10 @@ import (
 	"strings"
 
 	"github.com/InjectiveLabs/etherman/deployer"
-	. "github.com/onsi/ginkgo"
-
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	. "github.com/onsi/ginkgo"
 )
 
 // Returns a hex string representation of text, exactly 32 bytes wide. Strings must be 31 bytes or shorter, or an exception is thrown.

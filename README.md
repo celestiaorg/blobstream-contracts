@@ -1,83 +1,143 @@
-# Injective's Peggo [![Peggy.sol MythX](https://badgen.net/https/api.mythx.io/v1/projects/82ca9468-f86d-4550-a0ae-bc120eeb055f/badge/data?cache=300&icon=https://raw.githubusercontent.com/ConsenSys/mythx-github-badge/main/logo_white.svg)](https://docs.mythx.io/dashboard/github-badges)
+# Peggo
 
-Peggo is a Go implementation of the Peggy Orchestrator for the Injective Chain.
+<!-- markdownlint-disable MD041 -->
 
-`orchestrator` package provides all required components, while `orchestrator/cmd` has exectables that run.
+[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://img.shields.io/badge/repo%20status-WIP-yellow.svg?style=flat-square)](https://www.repostatus.org/#wip)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue?style=flat-square&logo=go)](https://godoc.org/github.com/umee-network/peggo)
+[![Go Report Card](https://goreportcard.com/badge/github.com/umee-network/peggo?style=flat-square)](https://goreportcard.com/report/github.com/umee-network/peggo)
+[![Version](https://img.shields.io/github/tag/umee-network/peggo.svg?style=flat-square)](https://github.com/umee-network/peggo/releases/latest)
+[![License: Apache-2.0](https://img.shields.io/github/license/umee-network/peggo.svg?style=flat-square)](https://github.com/umee-network/peggo/blob/main/LICENSE)
+[![Lines Of Code](https://img.shields.io/tokei/lines/github/umee-network/peggo?style=flat-square)](https://github.com/umee-network/peggo)
+[![GitHub Super-Linter](https://img.shields.io/github/workflow/status/umee-network/peggo/Lint?style=flat-square&label=Lint)](https://github.com/marketplace/actions/super-linter)
 
-List of executables:
+Peggo is a Go implementation of the Peggy (Gravity Bridge) Orchestrator originally
+implemented by [Injective Labs](https://github.com/InjectiveLabs/). Peggo itself
+is a fork of the original Gravity Bridge Orchestrator implemented by [Althea](https://github.com/althea-net).
 
-* `peggo_orchestrator` is the main Validator companion binary for Peggy.
-* `register_eth_key` is a special purpose binary for bootstrapping Peggy chains.
+
+## Table of Contents
+
+- [Dependencies](#dependencies)
+- [Installation](#installation)
+- [How to run](#how-to-run)
+- [How it works](#how-it-works)
+
+## Dependencies
+
+- [Go 1.17+](https://golang.org/dl/)
 
 ## Installation
 
-Get yourself `Go 1.15+` at https://golang.org/dl/ first, then:
+To install the `peggo` binary:
 
-```
-$ go get github.com/InjectiveLabs/peggo/orchestrator/cmd/...
-```
-
-## peggo_orchestrator
-
-### Configuration
-
-Use CLI args, flags or create `.env` with environment variables
-
-### Usage
-
-```
-$ peggo_orchestrator -h
-
-Usage: peggo_orchestrator [OPTIONS] COMMAND [arg...]
-
-The Validator companion binary for Peggy.
-
-Options:
-      --env                 Application environment (env $APP_ENV) (default "local")
-  -l, --log-level           Available levels: error, warn, info, debug. (env $APP_LOG_LEVEL) (default "info")
-      --svc-wait-timeout    Standard wait timeout for all service dependencies (e.g. injectived). (env $SERVICE_WAIT_TIMEOUT) (default "1m")
-      --cosmos-privkey      The Cosmos private key of the validator. (env $PEGGY_COSMOS_PRIVKEY)
-      --cosmos-grpc         Cosmos GRPC querying endpoint (env $PEGGY_COSMOS_GRPC) (default "tcp://localhost:9900")
-      --tendermint-rpc      Tednermint RPC endpoint (env $PEGGY_TENDERMINT_RPC) (default "http://localhost:26657")
-      --fees                The Cosmos Denom in which to pay Cosmos chain fees (env $PEGGY_FEE_DENOM) (default "inj")
-      --chain-id            Specify Chain ID of the injectived service. (env $INJECTIVED_CHAIN_ID) (default "888")
-      --eth-node-http       Specify HTTP endpoint for an Ethereum node. (env $PEGGY_ETH_RPC) (default "http://localhost:1317")
-      --eth-privkey         The Ethereum private key of the validator(Ex: 5D862464FE95...) (env $PEGGY_ETH_PRIVATE_KEY)
-      --contract-address    The Ethereum contract address of Peggy (env $PEGGY_CONTRACT_ADDRESS)
-      --statsd-prefix       Specify StatsD compatible metrics prefix. (env $STATSD_PREFIX) (default "relayer_api")
-      --statsd-addr         UDP address of a StatsD compatible metrics aggregator. (env $STATSD_ADDR) (default "localhost:8125")
-      --statsd-stuck-func   Sets a duration to consider a function to be stuck (e.g. in deadlock). (env $STATSD_STUCK_DUR) (default "5m")
-      --statsd-mocking      If enabled replaces statsd client with a mock one that simply logs values. (env $STATSD_MOCKING) (default "false")
-      --statsd-disabled     Force disabling statsd reporting completely. (env $STATSD_DISABLED) (default "false")
-
-Commands:
-  version                   Print the version information and exit.
-
-Run 'peggo_orchestrator COMMAND --help' for more information on a command.
+```shell
+$ make install
 ```
 
-## register_eth_key
+## How to run
 
-### Configuration
+### Setup
 
-Use CLI args, flags or create `.env` with environment variables
+First we must register the validator's Ethereum key. This key will be used to
+sign claims going from Ethereum to Umee and to sign any transactions sent to
+Ethereum (batches or validator set updates).
 
-### Usage
-
-```
-$ register_eth_key -h
-
-Usage: register_eth_key [OPTIONS]
-
-Special purpose binary for bootstrapping Peggy chains.
-
-Options:
-      --cosmos-privkey   The Cosmos private key of the validator. Must be saved when you generate your key (env $PEGGY_COSMOS_PRIVKEY)
-      --cosmos-grpc      Cosmos GRPC querying endpoint (env $PEGGY_COSMOS_GRPC) (default "tcp://localhost:9900")
-      --fees             The Cosmos Denom in which to pay Cosmos chain fees (env $PEGGY_FEE_DENOM) (default "inj")
-      --chain-id         Specify Chain ID of the injectived service. (env $INJECTIVED_CHAIN_ID) (default "888")
+```shell
+$ peggo tx register-eth-key \
+  --cosmos-chain-id="..." \
+  --cosmos-grpc="tcp://..." \
+  --tendermint-rpc="http://..." \
+  --cosmos-keyring=... \
+  --cosmos-keyring-dir=... \
+  --cosmos-from=... \
+  --eth-pk=$ETH_PK
 ```
 
-## License
+### Run the orchestrator
 
-Apache 2.0
+```shell
+$ peggo orchestrator \
+  --eth-pk=$ETH_PK \
+  --eth-rpc=$ETH_RPC \
+  --relay-batches=true \
+  --relay-valsets=true \
+  --eth-chain-id=... \
+  --cosmos-chain-id=... \
+  --cosmos-grpc="tcp://..." \
+  --tendermint-rpc="http://..." \
+  --cosmos-keyring=... \
+  --cosmos-keyring-dir=... \
+  --cosmos-from=...
+```
+
+### Send a transfer from Umee to Ethereum
+
+This is done using the command `umeed tx peggy send-to-eth`, use the `--help`
+flag for more information.
+
+If the coin doesn't have a corresponding ERC20 equivalent on the Ethereum
+network, the transaction will fail. This is only required for Cosmos originated
+coins and anyone can call the `deployERC20` function on the Peggy contract to
+fix this (Peggo has a helper command for this, see
+`peggo bridge deploy-erc20 --help` for more details).
+
+This process takes longer than transfers the other way around because they get
+relayed in batches rather than individually. It primarily depends on the amount
+of transfers of the same token and the fees the senders are paying.
+
+Important notice: if an "unlisted" (with no monetary value) ERC20 token gets
+sent into Umee it won't be possible to transfer it back to Ethereum, unless a
+validator is configured to batch and relay transactions of this token.
+
+### Send a transfer from Ethereum to Umee
+
+Any ERC20 token can be sent to Umee and it's done using the command
+`peggo bridge send-to-cosmos`, use the `--help` flag for more information. It
+can also be done by calling the `sendToCosmos` method on the Peggy contract.
+
+The ERC20 tokens will be locked in the Peggy contract and new coins will be
+minted on Umee with the denomination `peggy{token_address}`. This process takes
+around 3 minutes or 12 Ethereum blocks.
+
+## How it works
+
+Peggo allows transfers of assets back and forth between Ethereum and Umee.
+It supports both assets originating on Umee and assets originating on Ethereum
+(any ERC20 token).
+
+It works by scanning the events of the contract deployed on Ethereum (Peggy) and
+relaying them as messages to the Umee chain; and relaying transaction batches and
+validator sets from Umee to Ethereum.
+
+### Events and messages observed/relayed
+
+#### Ethereum
+
+**Deposits** (`SendToCosmosEvent`): emitted when sending tokens from Ethereum to
+Umee using the `sendToCosmos` function on Peggy.
+
+**Withdraw** (`TransactionBatchExecutedEvent`): emitted when a batch of
+transactions is sent from Umee to Ethereum using the `submitBatch` function on
+the Peggy contract by a validator. This serves as a confirmation to Umee that
+the batch was sent successfully.
+
+**Valset update** (`ValsetUpdatedEvent`): emitted on init of the Peggy contract
+and on every execution of the `updateValset` function.
+
+**Deployed ERC 20** (`ERC20DeployedEvent`): emitted when executing the function
+`deployERC20`. This event signals Umee that there's a new ERC20 deployed from
+Peggy, so Umee can map the token contract address to the corresponding native
+coin. This enables transfers from Umee to Ethereum.
+
+#### Umee
+
+ **Validator sets**: Umee informs the Peggy contract who are the current
+ validators and their power. This results in an execution of the `updateValset`
+ function.
+
+ **Request batch**: Peggo will check for new transactions in the Outgoing TX Pool
+ and if the transactions' fees are greater than the set minimum batch fee, it
+ will send a message to Umee requesting a new batch.
+
+ **Batches**: Peggo queries Umee for any batches ready to be relayed and relays
+ them over to Ethereum using the `submitBatch` function on the Peggy contract.

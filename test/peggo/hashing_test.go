@@ -5,15 +5,16 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/InjectiveLabs/etherman/deployer"
+	"github.com/InjectiveLabs/etherman/sol"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/InjectiveLabs/etherman/deployer"
-	"github.com/InjectiveLabs/etherman/sol"
-	"github.com/InjectiveLabs/peggo/orchestrator/ethereum/peggy"
+	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
 )
 
 var _ = Describe("Contract Tests", func() {
@@ -97,23 +98,9 @@ var _ = Describe("Contract Tests", func() {
 				Ω(hashingTestCallOpts.Contract).ShouldNot(Equal(zeroAddress))
 			})
 
-			It("Update checkpoint using IterativeHash", func() {
+			It("Update checkpoint using CheckpointHash", func() {
 				_, _, err := ContractDeployer.Tx(context.Background(), hashingTestTxOpts,
-					"IterativeHash", withArgsFn(validators, powers, valsetNonce, peggyID),
-				)
-				Ω(err).Should(BeNil())
-			})
-
-			It("Update checkpoint using ConcatHash", func() {
-				_, _, err := ContractDeployer.Tx(context.Background(), hashingTestTxOpts,
-					"ConcatHash", withArgsFn(validators, powers, valsetNonce, peggyID),
-				)
-				Ω(err).Should(BeNil())
-			})
-
-			It("Update checkpoint using ConcatHash2", func() {
-				_, _, err := ContractDeployer.Tx(context.Background(), hashingTestTxOpts,
-					"ConcatHash2", withArgsFn(validators, powers, valsetNonce, peggyID),
+					"CheckpointHash", withArgsFn(validators, powers, valsetNonce, big.NewInt(0), zeroAddress, peggyID),
 				)
 				Ω(err).Should(BeNil())
 			})
@@ -131,7 +118,7 @@ var _ = Describe("Contract Tests", func() {
 
 				Ω(lastCheckpoint).ShouldNot(Equal(zeroHash))
 				Ω(lastCheckpoint).Should(Equal(
-					makeValsetCheckpoint(peggyID, validators, powers, valsetNonce),
+					makeValsetCheckpoint(peggyID, validators, powers, valsetNonce, big.NewInt(0), zeroAddress),
 				))
 			})
 
@@ -159,12 +146,23 @@ func makeValsetCheckpoint(
 	validators []common.Address,
 	powers []*big.Int,
 	valsetNonce *big.Int,
+	rewardAmount *big.Int,
+	rewardToken common.Address,
 ) common.Hash {
 	methodName := formatBytes32String("checkpoint")
 
+	//TODO: check if we want to add a reward amount and a reward token here
+
 	buf, err := valsetConfirmABI.Pack("checkpoint",
-		peggyID, methodName, valsetNonce, validators, powers,
+		peggyID,
+		methodName,
+		valsetNonce,
+		validators,
+		powers,
+		rewardAmount,
+		rewardToken,
 	)
+
 	orFail(err)
 
 	return crypto.Keccak256Hash(buf[4:])

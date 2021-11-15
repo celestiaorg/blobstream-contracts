@@ -1,127 +1,38 @@
-package main
+package peggo
 
 import (
-	"bufio"
-	"bytes"
 	"context"
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
 
-	ethcmn "github.com/ethereum/go-ethereum/common"
-	log "github.com/xlab/suplog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 )
 
-// readEnv is a special utility that reads `.env` file into actual environment variables
-// of the current app, similar to `dotenv` Node package.
-func readEnv() {
-	if envdata, _ := ioutil.ReadFile(".env"); len(envdata) > 0 {
-		s := bufio.NewScanner(bytes.NewReader(envdata))
-		for s.Scan() {
-			parts := strings.Split(s.Text(), "=")
-			if len(parts) != 2 {
-				continue
-			}
-			strValue := strings.Trim(parts[1], `"`)
-			if err := os.Setenv(parts[0], strValue); err != nil {
-				log.WithField("name", parts[0]).WithError(err).Warningln("failed to override ENV variable")
-			}
-		}
-	}
-}
-
-// stdinConfirm checks the user's confirmation, if not forced to Yes
 func stdinConfirm(msg string) bool {
 	var response string
 
-	fmt.Print(msg)
+	fmt.Fprint(os.Stderr, msg)
 
 	if _, err := fmt.Scanln(&response); err != nil {
-		log.WithError(err).Errorln("failed to confirm the action")
+		fmt.Fprintf(os.Stderr, "failed to confirm action: %s\n", err)
 		return false
 	}
 
 	switch strings.ToLower(strings.TrimSpace(response)) {
 	case "y", "yes":
 		return true
+
 	default:
 		return false
 	}
-}
-
-// parseERC20ContractMapping converts list of address:denom pairs to a proper typed map.
-func parseERC20ContractMapping(items []string) map[ethcmn.Address]string {
-	res := make(map[ethcmn.Address]string)
-
-	for _, item := range items {
-		// item is a pair address:denom
-		parts := strings.Split(item, ":")
-		addr := ethcmn.HexToAddress(parts[0])
-
-		if len(parts) != 2 || len(parts[0]) == 0 || addr == (ethcmn.Address{}) {
-			log.Fatalln("failed to parse ERC20 mapping: check that all inputs contain valid denom:address pairs")
-		}
-
-		denom := parts[1]
-		res[addr] = denom
-	}
-
-	return res
-}
-
-// logLevel converts vague log level name into typed level.
-func logLevel(s string) log.Level {
-	switch s {
-	case "1", "error":
-		return log.ErrorLevel
-	case "2", "warn":
-		return log.WarnLevel
-	case "3", "info":
-		return log.InfoLevel
-	case "4", "debug":
-		return log.DebugLevel
-	default:
-		return log.FatalLevel
-	}
-}
-
-// toBool is used to parse vague bool definition into typed bool.
-func toBool(s string) bool {
-	switch strings.ToLower(s) {
-	case "true", "1", "t", "yes":
-		return true
-	default:
-		return false
-	}
-}
-
-// duration parses duration from string with a provided default fallback.
-func duration(s string, defaults time.Duration) time.Duration {
-	dur, err := time.ParseDuration(s)
-	if err != nil {
-		dur = defaults
-	}
-	return dur
-}
-
-// checkStatsdPrefix ensures that the statsd prefix really
-// have "." at end.
-func checkStatsdPrefix(s string) string {
-	if !strings.HasSuffix(s, ".") {
-		return s + "."
-	}
-	return s
 }
 
 func hexToBytes(str string) ([]byte, error) {
-	if strings.HasPrefix(str, "0x") {
-		str = str[2:]
-	}
+	str = strings.TrimPrefix(str, "0x")
 
 	data, err := hex.DecodeString(str)
 	if err != nil {
@@ -131,29 +42,24 @@ func hexToBytes(str string) ([]byte, error) {
 	return data, nil
 }
 
-// waitForService awaits an active ClientConn to a GRPC service.
+// waitForService awaits an active connection to a gRPC service.
 func waitForService(ctx context.Context, clientconn *grpc.ClientConn) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Fatalln("GRPC service wait timed out")
+			fmt.Fprintln(os.Stderr, "gRPC service wait timed out")
+			os.Exit(1)
+
 		default:
 			state := clientconn.GetState()
 
 			if state != connectivity.Ready {
-				log.WithField("state", state.String()).Warningln("state of GRPC connection not ready")
+				fmt.Fprintf(os.Stderr, "state of gRPC connection not ready: %s\n", state)
 				time.Sleep(5 * time.Second)
 				continue
 			}
 
 			return
 		}
-	}
-}
-
-// orShutdown fatals the app if there was an error.
-func orShutdown(err error) {
-	if err != nil && err != grpc.ErrServerStopped {
-		log.WithError(err).Fatalln("unable to start peggo orchestrator")
 	}
 }

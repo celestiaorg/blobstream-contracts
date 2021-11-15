@@ -30,7 +30,7 @@ func init() {
 		os.Setenv("PEGGO_TEST_COVERAGE_MODE", "set")
 	}
 	if _, ok := os.LookupEnv("PEGGO_TEST_BECH32_PREFIX"); !ok {
-		os.Setenv("PEGGO_TEST_BECH32_PREFIX", "inj")
+		os.Setenv("PEGGO_TEST_BECH32_PREFIX", "umee")
 	}
 	if _, ok := os.LookupEnv("PEGGO_TEST_BIP44_COIN"); !ok {
 		os.Setenv("PEGGO_TEST_BIP44_COIN", "60")
