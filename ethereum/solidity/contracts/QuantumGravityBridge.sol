@@ -201,6 +201,8 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
     ) private pure {
         uint256 cumulativePower = 0;
 
+        // TODO there should be a way to skip validators.
+        // The original implementation used a zero-`v` value in the signature, but that's hacky.
         for (uint256 i = 0; i < _currentValidators.length; i++) {
             // Check that the current validator has signed off on the hash.
             if (!verifySig(_currentValidators[i].addr, _digest, _sigs[i])) {
