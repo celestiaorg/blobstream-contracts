@@ -17,6 +17,12 @@ struct Signature {
     bytes32 s;
 }
 
+struct MessageTuple {
+    uint256 height;
+    bytes8 namespaceID;
+    bytes32 messageCommitment;
+}
+
 /// @title Quantum Gravity Bridge: Celestia -> Ethereum, Data Availability relay.
 contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
     // Don't change the order of state for working upgrades.
@@ -33,7 +39,8 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
     // bytes32 encoding of the string "transactionBatch"
-    bytes32 constant MESSAGE_ROOT_DOMAIN_SEPARATOR = 0x7472616e73616374696f6e426174636800000000000000000000000000000000;
+    bytes32 constant MESSAGE_TUPLE_ROOT_DOMAIN_SEPARATOR =
+        0x7472616e73616374696f6e426174636800000000000000000000000000000000;
 
     ////////////////
     // Immutables //
@@ -48,17 +55,18 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
     bytes32 public s_lastValidatorSetCheckpoint;
     uint256 public s_powerThreshold;
     uint256 public s_lastValidatorSetNonce;
-    uint256 public s_lastMessageRootNonce;
-    mapping(uint256 => bytes32) public s_messageRoots;
+    uint256 public s_lastMessageTupleRootNonce;
+    mapping(uint256 => bytes32) public s_messageTupleRoots;
 
     ////////////
     // Events //
     ////////////
 
-    /// @notice Emitted when a new root of messages is relayed.
+    /// @notice Emitted when a new root of message tuples is relayed.
     /// @param nonce Nonce.
-    /// @param messagesRoot Merkle root of relayed messages.
-    event MessageRootEvent(uint256 indexed nonce, bytes32 messagesRoot);
+    /// @param messageTupleRoot Merkle root of relayed message tuples.
+    /// See `submitMessageTupleRoot`.
+    event MessageTupleRootEvent(uint256 indexed nonce, bytes32 messageTupleRoot);
 
     /// @notice Emitted when the validator set is updated.
     /// @param nonce Nonce.
@@ -85,8 +93,8 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
     /// @notice Supplied current validators and powers do not match checkpoint.
     error SuppliedValidatorSetInvalid();
 
-    /// @notice Message root nonce nonce must be greater than the current nonce.
-    error InvalidMessageRootNonce();
+    /// @notice Message tuple root nonce nonce must be greater than the current nonce.
+    error InvalidMessageTupleRootNonce();
 
     ///////////////
     // Functions //
@@ -162,19 +170,19 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         return c;
     }
 
-    /// @dev Make a domain-separated commitment to a message root.
+    /// @dev Make a domain-separated commitment to a message tuple root.
     /// A hash of all relevant information about a message root.
     /// The format of the hash is:
-    ///     keccak256(bridge_id, MESSAGE_ROOT_DOMAIN_SEPARATOR, nonce, message_root)
+    ///     keccak256(bridge_id, MESSAGE_ROOT_DOMAIN_SEPARATOR, nonce, message_tuple_root)
     /// @param _bridge_id Bridge ID.
     /// @param _nonce Nonce.
-    /// @param _messageRoot Message root.
-    function domainSeparateMessageRoot(
+    /// @param _messageTupleRoot Message tuple root.
+    function domainSeparateMessageTupleRoot(
         bytes32 _bridge_id,
         uint256 _nonce,
-        bytes32 _messageRoot
+        bytes32 _messageTupleRoot
     ) private pure returns (bytes32) {
-        bytes32 c = keccak256(abi.encode(_bridge_id, MESSAGE_ROOT_DOMAIN_SEPARATOR, _nonce, _messageRoot));
+        bytes32 c = keccak256(abi.encode(_bridge_id, MESSAGE_TUPLE_ROOT_DOMAIN_SEPARATOR, _nonce, _messageTupleRoot));
 
         return c;
     }
@@ -220,7 +228,10 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
     /// over the checkpoint hash generated from the new validator set. Anyone
     /// can call this function, but they must supply valid signatures of the
     /// current validator set over the new validator set.
-    /// @param _newValidatorSetHash The hash of the new validator set
+    ///
+    /// The validator set hash that is signed over is domain separated as per
+    /// `domainSeparateValidatorSetHash`.
+    /// @param _newValidatorSetHash The hash of the new validator set.
     /// @param _newNonce The new nonce.
     /// @param _currentValidatorSet The current validator set.
     /// @param _sigs Signatures.
@@ -275,16 +286,26 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         emit ValidatorSetUpdatedEvent(_newNonce, _newPowerThreshold, _newValidatorSetHash);
     }
 
-    /// @notice Relays a root of Celestia -> Ethereum messages. Anyone can call
-    /// this function, but they must supply valid signatures of the current
-    /// validator set over the message root.
+    /// @notice Relays a root of Celestia -> Ethereum message tuples. Anyone
+    /// can call this function, but they must supply valid signatures of the
+    /// current validator set over the message tuple root.
+    ///
+    /// The message root is the Merkle root of the binary Merkle tree
+    /// (https://github.com/celestiaorg/celestia-specs/blob/master/src/specs/data_structures.md#binary-merkle-tree)
+    /// where each leaf in an ABI-encoded `MessageTuple`. Each relayed message
+    /// tuple will 1:1 mirror messages as they are included on Celestia, _in
+    /// order of inclusion of the PayForMessage transactions that paid for the
+    /// messages.
+    ///
+    /// The message tuple root that is signed over is domain separated as per
+    /// `domainSeparateMessageTupleRoot`.
     /// @param _nonce The message root nonce.
-    /// @param _messageRoot The Merkle root of messages.
+    /// @param _messageTupleRoot The Merkle root of message tuples.
     /// @param _currentValidatorSet The current validator set.
     /// @param _sigs Signatures.
-    function submitMessageRoot(
+    function submitMessageTupleRoot(
         uint256 _nonce,
-        bytes32 _messageRoot,
+        bytes32 _messageTupleRoot,
         Validator[] calldata _currentValidatorSet,
         Signature[] calldata _sigs
     ) external {
@@ -293,8 +314,8 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         uint256 currentPowerThreshold = s_powerThreshold;
 
         // Check that the message root nonce is higher than the last nonce.
-        if (_nonce <= s_lastMessageRootNonce) {
-            revert InvalidMessageRootNonce();
+        if (_nonce <= s_lastMessageTupleRootNonce) {
+            revert InvalidMessageTupleRootNonce();
         }
 
         // Check that current validators and signatures are well-formed.
@@ -316,16 +337,16 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         }
 
         // Check that enough current validators have signed off on the message root and nonce.
-        bytes32 c = domainSeparateMessageRoot(BRIDGE_ID, _nonce, _messageRoot);
+        bytes32 c = domainSeparateMessageTupleRoot(BRIDGE_ID, _nonce, _messageTupleRoot);
         checkValidatorSignatures(_currentValidatorSet, _sigs, c, currentPowerThreshold);
 
         // EFFECTS
 
-        s_lastMessageRootNonce = _nonce;
-        s_messageRoots[_nonce] = _messageRoot;
+        s_lastMessageTupleRootNonce = _nonce;
+        s_messageTupleRoots[_nonce] = _messageTupleRoot;
 
         // LOGS
 
-        emit MessageRootEvent(_nonce, _messageRoot);
+        emit MessageTupleRootEvent(_nonce, _messageTupleRoot);
     }
 }
