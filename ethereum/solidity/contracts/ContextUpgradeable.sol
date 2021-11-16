@@ -2,6 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
 /*
  * @dev Provides information about the current execution context, including the
  * sender of the transaction and its data. While these are generally available
@@ -12,7 +14,13 @@ pragma solidity ^0.8.0;
  *
  * This contract is only required for intermediate, library-like contracts.
  */
-abstract contract Context {
+abstract contract ContextUpgradeable is Initializable {
+    function __Context_init() internal initializer {
+        __Context_init_unchained();
+    }
+
+    function __Context_init_unchained() internal initializer {}
+
     function _msgSender() internal view virtual returns (address) {
         return msg.sender;
     }
@@ -21,4 +29,6 @@ abstract contract Context {
         this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
         return msg.data;
     }
+
+    uint256[50] private __gap;
 }

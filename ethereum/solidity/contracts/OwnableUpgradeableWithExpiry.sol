@@ -2,7 +2,9 @@
 
 pragma solidity ^0.8.0;
 
-import "./utils/Context.sol";
+import "./ContextUpgradeable.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
 /**
  * @dev Contract module which provides a basic access control mechanism, where
  * there is an account (an owner) that can be granted exclusive access to
@@ -15,7 +17,7 @@ import "./utils/Context.sol";
  * `onlyOwner`, which can be applied to your functions to restrict their use to
  * the owner.
  */
-abstract contract OwnableWithExpiry is Context {
+abstract contract OwnableUpgradeableWithExpiry is Initializable, ContextUpgradeable {
     address private _owner;
     uint256 private _deployTimestamp;
 
@@ -24,7 +26,12 @@ abstract contract OwnableWithExpiry is Context {
     /**
      * @dev Initializes the contract setting the deployer as the initial owner.
      */
-    constructor () {
+    function __Ownable_init() internal initializer {
+        __Context_init_unchained();
+        __Ownable_init_unchained();
+    }
+
+    function __Ownable_init_unchained() internal initializer {
         address msgSender = _msgSender();
         _owner = msgSender;
         _deployTimestamp = block.timestamp;
@@ -62,7 +69,7 @@ abstract contract OwnableWithExpiry is Context {
      * @return The timestamp of ownership expiry.
      */
     function getOwnershipExpiryTimestamp() public view returns (uint256) {
-       return _deployTimestamp + 52 weeks;
+        return _deployTimestamp + 52 weeks;
     }
 
     /**
@@ -70,10 +77,10 @@ abstract contract OwnableWithExpiry is Context {
      * @return True if the contract ownership is expired.
      */
     function isOwnershipExpired() public view returns (bool) {
-       return block.timestamp > getOwnershipExpiryTimestamp();
+        return block.timestamp > getOwnershipExpiryTimestamp();
     }
 
-     /**
+    /**
      * @dev Leaves the contract without owner. It will not be possible to call
      * `onlyOwner` functions anymore. Can only be called after ownership is expired.
      */
@@ -96,4 +103,6 @@ abstract contract OwnableWithExpiry is Context {
         emit OwnershipTransferred(_owner, address(0));
         _owner = address(0);
     }
+
+    uint256[49] private __gap;
 }
