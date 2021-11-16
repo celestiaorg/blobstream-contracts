@@ -8,8 +8,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
-	"github.com/umee-network/peggo/mocks"
-	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
+	"github.com/celestiaorg/quantum-gravity-bridge/mocks"
+	wrappers "github.com/celestiaorg/quantum-gravity-bridge/solidity/wrappers/Peggy.sol"
 	"github.com/umee-network/umee/x/peggy/types"
 )
 

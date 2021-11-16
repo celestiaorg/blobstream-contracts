@@ -52,11 +52,11 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
     // Storage //
     /////////////
 
-    bytes32 public s_lastValidatorSetCheckpoint;
-    uint256 public s_powerThreshold;
-    uint256 public s_lastValidatorSetNonce;
-    uint256 public s_lastMessageTupleRootNonce;
-    mapping(uint256 => bytes32) public s_messageTupleRoots;
+    bytes32 public state_lastValidatorSetCheckpoint;
+    uint256 public state_powerThreshold;
+    uint256 public state_lastValidatorSetNonce;
+    uint256 public state_lastMessageTupleRootNonce;
+    mapping(uint256 => bytes32) public state_messageTupleRoots;
 
     ////////////
     // Events //
@@ -123,8 +123,8 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
 
         // EFFECTS
 
-        s_lastValidatorSetCheckpoint = newCheckpoint;
-        s_powerThreshold = _powerThreshold;
+        state_lastValidatorSetCheckpoint = newCheckpoint;
+        state_powerThreshold = _powerThreshold;
 
         // LOGS
 
@@ -246,8 +246,8 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
     ) external {
         // CHECKS
 
-        uint256 currentNonce = s_lastValidatorSetNonce;
-        uint256 currentPowerThreshold = s_powerThreshold;
+        uint256 currentNonce = state_lastValidatorSetNonce;
+        uint256 currentPowerThreshold = state_powerThreshold;
 
         // Check that the valset nonce is greater than the old one.
         if (_newNonce <= currentNonce) {
@@ -263,7 +263,7 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         bytes32 currentValidatorSetHash = computeValidatorSetHash(_currentValidatorSet);
         if (
             domainSeparateValidatorSetHash(BRIDGE_ID, currentNonce, currentPowerThreshold, currentValidatorSetHash) !=
-            s_lastValidatorSetCheckpoint
+            state_lastValidatorSetCheckpoint
         ) {
             revert SuppliedValidatorSetInvalid();
         }
@@ -279,9 +279,9 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
 
         // EFFECTS
 
-        s_lastValidatorSetCheckpoint = newCheckpoint;
-        s_powerThreshold = _newPowerThreshold;
-        s_lastValidatorSetNonce = _newNonce;
+        state_lastValidatorSetCheckpoint = newCheckpoint;
+        state_powerThreshold = _newPowerThreshold;
+        state_lastValidatorSetNonce = _newNonce;
 
         // LOGS
 
@@ -313,10 +313,10 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
     ) external {
         // CHECKS
 
-        uint256 currentPowerThreshold = s_powerThreshold;
+        uint256 currentPowerThreshold = state_powerThreshold;
 
         // Check that the message root nonce is higher than the last nonce.
-        if (_nonce <= s_lastMessageTupleRootNonce) {
+        if (_nonce <= state_lastMessageTupleRootNonce) {
             revert InvalidMessageTupleRootNonce();
         }
 
@@ -330,10 +330,10 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         if (
             domainSeparateValidatorSetHash(
                 BRIDGE_ID,
-                s_lastValidatorSetNonce,
+                state_lastValidatorSetNonce,
                 currentPowerThreshold,
                 currentValidatorSetHash
-            ) != s_lastValidatorSetCheckpoint
+            ) != state_lastValidatorSetCheckpoint
         ) {
             revert SuppliedValidatorSetInvalid();
         }
@@ -344,8 +344,8 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
 
         // EFFECTS
 
-        s_lastMessageTupleRootNonce = _nonce;
-        s_messageTupleRoots[_nonce] = _messageTupleRoot;
+        state_lastMessageTupleRootNonce = _nonce;
+        state_messageTupleRoots[_nonce] = _messageTupleRoot;
 
         // LOGS
 

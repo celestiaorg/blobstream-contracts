@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/umee-network/peggo/cmd/peggo"
+	"github.com/celestiaorg/quantum-gravity-bridge/cmd/peggo"
 )
 
 func main() {

@@ -6,11 +6,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/celestiaorg/quantum-gravity-bridge/cmd/peggo/client"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/cosmos"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
-	"github.com/umee-network/peggo/cmd/peggo/client"
-	"github.com/umee-network/peggo/orchestrator/cosmos"
 	peggytypes "github.com/umee-network/umee/x/peggy/types"
 )
 

@@ -25,7 +25,7 @@ import (
 	"github.com/knadh/koanf"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/umee-network/peggo/orchestrator/ethereum/keystore"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/keystore"
 	"golang.org/x/term"
 )
 

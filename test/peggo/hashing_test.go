@@ -14,7 +14,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/peggy"
 )
 
 var _ = Describe("Contract Tests", func() {

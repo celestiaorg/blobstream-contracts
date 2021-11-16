@@ -1,4 +1,4 @@
-module github.com/umee-network/peggo
+module github.com/celestiaorg/quantum-gravity-bridge
 
 go 1.17
 

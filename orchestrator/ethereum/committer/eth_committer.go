@@ -5,13 +5,13 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/provider"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/util"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/umee-network/peggo/orchestrator/ethereum/provider"
-	"github.com/umee-network/peggo/orchestrator/ethereum/util"
 )
 
 // NewEthCommitter returns an instance of EVMCommitter, which

@@ -1,7 +1,7 @@
 package orchestrator
 
 import (
-	"github.com/umee-network/peggo/orchestrator/coingecko"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/coingecko"
 )
 
 // SetMinBatchFee sets the (optional) minimum batch fee denominated in USD.
