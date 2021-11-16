@@ -5,10 +5,10 @@ import (
 	"math/big"
 	"sort"
 
+	wrappers "github.com/celestiaorg/quantum-gravity-bridge/ethereum/solidity/wrappers/QuantumGravityBridge.sol"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/util"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/pkg/errors"
-	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/util"
-	wrappers "github.com/celestiaorg/quantum-gravity-bridge/ethereum/solidity/wrappers/QuantumGravityBridge.sol"
 	"github.com/umee-network/umee/x/peggy/types"
 )
 
@@ -128,7 +128,7 @@ func (a PeggyValsetUpdatedEvents) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 // funds from the Peggy contract and have submitted a hijacking update. If slashing for off Cosmos chain
 // Ethereum signatures is implemented you would put that handler here.
 func (s *peggyRelayer) checkIfValsetsDiffer(cosmosValset *types.Valset, ethValsetHash [32]byte, ethNonce *big.Int) {
-	if cosmosValset == nil && (ethNonce == nil || len(ethNonce.Bits())==0) {
+	if cosmosValset == nil && (ethNonce == nil || len(ethNonce.Bits()) == 0) {
 		// bootstrapping case
 		return
 	} else if cosmosValset == nil {

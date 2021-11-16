@@ -108,7 +108,6 @@ func deployPeggyCmd() *cobra.Command {
 				return fmt.Errorf("failed to dial Ethereum RPC node: %w", err)
 			}
 
-
 			auth, err := buildTransactOpts(konfig, ethRPC)
 			if err != nil {
 				return err
@@ -411,4 +410,3 @@ func getQuantumGravityBridgeContract(ethRPC *ethclient.Client, peggyAddr string)
 
 	return contract, nil
 }
-

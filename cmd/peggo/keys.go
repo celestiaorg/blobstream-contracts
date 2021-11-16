@@ -11,6 +11,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/keystore"
 	sdkcrypto "github.com/cosmos/cosmos-sdk/crypto"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -25,7 +26,6 @@ import (
 	"github.com/knadh/koanf"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/keystore"
 	"golang.org/x/term"
 )
 

@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/celestiaorg/quantum-gravity-bridge/cmd/peggo/client"
+	wrappers "github.com/celestiaorg/quantum-gravity-bridge/ethereum/solidity/wrappers/QuantumGravityBridge.sol"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/keystore"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/peggy"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/celestiaorg/quantum-gravity-bridge/cmd/peggo/client"
-	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/keystore"
-	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/peggy"
-	wrappers "github.com/celestiaorg/quantum-gravity-bridge/ethereum/solidity/wrappers/QuantumGravityBridge.sol"
 	"github.com/umee-network/umee/x/peggy/types"
 )
 
@@ -55,8 +55,8 @@ type PeggyBroadcastClient interface {
 // sortableEvent exists with the only purpose to make a nicer sortable slice for Ethereum events.
 // It is only used in SendEthereumClaims
 type sortableEvent struct {
-	EventNonce         uint64
-	ValsetUpdateEvent  *wrappers.QuantumGravityBridgeValidatorSetUpdatedEvent
+	EventNonce        uint64
+	ValsetUpdateEvent *wrappers.QuantumGravityBridgeValidatorSetUpdatedEvent
 }
 
 func NewPeggyBroadcastClient(
@@ -202,7 +202,6 @@ func (s *peggyBroadcastClient) SendBatchConfirm(
 
 	return nil
 }
-
 
 func (s *peggyBroadcastClient) SendRequestBatch(
 	ctx context.Context,
