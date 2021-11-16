@@ -6,15 +6,14 @@ import (
 	"math/big"
 	"strings"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	wrappers "github.com/celestiaorg/quantum-gravity-bridge/ethereum/solidity/wrappers/QuantumGravityBridge.sol"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/committer"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/provider"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/shopspring/decimal"
-	"github.com/umee-network/peggo/orchestrator/ethereum/committer"
-	"github.com/umee-network/peggo/orchestrator/ethereum/provider"
-	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
 	"github.com/umee-network/umee/x/peggy/types"
 )
 
@@ -22,14 +21,6 @@ type Contract interface {
 	committer.EVMCommitter
 
 	Address() common.Address
-
-	SendToCosmos(
-		ctx context.Context,
-		erc20 common.Address,
-		amount *big.Int,
-		cosmosAccAddress sdk.AccAddress,
-		senderAddress common.Address,
-	) (*common.Hash, error)
 
 	SendTransactionBatch(
 		ctx context.Context,
@@ -45,33 +36,15 @@ type Contract interface {
 		confirms []*types.MsgValsetConfirm,
 	) (*common.Hash, error)
 
-	GetTxBatchNonce(
-		ctx context.Context,
-		erc20ContractAddress common.Address,
-		callerAddress common.Address,
-	) (*big.Int, error)
-
 	GetValsetNonce(
 		ctx context.Context,
 		callerAddress common.Address,
 	) (*big.Int, error)
 
-	GetPeggyID(
+	GetBridgeID(
 		ctx context.Context,
 		callerAddress common.Address,
 	) (common.Hash, error)
-
-	GetERC20Symbol(
-		ctx context.Context,
-		erc20ContractAddress common.Address,
-		callerAddress common.Address,
-	) (symbol string, err error)
-
-	GetERC20Decimals(
-		ctx context.Context,
-		erc20ContractAddress common.Address,
-		callerAddress common.Address,
-	) (decimals uint8, err error)
 }
 
 func NewPeggyContract(
@@ -79,7 +52,7 @@ func NewPeggyContract(
 	ethCommitter committer.EVMCommitter,
 	peggyAddress common.Address,
 ) (Contract, error) {
-	ethPeggy, err := wrappers.NewPeggy(peggyAddress, ethCommitter.Provider())
+	ethPeggy, err := wrappers.NewQuantumGravityBridge(peggyAddress, ethCommitter.Provider())
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +73,7 @@ type peggyContract struct {
 
 	ethProvider  provider.EVMProvider
 	peggyAddress common.Address
-	ethPeggy     *wrappers.Peggy
+	ethPeggy     *wrappers.QuantumGravityBridge
 }
 
 func (s *peggyContract) Address() common.Address {
@@ -111,8 +84,7 @@ func (s *peggyContract) Address() common.Address {
 var maxUintAllowance = big.NewInt(0).Sub(big.NewInt(0).Exp(big.NewInt(2), big.NewInt(256), nil), big.NewInt(1))
 
 var (
-	peggyABI, _ = abi.JSON(strings.NewReader(wrappers.PeggyABI))
-	erc20ABI, _ = abi.JSON(strings.NewReader(wrappers.ERC20ABI))
+	peggyABI, _ = abi.JSON(strings.NewReader(wrappers.QuantumGravityBridgeMetaData.ABI))
 )
 
 func sigToVRS(sigHex string) (v uint8, r, s common.Hash) {

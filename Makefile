@@ -66,7 +66,7 @@ mocks:
 
 gen: solidity-wrappers
 
-SOLIDITY_DIR = solidity
+SOLIDITY_DIR = ethereum/solidity
 solidity-wrappers: $(SOLIDITY_DIR)/contracts/*.sol
 	cd $(SOLIDITY_DIR)/contracts/ ; \
 	for file in $(^F) ; do \

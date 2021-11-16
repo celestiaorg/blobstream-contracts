@@ -4,18 +4,15 @@ import (
 	"context"
 	"time"
 
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/cosmos"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/peggy"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/provider"
 	"github.com/rs/zerolog"
-	"github.com/umee-network/peggo/orchestrator/cosmos"
-	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
-	"github.com/umee-network/peggo/orchestrator/ethereum/provider"
-	"github.com/umee-network/umee/x/peggy/types"
 )
 
 type PeggyRelayer interface {
 	Start(ctx context.Context) error
 
-	FindLatestValset(ctx context.Context) (*types.Valset, error)
-	RelayBatches(ctx context.Context) error
 	RelayValsets(ctx context.Context) error
 }
 

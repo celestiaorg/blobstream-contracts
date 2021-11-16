@@ -4,18 +4,15 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"sort"
-	"time"
 
+	"github.com/celestiaorg/quantum-gravity-bridge/cmd/peggo/client"
+	wrappers "github.com/celestiaorg/quantum-gravity-bridge/ethereum/solidity/wrappers/QuantumGravityBridge.sol"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/keystore"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/peggy"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
-	"github.com/umee-network/peggo/cmd/peggo/client"
-	"github.com/umee-network/peggo/orchestrator/ethereum/keystore"
-	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
-	wrappers "github.com/umee-network/peggo/solidity/wrappers/Peggy.sol"
-	umeeapp "github.com/umee-network/umee/app"
 	"github.com/umee-network/umee/x/peggy/types"
 )
 
@@ -48,25 +45,6 @@ type PeggyBroadcastClient interface {
 		batch *types.OutgoingTxBatch,
 	) error
 
-	SendEthereumClaims(
-		ctx context.Context,
-		lastClaimEvent uint64,
-		deposits []*wrappers.PeggySendToCosmosEvent,
-		withdraws []*wrappers.PeggyTransactionBatchExecutedEvent,
-		valsetUpdates []*wrappers.PeggyValsetUpdatedEvent,
-		erc20Deployed []*wrappers.PeggyERC20DeployedEvent,
-		loopDuration time.Duration,
-	) error
-
-	// SendToEth broadcasts a Tx that tokens from Cosmos to Ethereum.
-	// These tokens will not be sent immediately. Instead, they will require
-	// some time to be included in a batch.
-	SendToEth(
-		ctx context.Context,
-		destination ethcmn.Address,
-		amount, fee sdk.Coin,
-	) error
-
 	// SendRequestBatch broadcasts a requests a batch of withdrawal transactions to be generated on the chain.
 	SendRequestBatch(
 		ctx context.Context,
@@ -77,11 +55,8 @@ type PeggyBroadcastClient interface {
 // sortableEvent exists with the only purpose to make a nicer sortable slice for Ethereum events.
 // It is only used in SendEthereumClaims
 type sortableEvent struct {
-	EventNonce         uint64
-	DepositEvent       *wrappers.PeggySendToCosmosEvent
-	WithdrawEvent      *wrappers.PeggyTransactionBatchExecutedEvent
-	ValsetUpdateEvent  *wrappers.PeggyValsetUpdatedEvent
-	ERC20DeployedEvent *wrappers.PeggyERC20DeployedEvent
+	EventNonce        uint64
+	ValsetUpdateEvent *wrappers.QuantumGravityBridgeValidatorSetUpdatedEvent
 }
 
 func NewPeggyBroadcastClient(
@@ -222,282 +197,6 @@ func (s *peggyBroadcastClient) SendBatchConfirm(
 	}
 	if err = s.broadcastClient.QueueBroadcastMsg(msg); err != nil {
 		err = errors.Wrap(err, "broadcasting MsgConfirmBatch failed")
-		return err
-	}
-
-	return nil
-}
-
-func (s *peggyBroadcastClient) sendDepositClaims(deposit *wrappers.PeggySendToCosmosEvent) error {
-	// EthereumBridgeDepositClaim
-	// When more than 66% of the active validator set has
-	// claimed to have seen the deposit enter the ethereum blockchain coins are
-	// issued to the Cosmos address in question
-	// -------------
-
-	recipientBz := deposit.Destination[:umeeapp.MaxAddrLen]
-
-	s.logger.Info().
-		Str("sender", deposit.Sender.Hex()).
-		Str("recipient", sdk.AccAddress(recipientBz).String()).
-		Str("amount", deposit.Amount.String()).
-		Str("event_nonce", deposit.EventNonce.String()).
-		Msg("oracle observed a deposit event. Sending MsgDepositClaim")
-
-	msg := &types.MsgDepositClaim{
-		EventNonce:     deposit.EventNonce.Uint64(),
-		BlockHeight:    deposit.Raw.BlockNumber,
-		TokenContract:  deposit.TokenContract.Hex(),
-		Amount:         sdk.NewIntFromBigInt(deposit.Amount),
-		EthereumSender: deposit.Sender.Hex(),
-		CosmosReceiver: sdk.AccAddress(recipientBz).String(),
-		Orchestrator:   s.broadcastClient.FromAddress().String(),
-	}
-
-	txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg)
-	if err != nil {
-		s.logger.Err(err).Msg("broadcasting MsgDepositClaim failed")
-		return err
-	}
-
-	s.logger.Info().
-		Str("tx_hash", txResponse.TxHash).
-		Str("event_nonce", deposit.EventNonce.String()).
-		Msg("oracle sent deposit event successfully")
-
-	return nil
-}
-
-func (s *peggyBroadcastClient) sendWithdrawClaims(withdraw *wrappers.PeggyTransactionBatchExecutedEvent) error {
-
-	s.logger.Info().
-		Str("nonce", withdraw.BatchNonce.String()).
-		Str("token_contract", withdraw.Token.Hex()).
-		Str("event_nonce", withdraw.EventNonce.String()).
-		Msg("oracle observed a withdraw event. Sending MsgWithdrawClaim")
-
-	// WithdrawClaim claims that a batch of withdrawal
-	// operations on the bridge contract was executed.
-	msg := &types.MsgWithdrawClaim{
-		EventNonce:    withdraw.EventNonce.Uint64(),
-		BatchNonce:    withdraw.BatchNonce.Uint64(),
-		BlockHeight:   withdraw.Raw.BlockNumber,
-		TokenContract: withdraw.Token.Hex(),
-		Orchestrator:  s.AccFromAddress().String(),
-	}
-
-	txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg)
-	if err != nil {
-		s.logger.Err(err).Msg("broadcasting MsgWithdrawClaim failed")
-		return err
-	}
-
-	s.logger.Info().
-		Str("tx_hash", txResponse.TxHash).
-		Str("event_nonce", withdraw.EventNonce.String()).
-		Msg("oracle sent Withdraw event successfully")
-
-	return nil
-}
-
-func (s *peggyBroadcastClient) sendValsetUpdateClaims(valsetUpdate *wrappers.PeggyValsetUpdatedEvent) error {
-
-	s.logger.Info().
-		Str("event_nonce", valsetUpdate.EventNonce.String()).
-		Uint64("valset_nonce", valsetUpdate.NewValsetNonce.Uint64()).
-		Int("validators", len(valsetUpdate.Validators)).
-		Interface("powers", valsetUpdate.Powers).
-		Uint64("reward_amount", valsetUpdate.RewardAmount.Uint64()).
-		Str("reward_token", valsetUpdate.RewardToken.Hex()).
-		Msg("oracle observed a valset update event; sending MsgValsetUpdateClaim")
-
-	members := make([]*types.BridgeValidator, len(valsetUpdate.Validators))
-	for i, val := range valsetUpdate.Validators {
-		members[i] = &types.BridgeValidator{
-			EthereumAddress: val.Hex(),
-			Power:           valsetUpdate.Powers[i].Uint64(),
-		}
-	}
-
-	msg := &types.MsgValsetUpdatedClaim{
-		EventNonce:   valsetUpdate.EventNonce.Uint64(),
-		ValsetNonce:  valsetUpdate.NewValsetNonce.Uint64(),
-		BlockHeight:  valsetUpdate.Raw.BlockNumber,
-		RewardAmount: sdk.NewIntFromBigInt(valsetUpdate.RewardAmount),
-		RewardToken:  valsetUpdate.RewardToken.Hex(),
-		Members:      members,
-		Orchestrator: s.AccFromAddress().String(),
-	}
-
-	txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg)
-	if err != nil {
-		s.logger.Err(err).Msg("broadcasting MsgValsetUpdatedClaim failed")
-		return err
-	}
-
-	s.logger.Info().
-		Str("tx_hash", txResponse.TxHash).
-		Str("event_nonce", valsetUpdate.EventNonce.String()).
-		Msg("oracle sent ValsetUpdate event successfully")
-
-	return nil
-}
-
-func (s *peggyBroadcastClient) sendERC20DeployedClaims(event *wrappers.PeggyERC20DeployedEvent) error {
-
-	s.logger.Info().
-		Str("event_nonce", event.EventNonce.String()).
-		Str("token_contract", event.TokenContract.Hex()).
-		Str("cosmos_denom", event.CosmosDenom).
-		Msg("oracle observed an ERC20 deployed event; sending MsgERC20DeployedClaim")
-
-	msg := &types.MsgERC20DeployedClaim{
-		EventNonce:    event.EventNonce.Uint64(),
-		BlockHeight:   event.Raw.BlockNumber,
-		Orchestrator:  s.AccFromAddress().String(),
-		CosmosDenom:   event.CosmosDenom,
-		TokenContract: event.TokenContract.Hex(),
-		Name:          event.Name,
-		Decimals:      uint64(event.Decimals),
-		Symbol:        event.Symbol,
-	}
-
-	txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg)
-	if err != nil {
-		s.logger.Err(err).Msg("broadcasting ERC20DeployedClaim failed")
-		return err
-	}
-
-	s.logger.Info().
-		Str("tx_hash", txResponse.TxHash).
-		Str("event_nonce", event.EventNonce.String()).
-		Msg("oracle sent ERC20Deployed event successfully")
-
-	return nil
-}
-
-func (s *peggyBroadcastClient) SendEthereumClaims(
-	ctx context.Context,
-	lastClaimEvent uint64,
-	deposits []*wrappers.PeggySendToCosmosEvent,
-	withdraws []*wrappers.PeggyTransactionBatchExecutedEvent,
-	valsetUpdates []*wrappers.PeggyValsetUpdatedEvent,
-	erc20Deployed []*wrappers.PeggyERC20DeployedEvent,
-	cosmosBlockTime time.Duration,
-) error {
-	allevents := []sortableEvent{}
-
-	// We add all the events to the same list to be sorted.
-	// Only events that have a nonce higher than the last claim event will be appended.
-	for _, ev := range deposits {
-		if ev.EventNonce.Uint64() > lastClaimEvent {
-			allevents = append(allevents, sortableEvent{
-				EventNonce:   ev.EventNonce.Uint64(),
-				DepositEvent: ev,
-			})
-		}
-	}
-
-	for _, ev := range withdraws {
-		if ev.EventNonce.Uint64() > lastClaimEvent {
-			allevents = append(allevents, sortableEvent{
-				EventNonce:    ev.EventNonce.Uint64(),
-				WithdrawEvent: ev,
-			})
-		}
-	}
-
-	for _, ev := range valsetUpdates {
-		if ev.EventNonce.Uint64() > lastClaimEvent {
-			allevents = append(allevents, sortableEvent{
-				EventNonce:        ev.EventNonce.Uint64(),
-				ValsetUpdateEvent: ev,
-			})
-		}
-	}
-
-	for _, ev := range erc20Deployed {
-		if ev.EventNonce.Uint64() > lastClaimEvent {
-			allevents = append(allevents, sortableEvent{
-				EventNonce:         ev.EventNonce.Uint64(),
-				ERC20DeployedEvent: ev,
-			})
-		}
-	}
-
-	// Use SliceStable so we always get the same order
-	sort.SliceStable(allevents, func(i, j int) bool {
-		return allevents[i].EventNonce < allevents[j].EventNonce
-	})
-
-	// iterate through events and send them sequentially
-	for _, ev := range allevents {
-		// If the event nonce isn't sequential, we break from this loop
-		// given that the events are sorted, this should never happen.
-		if ev.EventNonce != lastClaimEvent+1 {
-			break
-		}
-
-		switch {
-		case ev.DepositEvent != nil:
-			err := s.sendDepositClaims(ev.DepositEvent)
-			if err != nil {
-				s.logger.Err(err).Msg("broadcasting MsgDepositClaim failed")
-				return err
-			}
-		case ev.WithdrawEvent != nil:
-			err := s.sendWithdrawClaims(ev.WithdrawEvent)
-			if err != nil {
-				s.logger.Err(err).Msg("broadcasting MsgWithdrawClaim failed")
-				return err
-			}
-		case ev.ValsetUpdateEvent != nil:
-			err := s.sendValsetUpdateClaims(ev.ValsetUpdateEvent)
-			if err != nil {
-				s.logger.Err(err).Msg("broadcasting MsgValsetUpdateClaim failed")
-				return err
-			}
-		case ev.ERC20DeployedEvent != nil:
-			err := s.sendERC20DeployedClaims(ev.ERC20DeployedEvent)
-			if err != nil {
-				s.logger.Err(err).Msg("broadcasting MsgERC20DeployedClaim failed")
-				return err
-			}
-		}
-
-		lastClaimEvent++
-		time.Sleep(cosmosBlockTime)
-	}
-
-	return nil
-}
-
-func (s *peggyBroadcastClient) SendToEth(
-	ctx context.Context,
-	destination ethcmn.Address,
-	amount, fee sdk.Coin,
-) error {
-	// MsgSendToEth
-	// This is the message that a user calls when they want to bridge an asset
-	// it will later be removed when it is included in a batch and successfully
-	// submitted tokens are removed from the users balance immediately
-	// -------------
-	// AMOUNT:
-	// the coin to send across the bridge, note the restriction that this is a
-	// single coin not a set of coins that is normal in other Cosmos messages
-	// FEE:
-	// the fee paid for the bridge, distinct from the fee paid to the chain to
-	// actually send this message in the first place. So a successful send has
-	// two layers of fees for the user
-
-	msg := &types.MsgSendToEth{
-		Sender:    s.AccFromAddress().String(),
-		EthDest:   destination.Hex(),
-		Amount:    amount,
-		BridgeFee: fee, // TODO: use exactly that fee for transaction
-	}
-	if err := s.broadcastClient.QueueBroadcastMsg(msg); err != nil {
-		err = errors.Wrap(err, "broadcasting MsgSendToEth failed")
 		return err
 	}
 

@@ -7,23 +7,21 @@ import (
 	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/rs/zerolog"
 
-	"github.com/umee-network/peggo/orchestrator/coingecko"
-	"github.com/umee-network/peggo/orchestrator/cosmos/tmclient"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/coingecko"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/cosmos/tmclient"
 
-	sidechain "github.com/umee-network/peggo/orchestrator/cosmos"
-	"github.com/umee-network/peggo/orchestrator/ethereum/keystore"
-	"github.com/umee-network/peggo/orchestrator/ethereum/peggy"
-	"github.com/umee-network/peggo/orchestrator/ethereum/provider"
-	"github.com/umee-network/peggo/orchestrator/relayer"
+	sidechain "github.com/celestiaorg/quantum-gravity-bridge/orchestrator/cosmos"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/keystore"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/peggy"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/ethereum/provider"
+	"github.com/celestiaorg/quantum-gravity-bridge/orchestrator/relayer"
 )
 
 type PeggyOrchestrator interface {
 	Start(ctx context.Context) error
-	CheckForEvents(ctx context.Context, startingBlock uint64) (currentBlock uint64, err error)
+	// CheckForEvents(ctx context.Context, startingBlock uint64) (currentBlock uint64, err error)
 	GetLastCheckedBlock(ctx context.Context) (uint64, error)
-	EthOracleMainLoop(ctx context.Context) error
 	EthSignerMainLoop(ctx context.Context) error
-	BatchRequesterLoop(ctx context.Context) error
 	RelayerMainLoop(ctx context.Context) error
 
 	SetMinBatchFee(float64)

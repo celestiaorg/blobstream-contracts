@@ -39,6 +39,7 @@ func (s *peggyRelayer) RelayValsets(ctx context.Context) error {
 		return nil
 	}
 
+	// FIXME: we need to get the latest valset hash instead??!
 	currentEthValset, err := s.FindLatestValset(ctx)
 	if err != nil {
 		err = errors.Wrap(err, "couldn't find latest confirmed valset on Ethereum")
