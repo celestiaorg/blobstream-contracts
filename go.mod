@@ -18,7 +18,7 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/knadh/koanf v1.3.2
+	github.com/knadh/koanf v1.3.3
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mimoo/StrobeGo v0.0.0-20210601165009-122bf33a46e0 // indirect
 	github.com/onsi/ginkgo v1.16.5
