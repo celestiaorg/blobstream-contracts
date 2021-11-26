@@ -2,7 +2,7 @@ pull_request_rules:
   - name: Automatic merge on approval
     conditions:
       - "#approved-reviews-by>=1"
-      - base=main
+      - base=master
       - label=A:Automerge
     actions:
       merge:
@@ -11,7 +11,7 @@ pull_request_rules:
         commit_message: title+body
   - name: Backport patches to release/v0.1.x branch
     conditions:
-      - base=main
+      - base=master
       - label=S:backport/v0.1.x
     actions:
       backport:

@@ -3,7 +3,7 @@ on:
   pull_request:
   push:
     branches:
-      - main
+      - master
 jobs:
   golangci:
     name: Run golangci-lint
@@ -36,5 +36,5 @@ jobs:
         env:
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_MARKDOWN: true
-          DEFAULT_BRANCH: main
+          DEFAULT_BRANCH: master
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
