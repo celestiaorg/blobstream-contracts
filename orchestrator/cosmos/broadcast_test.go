@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
+	wrappers "github.com/celestiaorg/quantum-gravity-bridge/ethereum/wrappers/Peggy.sol"
 	"github.com/celestiaorg/quantum-gravity-bridge/mocks"
-	wrappers "github.com/celestiaorg/quantum-gravity-bridge/solidity/wrappers/Peggy.sol"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/umee-network/umee/x/peggy/types"

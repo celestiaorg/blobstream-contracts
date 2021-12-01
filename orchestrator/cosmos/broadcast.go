@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
+	"time"
 
 	"github.com/celestiaorg/quantum-gravity-bridge/cmd/peggo/client"
 	wrappers "github.com/celestiaorg/quantum-gravity-bridge/ethereum/solidity/wrappers/QuantumGravityBridge.sol"
@@ -53,9 +55,10 @@ type PeggyBroadcastClient interface {
 }
 
 // sortableEvent exists with the only purpose to make a nicer sortable slice for Ethereum events.
-// It is only used in SendEthereumClaims
+// It is only used in `SendEthereumClaims`
 type sortableEvent struct {
 	EventNonce        uint64
+	TupleRootEvent    *wrappers.QuantumGravityBridgeMessageTupleRootEvent
 	ValsetUpdateEvent *wrappers.QuantumGravityBridgeValidatorSetUpdatedEvent
 }
 
@@ -198,6 +201,145 @@ func (s *peggyBroadcastClient) SendBatchConfirm(
 	if err = s.broadcastClient.QueueBroadcastMsg(msg); err != nil {
 		err = errors.Wrap(err, "broadcasting MsgConfirmBatch failed")
 		return err
+	}
+
+	return nil
+}
+
+func (s *peggyBroadcastClient) sendTupleRootClaims(tupleRoot *wrappers.QuantumGravityBridgeMessageTupleRootEvent) error {
+
+	s.logger.Info().
+		Str("nonce", tupleRoot.BatchNonce.String()).
+		Str("token_contract", tupleRoot.Token.Hex()).
+		Str("event_nonce", tupleRoot.EventNonce.String()).
+		Msg("oracle observed a tuple root event. Sending MsgTupleRootClaim")
+
+	// TupleRootClaim claims that a tuple root submission
+	// operations on the bridge contract was executed.
+	msg := &types.MsgWithdrawClaim{
+		EventNonce:    tupleRoot.EventNonce.Uint64(),
+		BatchNonce:    tupleRoot.BatchNonce.Uint64(),
+		BlockHeight:   tupleRoot.Raw.BlockNumber,
+		TokenContract: tupleRoot.Token.Hex(),
+		Orchestrator:  s.AccFromAddress().String(),
+	}
+
+	txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg)
+	if err != nil {
+		s.logger.Err(err).Msg("broadcasting MsgTupleRootClaim failed")
+		return err
+	}
+
+	s.logger.Info().
+		Str("tx_hash", txResponse.TxHash).
+		Str("event_nonce", tupleRoot.EventNonce.String()).
+		Msg("oracle sent TupleRoot event successfully")
+
+	return nil
+}
+
+func (s *peggyBroadcastClient) sendValsetUpdateClaims(valsetUpdate *wrappers.QuantumGravityBridgeValidatorSetUpdatedEvent) error {
+
+	s.logger.Info().
+		Str("event_nonce", valsetUpdate.EventNonce.String()).
+		Uint64("valset_nonce", valsetUpdate.NewValsetNonce.Uint64()).
+		Int("validators", len(valsetUpdate.Validators)).
+		Interface("powers", valsetUpdate.Powers).
+		Uint64("reward_amount", valsetUpdate.RewardAmount.Uint64()).
+		Str("reward_token", valsetUpdate.RewardToken.Hex()).
+		Msg("oracle observed a valset update event; sending MsgValsetUpdateClaim")
+
+	members := make([]*types.BridgeValidator, len(valsetUpdate.Validators))
+	for i, val := range valsetUpdate.Validators {
+		members[i] = &types.BridgeValidator{
+			EthereumAddress: val.Hex(),
+			Power:           valsetUpdate.Powers[i].Uint64(),
+		}
+	}
+
+	msg := &types.MsgValsetUpdatedClaim{
+		EventNonce:   valsetUpdate.EventNonce.Uint64(),
+		ValsetNonce:  valsetUpdate.NewValsetNonce.Uint64(),
+		BlockHeight:  valsetUpdate.Raw.BlockNumber,
+		RewardAmount: sdk.NewIntFromBigInt(valsetUpdate.RewardAmount),
+		RewardToken:  valsetUpdate.RewardToken.Hex(),
+		Members:      members,
+		Orchestrator: s.AccFromAddress().String(),
+	}
+
+	txResponse, err := s.broadcastClient.SyncBroadcastMsg(msg)
+	if err != nil {
+		s.logger.Err(err).Msg("broadcasting MsgValsetUpdatedClaim failed")
+		return err
+	}
+
+	s.logger.Info().
+		Str("tx_hash", txResponse.TxHash).
+		Str("event_nonce", valsetUpdate.EventNonce.String()).
+		Msg("oracle sent ValsetUpdate event successfully")
+
+	return nil
+}
+
+func (s *peggyBroadcastClient) SendEthereumClaims(
+	ctx context.Context,
+	lastClaimEvent uint64,
+	tupleRoots []*wrappers.QuantumGravityBridgeMessageTupleRootEvent,
+	valsetUpdates []*wrappers.QuantumGravityBridgeValidatorSetUpdatedEvent,
+	cosmosBlockTime time.Duration,
+) error {
+	allevents := []sortableEvent{}
+
+	// We add all the events to the same list to be sorted.
+	// Only events that have a nonce higher than the last claim event will be appended.
+	for _, ev := range tupleRoots {
+		if ev.Nonce.Uint64() > lastClaimEvent {
+			allevents = append(allevents, sortableEvent{
+				EventNonce:     ev.Nonce.Uint64(),
+				TupleRootEvent: ev,
+			})
+		}
+	}
+
+	for _, ev := range valsetUpdates {
+		if ev.Nonce.Uint64() > lastClaimEvent {
+			allevents = append(allevents, sortableEvent{
+				EventNonce:        ev.Nonce.Uint64(),
+				ValsetUpdateEvent: ev,
+			})
+		}
+	}
+
+	// Use SliceStable so we always get the same order
+	sort.SliceStable(allevents, func(i, j int) bool {
+		return allevents[i].EventNonce < allevents[j].EventNonce
+	})
+
+	// iterate through events and send them sequentially
+	for _, ev := range allevents {
+		// If the event nonce isn't sequential, we break from this loop
+		// given that the events are sorted, this should never happen.
+		if ev.EventNonce != lastClaimEvent+1 {
+			break
+		}
+
+		switch {
+		case ev.TupleRootEvent != nil:
+			err := s.sendTupleRootClaims(ev.TupleRootEvent)
+			if err != nil {
+				s.logger.Err(err).Msg("broadcasting MsgSendTupleRootClaim failed")
+				return err
+			}
+		case ev.ValsetUpdateEvent != nil:
+			err := s.sendValsetUpdateClaims(ev.ValsetUpdateEvent)
+			if err != nil {
+				s.logger.Err(err).Msg("broadcasting MsgValsetUpdateClaim failed")
+				return err
+			}
+		}
+
+		lastClaimEvent++
+		time.Sleep(cosmosBlockTime)
 	}
 
 	return nil
