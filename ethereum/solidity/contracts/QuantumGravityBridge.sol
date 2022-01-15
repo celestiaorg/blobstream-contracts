@@ -24,10 +24,10 @@ struct MessageTuple {
 
 /// @title Quantum Gravity Bridge: Celestia -> Ethereum, Data Availability relay.
 contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
-    // Don't change the order of state for working upgrades.
-    // AND BE AWARE OF INHERITANCE VARIABLES!
-    // Inherited contracts contain storage slots and must be accounted for in any upgrades
-    // always test an exact upgrade on testnet and localhost before mainnet upgrades.
+    // Don't change the order of state for working upgrades AND BE AWARE OF
+    // INHERITANCE VARIABLES! Inherited contracts contain storage slots and must
+    // be accounted for in any upgrades. Always test an exact upgrade on testnet
+    // and localhost before mainnet upgrades.
 
     ///////////////
     // Constants //
