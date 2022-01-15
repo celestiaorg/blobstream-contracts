@@ -71,6 +71,7 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
     /// @param nonce Nonce.
     /// @param powerThreshold New voting power threshold.
     /// @param validatorSetHash Hash of new validator set.
+    /// See `updateValidatorSet`.
     event ValidatorSetUpdatedEvent(uint256 indexed nonce, uint256 powerThreshold, bytes32 validatorSetHash);
 
     ////////////
