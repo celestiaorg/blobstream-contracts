@@ -7,6 +7,7 @@ import "./IDAOracle.sol";
 import "./MessageTuple.sol";
 import "./OwnableUpgradeableWithExpiry.sol";
 import "./lib/tree/binary/BinaryMerkleProof.sol";
+import "./lib/tree/binary/BinaryMerkleTree.sol";
 
 struct Validator {
     address addr;
@@ -351,10 +352,21 @@ contract QuantumGravityBridge is IDAOracle, OwnableUpgradeableWithExpiry {
 
     /// @dev see "./IDAOracle.sol"
     function verifyAttestation(
-        uint256 tupleRootIndex,
-        MessageTuple memory tuple,
-        BinaryMerkleProof memory proof
+        uint256 _tupleRootIndex,
+        MessageTuple memory _tuple,
+        BinaryMerkleProof memory _proof
     ) external view override returns (bool) {
-        return true;
+        // Tuple root must have been committed before.
+        if (_tupleRootIndex <= state_lastMessageTupleRootNonce) {
+            return false;
+        }
+
+        // Load the tuple root at the given index from storage.
+        bytes32 root = state_messageTupleRoots[_tupleRootIndex];
+
+        // Verify the proof.
+        bool isProofValid = BinaryMerkleTree.verify(root, abi.encode(_tuple), _proof);
+
+        return isProofValid;
     }
 }
