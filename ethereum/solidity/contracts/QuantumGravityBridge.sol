@@ -293,7 +293,7 @@ contract QuantumGravityBridge is IDAOracle, OwnableUpgradeableWithExpiry {
     /// (https://github.com/celestiaorg/celestia-specs/blob/master/src/specs/data_structures.md#binary-merkle-tree)
     /// where each leaf in an ABI-encoded `MessageTuple`. Each relayed message
     /// tuple will 1:1 mirror messages as they are included on Celestia, _in
-    /// order of inclusion of the PayForMessage transactions that paid for the
+    /// order of inclusion_ of the PayForMessage transactions that paid for the
     /// messages.
     ///
     /// The message tuple root that is signed over is domain separated as per
@@ -349,6 +349,7 @@ contract QuantumGravityBridge is IDAOracle, OwnableUpgradeableWithExpiry {
         emit MessageTupleRootEvent(_nonce, _messageTupleRoot);
     }
 
+    /// @dev see "./IDAOracle.sol"
     function verifyAttestation(
         bytes32 tupleRoot,
         MessageTuple memory tuple,
