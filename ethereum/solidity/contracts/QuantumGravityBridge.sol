@@ -357,7 +357,7 @@ contract QuantumGravityBridge is IDAOracle, OwnableUpgradeableWithExpiry {
         BinaryMerkleProof memory _proof
     ) external view override returns (bool) {
         // Tuple root must have been committed before.
-        if (_tupleRootIndex <= state_lastMessageTupleRootNonce) {
+        if (_tupleRootIndex > state_lastMessageTupleRootNonce) {
             return false;
         }
 
