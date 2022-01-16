@@ -351,7 +351,7 @@ contract QuantumGravityBridge is IDAOracle, OwnableUpgradeableWithExpiry {
 
     /// @dev see "./IDAOracle.sol"
     function verifyAttestation(
-        bytes32 tupleRoot,
+        uint256 tupleRootIndex,
         MessageTuple memory tuple,
         BinaryMerkleProof memory proof
     ) external view override returns (bool) {
