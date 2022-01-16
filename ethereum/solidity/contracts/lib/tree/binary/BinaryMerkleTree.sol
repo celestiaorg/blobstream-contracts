@@ -9,31 +9,27 @@ import "./BinaryMerkleProof.sol";
 /// @title Binary Merkle Tree.
 library BinaryMerkleTree {
     /// @notice Verify if element (key, data) exists in Merkle tree, given data, proof, and root.
-    /// @param root: The root of the tree in which verify the given leaf
-    /// @param data: The data of the leaf to verify
-    /// @param key: The key of the leaf to verify.
-    /// @param proof: Binary Merkle Proof for the leaf.
-    /// @param numLeaves: The number of leaves in the tree
-    /// @return : Whether the proof is valid
-    /// @dev numLeaves is necessary to determine height of subtree containing the data to prove
+    /// @param root The root of the tree in which verify the given leaf.
+    /// @param data The data of the leaf to verify.
+    /// @param proof Binary Merkle Proof for the leaf.
+    /// @return `true` is proof is valid, `false` otherwise.
+    /// @dev proof.numLeaves is necessary to determine height of subtree containing the data to prove.
     function verify(
         bytes32 root,
         bytes memory data,
-        bytes32[] memory proof,
-        uint256 key,
-        uint256 numLeaves
+        BinaryMerkleProof memory proof
     ) internal pure returns (bool) {
         // Check proof is correct length for the key it is proving
-        if (numLeaves <= 1) {
-            if (proof.length != 0) {
+        if (proof.numLeaves <= 1) {
+            if (proof.sideNodes.length != 0) {
                 return false;
             }
-        } else if (proof.length != pathLengthFromKey(key, numLeaves)) {
+        } else if (proof.sideNodes.length != pathLengthFromKey(proof.key, proof.numLeaves)) {
             return false;
         }
 
         // Check key is in tree
-        if (key >= numLeaves) {
+        if (proof.key >= proof.numLeaves) {
             return false;
         }
 
@@ -42,8 +38,8 @@ library BinaryMerkleTree {
 
         // Null proof is only valid if numLeaves = 1
         // If so, just verify hash(data) is root
-        if (proof.length == 0) {
-            if (numLeaves == 1) {
+        if (proof.sideNodes.length == 0) {
+            if (proof.numLeaves == 1) {
                 return (root == digest);
             } else {
                 return false;
@@ -51,7 +47,7 @@ library BinaryMerkleTree {
         }
 
         uint256 height = 1;
-        uint256 stableEnd = key;
+        uint256 stableEnd = proof.key;
 
         // While the current subtree (of height 'height') is complete, determine
         // the position of the next sibling using the complete subtree algorithm.
@@ -66,26 +62,26 @@ library BinaryMerkleTree {
             // << 'height', and comparing the result to the number of leaves in the
             // Merkle tree.
 
-            uint256 subTreeStartIndex = (key / (1 << height)) * (1 << height);
+            uint256 subTreeStartIndex = (proof.key / (1 << height)) * (1 << height);
             uint256 subTreeEndIndex = subTreeStartIndex + (1 << height) - 1;
 
             // If the Merkle tree does not have a leaf at index
             // 'subTreeEndIndex', then the subtree of the current height is not
             // a complete subtree.
-            if (subTreeEndIndex >= numLeaves) {
+            if (subTreeEndIndex >= proof.numLeaves) {
                 break;
             }
             stableEnd = subTreeEndIndex;
 
             // Determine if the key is in the first or the second half of
             // the subtree.
-            if (proof.length <= height - 1) {
+            if (proof.sideNodes.length <= height - 1) {
                 return false;
             }
-            if (key - subTreeStartIndex < (1 << (height - 1))) {
-                digest = nodeDigest(digest, proof[height - 1]);
+            if (proof.key - subTreeStartIndex < (1 << (height - 1))) {
+                digest = nodeDigest(digest, proof.sideNodes[height - 1]);
             } else {
-                digest = nodeDigest(proof[height - 1], digest);
+                digest = nodeDigest(proof.sideNodes[height - 1], digest);
             }
 
             height += 1;
@@ -94,18 +90,18 @@ library BinaryMerkleTree {
         // Determine if the next hash belongs to an orphan that was elevated. This
         // is the case IFF 'stableEnd' (the last index of the largest full subtree)
         // is equal to the number of leaves in the Merkle tree.
-        if (stableEnd != numLeaves - 1) {
-            if (proof.length <= height - 1) {
+        if (stableEnd != proof.numLeaves - 1) {
+            if (proof.sideNodes.length <= height - 1) {
                 return false;
             }
-            digest = nodeDigest(digest, proof[height - 1]);
+            digest = nodeDigest(digest, proof.sideNodes[height - 1]);
             height += 1;
         }
 
         // All remaining elements in the proof set will belong to a left sibling\
         // i.e proof sideNodes are hashed in "from the left"
-        while (height - 1 < proof.length) {
-            digest = nodeDigest(proof[height - 1], digest);
+        while (height - 1 < proof.sideNodes.length) {
+            digest = nodeDigest(proof.sideNodes[height - 1], digest);
             height += 1;
         }
 
