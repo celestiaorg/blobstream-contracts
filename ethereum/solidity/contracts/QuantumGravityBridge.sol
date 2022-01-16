@@ -3,7 +3,10 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
+import "./IDAOracle.sol";
+import "./MessageTuple.sol";
 import "./OwnableUpgradeableWithExpiry.sol";
+import "./lib/tree/binary/BinaryMerkleProof.sol";
 
 struct Validator {
     address addr;
@@ -16,14 +19,8 @@ struct Signature {
     bytes32 s;
 }
 
-struct MessageTuple {
-    uint256 height;
-    bytes8 namespaceID;
-    bytes32 messageCommitment;
-}
-
 /// @title Quantum Gravity Bridge: Celestia -> Ethereum, Data Availability relay.
-contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
+contract QuantumGravityBridge is IDAOracle, OwnableUpgradeableWithExpiry {
     // Don't change the order of state for working upgrades AND BE AWARE OF
     // INHERITANCE VARIABLES! Inherited contracts contain storage slots and must
     // be accounted for in any upgrades. Always test an exact upgrade on testnet
@@ -350,5 +347,13 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         // LOGS
 
         emit MessageTupleRootEvent(_nonce, _messageTupleRoot);
+    }
+
+    function verifyAttestation(
+        bytes32 tupleRoot,
+        MessageTuple memory tuple,
+        BinaryMerkleProof memory proof
+    ) external view override returns (bool) {
+        return true;
     }
 }
