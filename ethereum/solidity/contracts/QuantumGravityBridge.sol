@@ -21,6 +21,16 @@ struct Signature {
 }
 
 /// @title Quantum Gravity Bridge: Celestia -> Ethereum, Data Availability relay.
+/// @dev The relay relies on a set of signers to attest to some event on
+/// Celestia. These signers are the Celestia validator set, who sign over every
+/// Celestia block. Keeping track of the Celestia validator set is accomplished
+/// by updating this contract's view of the validator set with
+/// `updateValidatorSet()`. At least 2/3 of the voting power of the current
+/// view of the validator set must sign off on new relayed events, submitted
+/// with `submitMessageTupleRoot()`. Each event is a batch of `MessageTuple`s
+/// (see ./MessageTuple.sol), with each tuple representing a single message
+/// posted to Celestia. Relayed tuples are in the same order as the messages
+/// they represent are paid for on Celestia.
 contract QuantumGravityBridge is IDAOracle, OwnableUpgradeableWithExpiry {
     // Don't change the order of state for working upgrades AND BE AWARE OF
     // INHERITANCE VARIABLES! Inherited contracts contain storage slots and must
@@ -31,11 +41,11 @@ contract QuantumGravityBridge is IDAOracle, OwnableUpgradeableWithExpiry {
     // Constants //
     ///////////////
 
-    // bytes32 encoding of the string "checkpoint"
+    /// @dev bytes32 encoding of the string "checkpoint"
     bytes32 constant VALIDATOR_SET_HASH_DOMAIN_SEPARATOR =
         0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-    // bytes32 encoding of the string "transactionBatch"
+    /// @dev bytes32 encoding of the string "transactionBatch"
     bytes32 constant MESSAGE_TUPLE_ROOT_DOMAIN_SEPARATOR =
         0x7472616e73616374696f6e426174636800000000000000000000000000000000;
 
@@ -49,10 +59,15 @@ contract QuantumGravityBridge is IDAOracle, OwnableUpgradeableWithExpiry {
     // Storage //
     /////////////
 
+    /// @notice Domain-separated commitment to the latest validator set.
     bytes32 public state_lastValidatorSetCheckpoint;
+    /// @notice Voting power required to submit a new update.
     uint256 public state_powerThreshold;
+    /// @notice Unique nonce of validator set updates.
     uint256 public state_lastValidatorSetNonce;
+    /// @notice Unique nonce of message tuple updates.
     uint256 public state_lastMessageTupleRootNonce;
+    /// @notice Mapping of message tuple nonces to message tuple roots.
     mapping(uint256 => bytes32) public state_messageTupleRoots;
 
     ////////////
@@ -129,7 +144,7 @@ contract QuantumGravityBridge is IDAOracle, OwnableUpgradeableWithExpiry {
         emit ValidatorSetUpdatedEvent(nonce, _powerThreshold, _validatorSetHash);
     }
 
-    /// @notice Utility function to verify EIP-191 signatures
+    /// @notice Utility function to verify EIP-191 signatures.
     function verifySig(
         address _signer,
         bytes32 _digest,
