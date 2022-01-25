@@ -8,16 +8,16 @@ import "./BinaryMerkleProof.sol";
 
 /// @title Binary Merkle Tree.
 library BinaryMerkleTree {
-    /// @notice Verify if element (key, data) exists in Merkle tree, given data, proof, and root.
+    /// @notice Verify if element exists in Merkle tree, given data, proof, and root.
     /// @param root The root of the tree in which verify the given leaf.
+    /// @param proof Binary Merkle proof for the leaf.
     /// @param data The data of the leaf to verify.
-    /// @param proof Binary Merkle Proof for the leaf.
     /// @return `true` is proof is valid, `false` otherwise.
     /// @dev proof.numLeaves is necessary to determine height of subtree containing the data to prove.
     function verify(
         bytes32 root,
-        bytes memory data,
-        BinaryMerkleProof memory proof
+        BinaryMerkleProof memory proof,
+        bytes memory data
     ) internal pure returns (bool) {
         // Check proof is correct length for the key it is proving
         if (proof.numLeaves <= 1) {

@@ -7,4 +7,8 @@ import "./NamespaceNode.sol";
 struct NamespaceMerkleProof {
     // List of side nodes to verify and calculate tree.
     NamespaceNode[] sideNodes;
+    // The key of the leaf to verify.
+    uint256 key;
+    // The number of leaves in the tree
+    uint256 numLeaves;
 }
