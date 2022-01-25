@@ -380,7 +380,7 @@ contract QuantumGravityBridge is IDAOracle, OwnableUpgradeableWithExpiry {
         bytes32 root = state_messageTupleRoots[_tupleRootIndex];
 
         // Verify the proof.
-        bool isProofValid = BinaryMerkleTree.verify(root, abi.encode(_tuple), _proof);
+        bool isProofValid = BinaryMerkleTree.verify(root, _proof, abi.encode(_tuple));
 
         return isProofValid;
     }
