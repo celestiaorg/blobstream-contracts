@@ -32,6 +32,7 @@ $ make install
 
 ## How to run
 
+<!--
 ### Setup
 
 First we must register the validator's Ethereum key.
@@ -64,6 +65,7 @@ $ qgb orchestrator \
   --cosmos-keyring-dir=... \
   --cosmos-from=...
 ```
+-->
 
 ### Send a message from Celestia to an EVM chain
 
