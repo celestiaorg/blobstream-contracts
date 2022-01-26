@@ -81,7 +81,7 @@ It does not support bridging assets such as fungible or non-fungible tokens dire
 
 It works by relying on a set of signers to attest to some event on Celestia: the Celestia validator set.
 The QGB contract keeps track of the Celestia validator set by updating its view of the validator set with `updateValidatorSet()`.
-At least 2/3 of the voting power of the current view of the validator set must sign off on new relayed events, submitted with `submitMessageTupleRoot()`.
+More than 2/3 of the voting power of the current view of the validator set must sign off on new relayed events, submitted with `submitMessageTupleRoot()`.
 Each event is a batch of `MessageTuple`s, with each tuple representing a single message posted to Celestia.
 Relayed tuples are in the same order as the messages they represent are paid for on Celestia.
 
