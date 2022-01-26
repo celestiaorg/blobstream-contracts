@@ -10,6 +10,7 @@
 
 The Quantum Gravity Bridge (QGB) is a Celestia -> EVM message relay.
 It is based on Umee's Gravity Bridge implementation, [Peggo](https://github.com/umee-network/peggo).
+**This project is under active development and should not be used in production**.
 
 ## Table of Contents
 
