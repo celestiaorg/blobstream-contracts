@@ -14,7 +14,6 @@ It is based on Umee's Gravity Bridge implementation, [Peggo](https://github.com/
 ## Table of Contents
 
 - [Dependencies](#dependencies)
-- [Installation](#installation)
 - [How to run](#how-to-run)
 - [How it works](#how-it-works)
 
@@ -22,6 +21,7 @@ It is based on Umee's Gravity Bridge implementation, [Peggo](https://github.com/
 
 - [Go 1.17+](https://golang.org/dl/)
 
+<!--
 ## Installation
 
 To install the `qgb` binary:
@@ -29,6 +29,7 @@ To install the `qgb` binary:
 ```console
 $ make install
 ```
+-->
 
 ## How to run
 
