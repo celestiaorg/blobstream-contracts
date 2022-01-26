@@ -15,7 +15,6 @@ It is based on Umee's Gravity Bridge implementation, [Peggo](https://github.com/
 ## Table of Contents
 
 - [Dependencies](#dependencies)
-- [How to run](#how-to-run)
 - [How it works](#how-it-works)
 
 ## Dependencies
@@ -32,9 +31,9 @@ $ make install
 ```
 -->
 
+<!--
 ## How to run
 
-<!--
 ### Setup
 
 First we must register the validator's Ethereum key.
@@ -69,7 +68,7 @@ $ qgb orchestrator \
 ```
 -->
 
-### Send a message from Celestia to an EVM chain
+## Send a message from Celestia to an EVM chain
 
 A message can be included on Celestia by using the Celestia app.
 Instructions [here](https://github.com/celestiaorg/celestia-app).
