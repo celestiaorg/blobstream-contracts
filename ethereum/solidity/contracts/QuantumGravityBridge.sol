@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-import "./IDAOracle.sol";
 import "./DataRootTuple.sol";
+import "./IDAOracle.sol";
 import "./OwnableUpgradeableWithExpiry.sol";
 import "./lib/tree/binary/BinaryMerkleProof.sol";
 import "./lib/tree/binary/BinaryMerkleTree.sol";
