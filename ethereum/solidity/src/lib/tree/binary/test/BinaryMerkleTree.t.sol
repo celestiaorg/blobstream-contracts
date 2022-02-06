@@ -30,4 +30,15 @@ contract BinaryMerkleProofTest is DSTest {
         bool isValid = BinaryMerkleTree.verify(root, proof, data);
         assertTrue(isValid);
     }
+
+    function testVerifyOneLeafSome() external {
+        bytes32 root = 0x48c90c8ae24688d6bef5d48a30c2cc8b6754335a8db21793cc0a8e3bed321729;
+        bytes32[] memory sideNodes;
+        uint256 key = 0;
+        uint256 numLeaves = 1;
+        BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
+        bytes memory data = hex"deadbeef";
+        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        assertTrue(isValid);
+    }
 }
