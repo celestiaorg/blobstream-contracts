@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./ContextUpgradeable.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "lib/@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 /**
  * @dev Contract module which provides a basic access control mechanism, where

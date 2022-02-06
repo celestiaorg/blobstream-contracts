@@ -5,3 +5,4 @@ cache
 coverage
 **/typechain/**/*
 node_modules
+out/
