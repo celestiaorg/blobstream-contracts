@@ -41,4 +41,31 @@ contract BinaryMerkleProofTest is DSTest {
         bool isValid = BinaryMerkleTree.verify(root, proof, data);
         assertTrue(isValid);
     }
+
+    function testVerifyLeafSevenOfEight() external {
+        bytes32 root = 0x48c90c8ae24688d6bef5d48a30c2cc8b6754335a8db21793cc0a8e3bed321729;
+        bytes32[] memory sideNodes = new bytes32[](4);
+        sideNodes[0] = 0x48c90c8ae24688d6bef5d48a30c2cc8b6754335a8db21793cc0a8e3bed321729;
+        sideNodes[1] = 0x48c90c8ae24688d6bef5d48a30c2cc8b6754335a8db21793cc0a8e3bed321729;
+        sideNodes[2] = 0x48c90c8ae24688d6bef5d48a30c2cc8b6754335a8db21793cc0a8e3bed321729;
+        sideNodes[3] = 0x48c90c8ae24688d6bef5d48a30c2cc8b6754335a8db21793cc0a8e3bed321729;
+
+        uint256 key = 6;
+        uint256 numLeaves = 8;
+        BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
+        bytes memory data = hex"deadbeef";
+        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        assertTrue(isValid);
+    }
+
+    function testVerifyLeafEightOfEight() external {
+        bytes32 root = 0x48c90c8ae24688d6bef5d48a30c2cc8b6754335a8db21793cc0a8e3bed321729;
+        bytes32[] memory sideNodes;
+        uint256 key = 7;
+        uint256 numLeaves = 8;
+        BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
+        bytes memory data = hex"deadbeef";
+        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        assertTrue(isValid);
+    }
 }
