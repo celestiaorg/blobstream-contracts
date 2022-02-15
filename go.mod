@@ -9,7 +9,7 @@ require (
 	github.com/bugsnag/panicwrap v1.3.4 // indirect
 	github.com/cosmos/cosmos-sdk v0.44.3
 	github.com/dgraph-io/ristretto v0.1.0 // indirect
-	github.com/ethereum/go-ethereum v1.10.12
+	github.com/ethereum/go-ethereum v1.10.16
 	github.com/go-kit/kit v0.11.0 // indirect
 	github.com/golang/glog v0.0.0-20210429001901-424d2337a529 // indirect
 	github.com/golang/mock v1.6.0
@@ -84,7 +84,7 @@ require (
 	github.com/daixiang0/gci v0.2.9 // indirect
 	github.com/danieljoos/wincred v1.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/deckarep/golang-set v0.0.0-20180603214616-504e848d77ea // indirect
+	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/denis-tingajkin/go-header v0.4.2 // indirect
 	github.com/dgraph-io/badger/v2 v2.2007.2 // indirect
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
@@ -155,7 +155,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jmhodges/levigo v1.0.0 // indirect
 	github.com/julz/importas v0.0.0-20210419104244-841f0c0fe66d // indirect
-	github.com/karalabe/usb v0.0.0-20211005121534-4c5740d64559 // indirect
+	github.com/karalabe/usb v0.0.2 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/keybase/go-keychain v0.0.0-20190712205309-48d3d31d256d // indirect
 	github.com/kisielk/errcheck v1.6.0 // indirect
