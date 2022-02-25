@@ -185,4 +185,66 @@ contract NamespaceMerkleTreeTest is DSTest {
         bool isValid = NamespaceMerkleTree.verify(root, proof, 0x0000000000000010, data);
         assertTrue(isValid);
     }
+
+    function testVerifyLeafSevenOfEight() external {
+        NamespaceNode memory root = NamespaceNode(
+            0x0000000000000010,
+            0x0000000000000040,
+            0x16c760661bc5ed683d27dc2f045a81a67e837928527e0de209a195b6db60f462
+        );
+        NamespaceNode[] memory sideNodes = new NamespaceNode[](3);
+        sideNodes[0] = NamespaceNode(
+            Constants.PARITY_SHARE_NAMESPACE_ID,
+            Constants.PARITY_SHARE_NAMESPACE_ID,
+            0xf5a80844a112828c28da280019cb6e97765f81e1e003cc78a198901494db2641
+        );
+        sideNodes[1] = NamespaceNode(
+            Constants.PARITY_SHARE_NAMESPACE_ID,
+            Constants.PARITY_SHARE_NAMESPACE_ID,
+            0x61d6762ff063c2008a412246bc6bb370885c4e1a935ca28ed8699dc5c68ff28a
+        );
+        sideNodes[2] = NamespaceNode(
+            0x0000000000000010,
+            0x0000000000000040,
+            0xed6a82bfecd113f693065e3b1f271f21150b6d793917402f6c05a01feb6b3eb8
+        );
+
+        uint256 key = 6;
+        uint256 numLeaves = 8;
+        NamespaceMerkleProof memory proof = NamespaceMerkleProof(sideNodes, key, numLeaves);
+        bytes memory data = hex"07";
+        bool isValid = NamespaceMerkleTree.verify(root, proof, Constants.PARITY_SHARE_NAMESPACE_ID, data);
+        assertTrue(isValid);
+    }
+
+    function testVerifyLeafEightOfEight() external {
+        NamespaceNode memory root = NamespaceNode(
+            0x0000000000000010,
+            0x0000000000000040,
+            0x16c760661bc5ed683d27dc2f045a81a67e837928527e0de209a195b6db60f462
+        );
+        NamespaceNode[] memory sideNodes = new NamespaceNode[](3);
+        sideNodes[0] = NamespaceNode(
+            Constants.PARITY_SHARE_NAMESPACE_ID,
+            Constants.PARITY_SHARE_NAMESPACE_ID,
+            0x24ddc56b10cebbf760b3a744ad3a0e91093db34b4d22995f6de6dac918e38ae5
+        );
+        sideNodes[1] = NamespaceNode(
+            Constants.PARITY_SHARE_NAMESPACE_ID,
+            Constants.PARITY_SHARE_NAMESPACE_ID,
+            0x61d6762ff063c2008a412246bc6bb370885c4e1a935ca28ed8699dc5c68ff28a
+        );
+        sideNodes[2] = NamespaceNode(
+            0x0000000000000010,
+            0x0000000000000040,
+            0xed6a82bfecd113f693065e3b1f271f21150b6d793917402f6c05a01feb6b3eb8
+        );
+
+        uint256 key = 7;
+        uint256 numLeaves = 8;
+        NamespaceMerkleProof memory proof = NamespaceMerkleProof(sideNodes, key, numLeaves);
+        bytes memory data = hex"08";
+        bool isValid = NamespaceMerkleTree.verify(root, proof, Constants.PARITY_SHARE_NAMESPACE_ID, data);
+        assertTrue(isValid);
+    }
 }
