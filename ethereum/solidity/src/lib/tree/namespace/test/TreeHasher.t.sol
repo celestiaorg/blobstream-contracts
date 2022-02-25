@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "ds-test/test.sol";
 
+import "../../Constants.sol";
 import "../NamespaceNode.sol";
 import "../TreeHasher.sol";
 
@@ -55,6 +56,28 @@ contract TreeHasherTest is DSTest {
         NamespaceNode memory right = NamespaceNode(
             nidRight,
             nidRight,
+            0xc75cb66ae28d8ebc6eded002c28a8ba0d06d3a78c6b5cbf9b2ade051f0775ac4
+        );
+        NamespaceNode memory node = nodeDigest(left, right);
+        assertEqNamespaceNode(node, expected);
+    }
+
+    function testNodeParity() external {
+        bytes8 nidMin = 0x0000000000000000;
+        bytes8 nidMax = 0xdeadbeefdeadbeef;
+        NamespaceNode memory expected = NamespaceNode(
+            nidMin,
+            nidMax,
+            0xb16c8e95fa3655fa06d2ccf09f8351443c5a838a1f1b8d5cf2cb1ec00adf2662
+        );
+        NamespaceNode memory left = NamespaceNode(
+            nidMin,
+            nidMax,
+            0xdb55da3fc3098e9c42311c6013304ff36b19ef73d12ea932054b5ad51df4f49d
+        );
+        NamespaceNode memory right = NamespaceNode(
+            Constants.PARITY_SHARE_NAMESPACE_ID,
+            Constants.PARITY_SHARE_NAMESPACE_ID,
             0xc75cb66ae28d8ebc6eded002c28a8ba0d06d3a78c6b5cbf9b2ade051f0775ac4
         );
         NamespaceNode memory node = nodeDigest(left, right);
