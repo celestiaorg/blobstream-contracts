@@ -44,7 +44,7 @@ function nodeDigest(NamespaceNode memory l, NamespaceNode memory r) pure returns
     if (l.min == Constants.PARITY_SHARE_NAMESPACE_ID) {
         max = Constants.PARITY_SHARE_NAMESPACE_ID;
     } else if (r.min == Constants.PARITY_SHARE_NAMESPACE_ID) {
-        max = r.max;
+        max = l.max;
     } else {
         max = namespaceMax(l.max, r.max);
     }
