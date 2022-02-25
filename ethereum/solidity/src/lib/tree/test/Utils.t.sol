@@ -6,6 +6,14 @@ import "ds-test/test.sol";
 import "../Utils.sol";
 
 contract UtilsTest is DSTest {
+    function testPathLengthFromKey0_2() external {
+        assertEq(pathLengthFromKey(0, 2), 1);
+    }
+
+    function testPathLengthFromKey1_2() external {
+        assertEq(pathLengthFromKey(1, 2), 1);
+    }
+
     function testPathLengthFromKey0_8() external {
         assertEq(pathLengthFromKey(0, 8), 3);
     }
