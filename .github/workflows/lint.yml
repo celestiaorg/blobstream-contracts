@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 6
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: technote-space/get-diff-action@v6.0.1
         with:
           PATTERNS: |
@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           # Full git history is needed to get a proper list of changed files
           # within `super-linter`.
