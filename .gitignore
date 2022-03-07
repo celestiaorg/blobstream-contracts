@@ -44,3 +44,6 @@ data/
 test/solidity/build
 solidity/deployment/build
 solidity/deployment/.env
+
+# Foundry
+cache/
