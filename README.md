@@ -75,14 +75,14 @@ Instructions [here](https://github.com/celestiaorg/celestia-app).
 
 ## How it works
 
-The QGB allows messages to be relayed in one direction, from Celestia to an EVM chain.
+The QGB allows Celestia block header data roots to be relayed in one direction, from Celestia to an EVM chain.
 It does not support bridging assets such as fungible or non-fungible tokens directly, and cannot send messages from the EVM chain back to Celestia.
 
 It works by relying on a set of signers to attest to some event on Celestia: the Celestia validator set.
 The QGB contract keeps track of the Celestia validator set by updating its view of the validator set with `updateValidatorSet()`.
-More than 2/3 of the voting power of the current view of the validator set must sign off on new relayed events, submitted with `submitMessageTupleRoot()`.
-Each event is a batch of `MessageTuple`s, with each tuple representing a single message posted to Celestia.
-Relayed tuples are in the same order as the messages they represent are paid for on Celestia.
+More than 2/3 of the voting power of the current view of the validator set must sign off on new relayed events, submitted with `submitDataRootTupleRoot()`.
+Each event is a batch of `DataRootTuple`s, with each tuple representing a single [data root (i.e. block header)](https://celestiaorg.github.io/celestia-specs/latest/specs/data_structures.html#header).
+Relayed tuples are in the same order as Celestia block headers.
 
 ### Events and messages relayed
 
@@ -91,5 +91,5 @@ Relayed tuples are in the same order as the messages they represent are paid for
  This results in an execution of the `updateValidatorSet` function.
 
  **Batches**:
- The relayer informs the QGB contract of new tuple roots.
- This results in an execution of the `submitMessageTupleRoot` function.
+ The relayer informs the QGB contract of new data root tuple roots.
+ This results in an execution of the `submitDataRootTupleRoot` function.
