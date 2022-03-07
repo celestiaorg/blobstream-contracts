@@ -27,6 +27,7 @@ function namespaceMax(bytes8 l, bytes8 r) pure returns (bytes8) {
 /// @notice Hash a leaf node.
 /// @param minmaxNID Namespace ID.
 /// @param data Raw data of the leaf.
+/// @dev More details in https://github.com/celestiaorg/celestia-specs/blob/master/src/specs/data_structures.md#namespace-merkle-tree
 // solhint-disable-next-line func-visibility
 function leafDigest(bytes8 minmaxNID, bytes memory data) pure returns (NamespaceNode memory) {
     bytes32 digest = sha256(abi.encodePacked(Constants.LEAF_PREFIX, minmaxNID, minmaxNID, data));
@@ -37,6 +38,7 @@ function leafDigest(bytes8 minmaxNID, bytes memory data) pure returns (Namespace
 /// @notice Hash an internal node.
 /// @param l Left child.
 /// @param r Right child.
+/// @dev More details in https://github.com/celestiaorg/celestia-specs/blob/master/src/specs/data_structures.md#namespace-merkle-tree
 // solhint-disable-next-line func-visibility
 function nodeDigest(NamespaceNode memory l, NamespaceNode memory r) pure returns (NamespaceNode memory) {
     bytes8 min = namespaceMin(l.min, r.min);

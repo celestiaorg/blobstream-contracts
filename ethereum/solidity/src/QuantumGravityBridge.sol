@@ -3,7 +3,11 @@ pragma solidity ^0.8.0;
 
 import "lib/@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
+import "./DataRootTuple.sol";
+import "./IDAOracle.sol";
 import "./OwnableUpgradeableWithExpiry.sol";
+import "./lib/tree/binary/BinaryMerkleProof.sol";
+import "./lib/tree/binary/BinaryMerkleTree.sol";
 
 struct Validator {
     address addr;
@@ -16,29 +20,33 @@ struct Signature {
     bytes32 s;
 }
 
-struct MessageTuple {
-    uint256 height;
-    bytes8 namespaceID;
-    bytes32 messageCommitment;
-}
-
 /// @title Quantum Gravity Bridge: Celestia -> Ethereum, Data Availability relay.
-contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
-    // Don't change the order of state for working upgrades.
-    // AND BE AWARE OF INHERITANCE VARIABLES!
-    // Inherited contracts contain storage slots and must be accounted for in any upgrades
-    // always test an exact upgrade on testnet and localhost before mainnet upgrades.
+/// @dev The relay relies on a set of signers to attest to some event on
+/// Celestia. These signers are the Celestia validator set, who sign over every
+/// Celestia block. Keeping track of the Celestia validator set is accomplished
+/// by updating this contract's view of the validator set with
+/// `updateValidatorSet()`. At least 2/3 of the voting power of the current
+/// view of the validator set must sign off on new relayed events, submitted
+/// with `submitDataRootTupleRoot()`. Each event is a batch of `DataRootTuple`s
+/// (see ./DataRootTuple.sol), with each tuple representing a single data root
+/// in a Celestia block header. Relayed tuples are in the same order as the
+/// block headers.
+contract QuantumGravityBridge is IDAOracle, OwnableUpgradeableWithExpiry {
+    // Don't change the order of state for working upgrades AND BE AWARE OF
+    // INHERITANCE VARIABLES! Inherited contracts contain storage slots and must
+    // be accounted for in any upgrades. Always test an exact upgrade on testnet
+    // and localhost before mainnet upgrades.
 
     ///////////////
     // Constants //
     ///////////////
 
-    // bytes32 encoding of the string "checkpoint"
+    /// @dev bytes32 encoding of the string "checkpoint"
     bytes32 constant VALIDATOR_SET_HASH_DOMAIN_SEPARATOR =
         0x636865636b706f696e7400000000000000000000000000000000000000000000;
 
-    // bytes32 encoding of the string "transactionBatch"
-    bytes32 constant MESSAGE_TUPLE_ROOT_DOMAIN_SEPARATOR =
+    /// @dev bytes32 encoding of the string "transactionBatch"
+    bytes32 constant DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR =
         0x7472616e73616374696f6e426174636800000000000000000000000000000000;
 
     ////////////////
@@ -51,26 +59,32 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
     // Storage //
     /////////////
 
+    /// @notice Domain-separated commitment to the latest validator set.
     bytes32 public state_lastValidatorSetCheckpoint;
+    /// @notice Voting power required to submit a new update.
     uint256 public state_powerThreshold;
+    /// @notice Unique nonce of validator set updates.
     uint256 public state_lastValidatorSetNonce;
-    uint256 public state_lastMessageTupleRootNonce;
-    mapping(uint256 => bytes32) public state_messageTupleRoots;
+    /// @notice Unique nonce of data root tuple root updates.
+    uint256 public state_lastDataRootTupleRootNonce;
+    /// @notice Mapping of data root tuple root nonces to data root tuple roots.
+    mapping(uint256 => bytes32) public state_dataRootTupleRoots;
 
     ////////////
     // Events //
     ////////////
 
-    /// @notice Emitted when a new root of message tuples is relayed.
+    /// @notice Emitted when a new root of data root tuples is relayed.
     /// @param nonce Nonce.
-    /// @param messageTupleRoot Merkle root of relayed message tuples.
-    /// See `submitMessageTupleRoot`.
-    event MessageTupleRootEvent(uint256 indexed nonce, bytes32 messageTupleRoot);
+    /// @param dataRootTupleRoot Merkle root of relayed data root tuples.
+    /// See `submitDataRootTupleRoot`.
+    event DataRootTupleRootEvent(uint256 indexed nonce, bytes32 dataRootTupleRoot);
 
     /// @notice Emitted when the validator set is updated.
     /// @param nonce Nonce.
     /// @param powerThreshold New voting power threshold.
     /// @param validatorSetHash Hash of new validator set.
+    /// See `updateValidatorSet`.
     event ValidatorSetUpdatedEvent(uint256 indexed nonce, uint256 powerThreshold, bytes32 validatorSetHash);
 
     ////////////
@@ -92,8 +106,8 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
     /// @notice Supplied current validators and powers do not match checkpoint.
     error SuppliedValidatorSetInvalid();
 
-    /// @notice Message tuple root nonce nonce must be greater than the current nonce.
-    error InvalidMessageTupleRootNonce();
+    /// @notice Data root tuple root nonce nonce must be greater than the current nonce.
+    error InvalidDataRootTupleRootNonce();
 
     ///////////////
     // Functions //
@@ -130,7 +144,7 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         emit ValidatorSetUpdatedEvent(nonce, _powerThreshold, _validatorSetHash);
     }
 
-    /// @notice Utility function to verify EIP-191 signatures
+    /// @notice Utility function to verify EIP-191 signatures.
     function verifySig(
         address _signer,
         bytes32 _digest,
@@ -169,19 +183,21 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         return c;
     }
 
-    /// @dev Make a domain-separated commitment to a message tuple root.
-    /// A hash of all relevant information about a message root.
+    /// @dev Make a domain-separated commitment to a data root tuple root.
+    /// A hash of all relevant information about a data root tuple root.
     /// The format of the hash is:
-    ///     keccak256(bridge_id, MESSAGE_ROOT_DOMAIN_SEPARATOR, nonce, message_tuple_root)
+    ///     keccak256(bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, nonce, _dataRootTupleRoot)
     /// @param _bridge_id Bridge ID.
     /// @param _nonce Nonce.
-    /// @param _messageTupleRoot Message tuple root.
-    function domainSeparateMessageTupleRoot(
+    /// @param _dataRootTupleRoot Data root tuple root.
+    function domainSeparateDataRootTupleRoot(
         bytes32 _bridge_id,
         uint256 _nonce,
-        bytes32 _messageTupleRoot
+        bytes32 _dataRootTupleRoot
     ) private pure returns (bytes32) {
-        bytes32 c = keccak256(abi.encode(_bridge_id, MESSAGE_TUPLE_ROOT_DOMAIN_SEPARATOR, _nonce, _messageTupleRoot));
+        bytes32 c = keccak256(
+            abi.encode(_bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _nonce, _dataRootTupleRoot)
+        );
 
         return c;
     }
@@ -287,26 +303,25 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
         emit ValidatorSetUpdatedEvent(_newNonce, _newPowerThreshold, _newValidatorSetHash);
     }
 
-    /// @notice Relays a root of Celestia -> Ethereum message tuples. Anyone
+    /// @notice Relays a root of Celestia -> Ethereum data root tuples. Anyone
     /// can call this function, but they must supply valid signatures of the
-    /// current validator set over the message tuple root.
+    /// current validator set over the data root tuple root.
     ///
-    /// The message root is the Merkle root of the binary Merkle tree
+    /// The data root root is the Merkle root of the binary Merkle tree
     /// (https://github.com/celestiaorg/celestia-specs/blob/master/src/specs/data_structures.md#binary-merkle-tree)
-    /// where each leaf in an ABI-encoded `MessageTuple`. Each relayed message
-    /// tuple will 1:1 mirror messages as they are included on Celestia, _in
-    /// order of inclusion of the PayForMessage transactions that paid for the
-    /// messages.
+    /// where each leaf in an ABI-encoded `DataRootTuple`. Each relayed data
+    /// root tuple will 1:1 mirror data roots as they are included in headers
+    /// on Celestia, _in order of inclusion_.
     ///
-    /// The message tuple root that is signed over is domain separated as per
-    /// `domainSeparateMessageTupleRoot`.
-    /// @param _nonce The message root nonce.
-    /// @param _messageTupleRoot The Merkle root of message tuples.
+    /// The data tuple root that is signed over is domain separated as per
+    /// `domainSeparateDataRootTupleRoot`.
+    /// @param _nonce The data root tuple root nonce.
+    /// @param _dataRootTupleRoot The Merkle root of data root tuples.
     /// @param _currentValidatorSet The current validator set.
     /// @param _sigs Signatures.
-    function submitMessageTupleRoot(
+    function submitDataRootTupleRoot(
         uint256 _nonce,
-        bytes32 _messageTupleRoot,
+        bytes32 _dataRootTupleRoot,
         Validator[] calldata _currentValidatorSet,
         Signature[] calldata _sigs
     ) external {
@@ -314,9 +329,9 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
 
         uint256 currentPowerThreshold = state_powerThreshold;
 
-        // Check that the message root nonce is higher than the last nonce.
-        if (_nonce <= state_lastMessageTupleRootNonce) {
-            revert InvalidMessageTupleRootNonce();
+        // Check that the data root tuple root nonce is higher than the last nonce.
+        if (_nonce <= state_lastDataRootTupleRootNonce) {
+            revert InvalidDataRootTupleRootNonce();
         }
 
         // Check that current validators and signatures are well-formed.
@@ -337,17 +352,38 @@ contract QuantumGravityBridge is OwnableUpgradeableWithExpiry {
             revert SuppliedValidatorSetInvalid();
         }
 
-        // Check that enough current validators have signed off on the message root and nonce.
-        bytes32 c = domainSeparateMessageTupleRoot(BRIDGE_ID, _nonce, _messageTupleRoot);
+        // Check that enough current validators have signed off on the data
+        // root tuple root and nonce.
+        bytes32 c = domainSeparateDataRootTupleRoot(BRIDGE_ID, _nonce, _dataRootTupleRoot);
         checkValidatorSignatures(_currentValidatorSet, _sigs, c, currentPowerThreshold);
 
         // EFFECTS
 
-        state_lastMessageTupleRootNonce = _nonce;
-        state_messageTupleRoots[_nonce] = _messageTupleRoot;
+        state_lastDataRootTupleRootNonce = _nonce;
+        state_dataRootTupleRoots[_nonce] = _dataRootTupleRoot;
 
         // LOGS
 
-        emit MessageTupleRootEvent(_nonce, _messageTupleRoot);
+        emit DataRootTupleRootEvent(_nonce, _dataRootTupleRoot);
+    }
+
+    /// @dev see "./IDAOracle.sol"
+    function verifyAttestation(
+        uint256 _tupleRootIndex,
+        DataRootTuple memory _tuple,
+        BinaryMerkleProof memory _proof
+    ) external view override returns (bool) {
+        // Tuple must have been committed before.
+        if (_tupleRootIndex > state_lastDataRootTupleRootNonce) {
+            return false;
+        }
+
+        // Load the tuple root at the given index from storage.
+        bytes32 root = state_dataRootTupleRoots[_tupleRootIndex];
+
+        // Verify the proof.
+        bool isProofValid = BinaryMerkleTree.verify(root, _proof, abi.encode(_tuple));
+
+        return isProofValid;
     }
 }
