@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.4;
 
 /// @notice A tuple of data root with metadata. Each data root is associated
 ///  with a Celestia block height.
