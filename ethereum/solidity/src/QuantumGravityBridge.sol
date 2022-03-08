@@ -144,6 +144,12 @@ contract QuantumGravityBridge is IDAOracle, OwnableUpgradeableWithExpiry {
         emit ValidatorSetUpdatedEvent(nonce, _powerThreshold, _validatorSetHash);
     }
 
+    /// @notice Utility function to check if a signature is nil.
+    /// If all bytes of the 65-byte signature are zero, then it's a nil signature.
+    function isSigNil(Signature calldata _sig) private pure returns (bool) {
+        return (_sig.r == 0 && _sig.s == 0 && _sig.v == 0);
+    }
+
     /// @notice Utility function to verify EIP-191 signatures.
     function verifySig(
         address _signer,
@@ -216,9 +222,12 @@ contract QuantumGravityBridge is IDAOracle, OwnableUpgradeableWithExpiry {
     ) private pure {
         uint256 cumulativePower = 0;
 
-        // TODO there should be a way to skip validators.
-        // The original implementation used a zero-`v` value in the signature, but that's hacky.
         for (uint256 i = 0; i < _currentValidators.length; i++) {
+            // If the signature is nil, then it's not present so continue.
+            if (isSigNil(_sigs[i])) {
+                continue;
+            }
+
             // Check that the current validator has signed off on the hash.
             if (!verifySig(_currentValidators[i].addr, _digest, _sigs[i])) {
                 revert InvalidSignature();
