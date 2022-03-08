@@ -144,7 +144,7 @@ contract QuantumGravityBridge is IDAOracle, OwnableUpgradeableWithExpiry {
         emit ValidatorSetUpdatedEvent(nonce, _powerThreshold, _validatorSetHash);
     }
 
-    /// @notice Utility function to check is a signature is nil.
+    /// @notice Utility function to check if a signature is nil.
     /// If all bytes of the 65-byte signature are zero, then it's a nil signature.
     function isSigNil(Signature calldata _sig) private pure returns (bool) {
         return (_sig.r == 0 && _sig.s == 0 && _sig.v == 0);
