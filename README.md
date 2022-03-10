@@ -17,9 +17,12 @@ It is based on Umee's Gravity Bridge implementation, [Peggo](https://github.com/
 - [Dependencies](#dependencies)
 - [How it works](#how-it-works)
 
-## Dependencies
+## Building From Source
 
-- [Go 1.17+](https://golang.org/dl/)
+
+### Dependencies
+
+Building requires [Go 1.17+](https://golang.org/dl/).
 
 To regenerate the Go ABI wrappers, you need the `abigen` tool. Install it with:
 
@@ -29,52 +32,11 @@ cd go-ethereum
 make devtools
 ```
 
-<!--
-## Installation
+### Building
 
-To install the `qgb` binary:
-
-```console
-$ make install
+```sh
+make build
 ```
--->
-
-<!--
-## How to run
-
-### Setup
-
-First we must register the validator's Ethereum key.
-This key will be used to sign events relayed to the EVM chain (message tuples or validator set updates).
-
-```console
-$ qgb tx register-eth-key \
-  --cosmos-chain-id="..." \
-  --cosmos-grpc="tcp://..." \
-  --tendermint-rpc="http://..." \
-  --cosmos-keyring=... \
-  --cosmos-keyring-dir=... \
-  --cosmos-from=... \
-  --eth-pk=$ETH_PK
-```
-
-### Run the orchestrator
-
-```console
-$ qgb orchestrator \
-  --eth-pk=$ETH_PK \
-  --eth-rpc=$ETH_RPC \
-  --relay-batches=true \
-  --relay-valsets=true \
-  --eth-chain-id=... \
-  --cosmos-chain-id=... \
-  --cosmos-grpc="tcp://..." \
-  --tendermint-rpc="http://..." \
-  --cosmos-keyring=... \
-  --cosmos-keyring-dir=... \
-  --cosmos-from=...
-```
--->
 
 ## Send a message from Celestia to an EVM chain
 
