@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.4;
 
-import "lib/@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "./lib/openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import "./DataRootTuple.sol";
 import "./IDAOracle.sol";
