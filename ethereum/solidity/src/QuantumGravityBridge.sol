@@ -5,7 +5,6 @@ import "lib/@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 import "./DataRootTuple.sol";
 import "./IDAOracle.sol";
-import "./OwnableUpgradeableWithExpiry.sol";
 import "./lib/tree/binary/BinaryMerkleProof.sol";
 import "./lib/tree/binary/BinaryMerkleTree.sol";
 
@@ -31,7 +30,7 @@ struct Signature {
 /// (see ./DataRootTuple.sol), with each tuple representing a single data root
 /// in a Celestia block header. Relayed tuples are in the same order as the
 /// block headers.
-contract QuantumGravityBridge is IDAOracle, OwnableUpgradeableWithExpiry {
+contract QuantumGravityBridge is IDAOracle {
     // Don't change the order of state for working upgrades AND BE AWARE OF
     // INHERITANCE VARIABLES! Inherited contracts contain storage slots and must
     // be accounted for in any upgrades. Always test an exact upgrade on testnet
@@ -125,8 +124,6 @@ contract QuantumGravityBridge is IDAOracle, OwnableUpgradeableWithExpiry {
         uint256 _powerThreshold,
         bytes32 _validatorSetHash
     ) {
-        __Ownable_init_unchained();
-
         BRIDGE_ID = _bridge_id;
 
         // CHECKS
