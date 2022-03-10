@@ -28,6 +28,19 @@ var (
 	_ = event.NewSubscription
 )
 
+// BinaryMerkleProof is an auto generated low-level Go binding around an user-defined struct.
+type BinaryMerkleProof struct {
+	SideNodes [][32]byte
+	Key       *big.Int
+	NumLeaves *big.Int
+}
+
+// DataRootTuple is an auto generated low-level Go binding around an user-defined struct.
+type DataRootTuple struct {
+	Height   *big.Int
+	DataRoot [32]byte
+}
+
 // Signature is an auto generated low-level Go binding around an user-defined struct.
 type Signature struct {
 	V uint8
@@ -41,113 +54,135 @@ type Validator struct {
 	Power *big.Int
 }
 
-// ContextUpgradeableMetaData contains all meta data concerning the ContextUpgradeable contract.
-var ContextUpgradeableMetaData = &bind.MetaData{
+// BinaryMerkleTreeMetaData contains all meta data concerning the BinaryMerkleTree contract.
+var BinaryMerkleTreeMetaData = &bind.MetaData{
 	ABI: "[]",
+	Bin: "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea264697066735822122080c9e017991ec01c87b659c80c4b851d2bfbc72ff84ee1d8d004ede6351bb63f64736f6c634300080c0033",
 }
 
-// ContextUpgradeableABI is the input ABI used to generate the binding from.
-// Deprecated: Use ContextUpgradeableMetaData.ABI instead.
-var ContextUpgradeableABI = ContextUpgradeableMetaData.ABI
+// BinaryMerkleTreeABI is the input ABI used to generate the binding from.
+// Deprecated: Use BinaryMerkleTreeMetaData.ABI instead.
+var BinaryMerkleTreeABI = BinaryMerkleTreeMetaData.ABI
 
-// ContextUpgradeable is an auto generated Go binding around an Ethereum contract.
-type ContextUpgradeable struct {
-	ContextUpgradeableCaller     // Read-only binding to the contract
-	ContextUpgradeableTransactor // Write-only binding to the contract
-	ContextUpgradeableFilterer   // Log filterer for contract events
+// BinaryMerkleTreeBin is the compiled bytecode used for deploying new contracts.
+// Deprecated: Use BinaryMerkleTreeMetaData.Bin instead.
+var BinaryMerkleTreeBin = BinaryMerkleTreeMetaData.Bin
+
+// DeployBinaryMerkleTree deploys a new Ethereum contract, binding an instance of BinaryMerkleTree to it.
+func DeployBinaryMerkleTree(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *BinaryMerkleTree, error) {
+	parsed, err := BinaryMerkleTreeMetaData.GetAbi()
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+	if parsed == nil {
+		return common.Address{}, nil, nil, errors.New("GetABI returned nil")
+	}
+
+	address, tx, contract, err := bind.DeployContract(auth, *parsed, common.FromHex(BinaryMerkleTreeBin), backend)
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+	return address, tx, &BinaryMerkleTree{BinaryMerkleTreeCaller: BinaryMerkleTreeCaller{contract: contract}, BinaryMerkleTreeTransactor: BinaryMerkleTreeTransactor{contract: contract}, BinaryMerkleTreeFilterer: BinaryMerkleTreeFilterer{contract: contract}}, nil
 }
 
-// ContextUpgradeableCaller is an auto generated read-only Go binding around an Ethereum contract.
-type ContextUpgradeableCaller struct {
+// BinaryMerkleTree is an auto generated Go binding around an Ethereum contract.
+type BinaryMerkleTree struct {
+	BinaryMerkleTreeCaller     // Read-only binding to the contract
+	BinaryMerkleTreeTransactor // Write-only binding to the contract
+	BinaryMerkleTreeFilterer   // Log filterer for contract events
+}
+
+// BinaryMerkleTreeCaller is an auto generated read-only Go binding around an Ethereum contract.
+type BinaryMerkleTreeCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// ContextUpgradeableTransactor is an auto generated write-only Go binding around an Ethereum contract.
-type ContextUpgradeableTransactor struct {
+// BinaryMerkleTreeTransactor is an auto generated write-only Go binding around an Ethereum contract.
+type BinaryMerkleTreeTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// ContextUpgradeableFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
-type ContextUpgradeableFilterer struct {
+// BinaryMerkleTreeFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type BinaryMerkleTreeFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// ContextUpgradeableSession is an auto generated Go binding around an Ethereum contract,
+// BinaryMerkleTreeSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
-type ContextUpgradeableSession struct {
-	Contract     *ContextUpgradeable // Generic contract binding to set the session for
-	CallOpts     bind.CallOpts       // Call options to use throughout this session
-	TransactOpts bind.TransactOpts   // Transaction auth options to use throughout this session
+type BinaryMerkleTreeSession struct {
+	Contract     *BinaryMerkleTree // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts     // Call options to use throughout this session
+	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
 }
 
-// ContextUpgradeableCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// BinaryMerkleTreeCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
-type ContextUpgradeableCallerSession struct {
-	Contract *ContextUpgradeableCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts             // Call options to use throughout this session
+type BinaryMerkleTreeCallerSession struct {
+	Contract *BinaryMerkleTreeCaller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts           // Call options to use throughout this session
 }
 
-// ContextUpgradeableTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// BinaryMerkleTreeTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
-type ContextUpgradeableTransactorSession struct {
-	Contract     *ContextUpgradeableTransactor // Generic contract transactor binding to set the session for
-	TransactOpts bind.TransactOpts             // Transaction auth options to use throughout this session
+type BinaryMerkleTreeTransactorSession struct {
+	Contract     *BinaryMerkleTreeTransactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts           // Transaction auth options to use throughout this session
 }
 
-// ContextUpgradeableRaw is an auto generated low-level Go binding around an Ethereum contract.
-type ContextUpgradeableRaw struct {
-	Contract *ContextUpgradeable // Generic contract binding to access the raw methods on
+// BinaryMerkleTreeRaw is an auto generated low-level Go binding around an Ethereum contract.
+type BinaryMerkleTreeRaw struct {
+	Contract *BinaryMerkleTree // Generic contract binding to access the raw methods on
 }
 
-// ContextUpgradeableCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
-type ContextUpgradeableCallerRaw struct {
-	Contract *ContextUpgradeableCaller // Generic read-only contract binding to access the raw methods on
+// BinaryMerkleTreeCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type BinaryMerkleTreeCallerRaw struct {
+	Contract *BinaryMerkleTreeCaller // Generic read-only contract binding to access the raw methods on
 }
 
-// ContextUpgradeableTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
-type ContextUpgradeableTransactorRaw struct {
-	Contract *ContextUpgradeableTransactor // Generic write-only contract binding to access the raw methods on
+// BinaryMerkleTreeTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type BinaryMerkleTreeTransactorRaw struct {
+	Contract *BinaryMerkleTreeTransactor // Generic write-only contract binding to access the raw methods on
 }
 
-// NewContextUpgradeable creates a new instance of ContextUpgradeable, bound to a specific deployed contract.
-func NewContextUpgradeable(address common.Address, backend bind.ContractBackend) (*ContextUpgradeable, error) {
-	contract, err := bindContextUpgradeable(address, backend, backend, backend)
+// NewBinaryMerkleTree creates a new instance of BinaryMerkleTree, bound to a specific deployed contract.
+func NewBinaryMerkleTree(address common.Address, backend bind.ContractBackend) (*BinaryMerkleTree, error) {
+	contract, err := bindBinaryMerkleTree(address, backend, backend, backend)
 	if err != nil {
 		return nil, err
 	}
-	return &ContextUpgradeable{ContextUpgradeableCaller: ContextUpgradeableCaller{contract: contract}, ContextUpgradeableTransactor: ContextUpgradeableTransactor{contract: contract}, ContextUpgradeableFilterer: ContextUpgradeableFilterer{contract: contract}}, nil
+	return &BinaryMerkleTree{BinaryMerkleTreeCaller: BinaryMerkleTreeCaller{contract: contract}, BinaryMerkleTreeTransactor: BinaryMerkleTreeTransactor{contract: contract}, BinaryMerkleTreeFilterer: BinaryMerkleTreeFilterer{contract: contract}}, nil
 }
 
-// NewContextUpgradeableCaller creates a new read-only instance of ContextUpgradeable, bound to a specific deployed contract.
-func NewContextUpgradeableCaller(address common.Address, caller bind.ContractCaller) (*ContextUpgradeableCaller, error) {
-	contract, err := bindContextUpgradeable(address, caller, nil, nil)
+// NewBinaryMerkleTreeCaller creates a new read-only instance of BinaryMerkleTree, bound to a specific deployed contract.
+func NewBinaryMerkleTreeCaller(address common.Address, caller bind.ContractCaller) (*BinaryMerkleTreeCaller, error) {
+	contract, err := bindBinaryMerkleTree(address, caller, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &ContextUpgradeableCaller{contract: contract}, nil
+	return &BinaryMerkleTreeCaller{contract: contract}, nil
 }
 
-// NewContextUpgradeableTransactor creates a new write-only instance of ContextUpgradeable, bound to a specific deployed contract.
-func NewContextUpgradeableTransactor(address common.Address, transactor bind.ContractTransactor) (*ContextUpgradeableTransactor, error) {
-	contract, err := bindContextUpgradeable(address, nil, transactor, nil)
+// NewBinaryMerkleTreeTransactor creates a new write-only instance of BinaryMerkleTree, bound to a specific deployed contract.
+func NewBinaryMerkleTreeTransactor(address common.Address, transactor bind.ContractTransactor) (*BinaryMerkleTreeTransactor, error) {
+	contract, err := bindBinaryMerkleTree(address, nil, transactor, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &ContextUpgradeableTransactor{contract: contract}, nil
+	return &BinaryMerkleTreeTransactor{contract: contract}, nil
 }
 
-// NewContextUpgradeableFilterer creates a new log filterer instance of ContextUpgradeable, bound to a specific deployed contract.
-func NewContextUpgradeableFilterer(address common.Address, filterer bind.ContractFilterer) (*ContextUpgradeableFilterer, error) {
-	contract, err := bindContextUpgradeable(address, nil, nil, filterer)
+// NewBinaryMerkleTreeFilterer creates a new log filterer instance of BinaryMerkleTree, bound to a specific deployed contract.
+func NewBinaryMerkleTreeFilterer(address common.Address, filterer bind.ContractFilterer) (*BinaryMerkleTreeFilterer, error) {
+	contract, err := bindBinaryMerkleTree(address, nil, nil, filterer)
 	if err != nil {
 		return nil, err
 	}
-	return &ContextUpgradeableFilterer{contract: contract}, nil
+	return &BinaryMerkleTreeFilterer{contract: contract}, nil
 }
 
-// bindContextUpgradeable binds a generic wrapper to an already deployed contract.
-func bindContextUpgradeable(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	parsed, err := abi.JSON(strings.NewReader(ContextUpgradeableABI))
+// bindBinaryMerkleTree binds a generic wrapper to an already deployed contract.
+func bindBinaryMerkleTree(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(BinaryMerkleTreeABI))
 	if err != nil {
 		return nil, err
 	}
@@ -158,44 +193,217 @@ func bindContextUpgradeable(address common.Address, caller bind.ContractCaller, 
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_ContextUpgradeable *ContextUpgradeableRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
-	return _ContextUpgradeable.Contract.ContextUpgradeableCaller.contract.Call(opts, result, method, params...)
+func (_BinaryMerkleTree *BinaryMerkleTreeRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _BinaryMerkleTree.Contract.BinaryMerkleTreeCaller.contract.Call(opts, result, method, params...)
 }
 
 // Transfer initiates a plain transaction to move funds to the contract, calling
 // its default method if one is available.
-func (_ContextUpgradeable *ContextUpgradeableRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _ContextUpgradeable.Contract.ContextUpgradeableTransactor.contract.Transfer(opts)
+func (_BinaryMerkleTree *BinaryMerkleTreeRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _BinaryMerkleTree.Contract.BinaryMerkleTreeTransactor.contract.Transfer(opts)
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (_ContextUpgradeable *ContextUpgradeableRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _ContextUpgradeable.Contract.ContextUpgradeableTransactor.contract.Transact(opts, method, params...)
+func (_BinaryMerkleTree *BinaryMerkleTreeRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _BinaryMerkleTree.Contract.BinaryMerkleTreeTransactor.contract.Transact(opts, method, params...)
 }
 
 // Call invokes the (constant) contract method with params as input values and
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_ContextUpgradeable *ContextUpgradeableCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
-	return _ContextUpgradeable.Contract.contract.Call(opts, result, method, params...)
+func (_BinaryMerkleTree *BinaryMerkleTreeCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _BinaryMerkleTree.Contract.contract.Call(opts, result, method, params...)
 }
 
 // Transfer initiates a plain transaction to move funds to the contract, calling
 // its default method if one is available.
-func (_ContextUpgradeable *ContextUpgradeableTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _ContextUpgradeable.Contract.contract.Transfer(opts)
+func (_BinaryMerkleTree *BinaryMerkleTreeTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _BinaryMerkleTree.Contract.contract.Transfer(opts)
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (_ContextUpgradeable *ContextUpgradeableTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _ContextUpgradeable.Contract.contract.Transact(opts, method, params...)
+func (_BinaryMerkleTree *BinaryMerkleTreeTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _BinaryMerkleTree.Contract.contract.Transact(opts, method, params...)
+}
+
+// ConstantsMetaData contains all meta data concerning the Constants contract.
+var ConstantsMetaData = &bind.MetaData{
+	ABI: "[]",
+	Bin: "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea264697066735822122012539861920e3186959e4a0f034710a70fe4af456d0b0566dc49bb8ae3ab132664736f6c634300080c0033",
+}
+
+// ConstantsABI is the input ABI used to generate the binding from.
+// Deprecated: Use ConstantsMetaData.ABI instead.
+var ConstantsABI = ConstantsMetaData.ABI
+
+// ConstantsBin is the compiled bytecode used for deploying new contracts.
+// Deprecated: Use ConstantsMetaData.Bin instead.
+var ConstantsBin = ConstantsMetaData.Bin
+
+// DeployConstants deploys a new Ethereum contract, binding an instance of Constants to it.
+func DeployConstants(auth *bind.TransactOpts, backend bind.ContractBackend) (common.Address, *types.Transaction, *Constants, error) {
+	parsed, err := ConstantsMetaData.GetAbi()
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+	if parsed == nil {
+		return common.Address{}, nil, nil, errors.New("GetABI returned nil")
+	}
+
+	address, tx, contract, err := bind.DeployContract(auth, *parsed, common.FromHex(ConstantsBin), backend)
+	if err != nil {
+		return common.Address{}, nil, nil, err
+	}
+	return address, tx, &Constants{ConstantsCaller: ConstantsCaller{contract: contract}, ConstantsTransactor: ConstantsTransactor{contract: contract}, ConstantsFilterer: ConstantsFilterer{contract: contract}}, nil
+}
+
+// Constants is an auto generated Go binding around an Ethereum contract.
+type Constants struct {
+	ConstantsCaller     // Read-only binding to the contract
+	ConstantsTransactor // Write-only binding to the contract
+	ConstantsFilterer   // Log filterer for contract events
+}
+
+// ConstantsCaller is an auto generated read-only Go binding around an Ethereum contract.
+type ConstantsCaller struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// ConstantsTransactor is an auto generated write-only Go binding around an Ethereum contract.
+type ConstantsTransactor struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// ConstantsFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type ConstantsFilterer struct {
+	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+}
+
+// ConstantsSession is an auto generated Go binding around an Ethereum contract,
+// with pre-set call and transact options.
+type ConstantsSession struct {
+	Contract     *Constants        // Generic contract binding to set the session for
+	CallOpts     bind.CallOpts     // Call options to use throughout this session
+	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
+}
+
+// ConstantsCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// with pre-set call options.
+type ConstantsCallerSession struct {
+	Contract *ConstantsCaller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts    // Call options to use throughout this session
+}
+
+// ConstantsTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// with pre-set transact options.
+type ConstantsTransactorSession struct {
+	Contract     *ConstantsTransactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts    // Transaction auth options to use throughout this session
+}
+
+// ConstantsRaw is an auto generated low-level Go binding around an Ethereum contract.
+type ConstantsRaw struct {
+	Contract *Constants // Generic contract binding to access the raw methods on
+}
+
+// ConstantsCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type ConstantsCallerRaw struct {
+	Contract *ConstantsCaller // Generic read-only contract binding to access the raw methods on
+}
+
+// ConstantsTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type ConstantsTransactorRaw struct {
+	Contract *ConstantsTransactor // Generic write-only contract binding to access the raw methods on
+}
+
+// NewConstants creates a new instance of Constants, bound to a specific deployed contract.
+func NewConstants(address common.Address, backend bind.ContractBackend) (*Constants, error) {
+	contract, err := bindConstants(address, backend, backend, backend)
+	if err != nil {
+		return nil, err
+	}
+	return &Constants{ConstantsCaller: ConstantsCaller{contract: contract}, ConstantsTransactor: ConstantsTransactor{contract: contract}, ConstantsFilterer: ConstantsFilterer{contract: contract}}, nil
+}
+
+// NewConstantsCaller creates a new read-only instance of Constants, bound to a specific deployed contract.
+func NewConstantsCaller(address common.Address, caller bind.ContractCaller) (*ConstantsCaller, error) {
+	contract, err := bindConstants(address, caller, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &ConstantsCaller{contract: contract}, nil
+}
+
+// NewConstantsTransactor creates a new write-only instance of Constants, bound to a specific deployed contract.
+func NewConstantsTransactor(address common.Address, transactor bind.ContractTransactor) (*ConstantsTransactor, error) {
+	contract, err := bindConstants(address, nil, transactor, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &ConstantsTransactor{contract: contract}, nil
+}
+
+// NewConstantsFilterer creates a new log filterer instance of Constants, bound to a specific deployed contract.
+func NewConstantsFilterer(address common.Address, filterer bind.ContractFilterer) (*ConstantsFilterer, error) {
+	contract, err := bindConstants(address, nil, nil, filterer)
+	if err != nil {
+		return nil, err
+	}
+	return &ConstantsFilterer{contract: contract}, nil
+}
+
+// bindConstants binds a generic wrapper to an already deployed contract.
+func bindConstants(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(ConstantsABI))
+	if err != nil {
+		return nil, err
+	}
+	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_Constants *ConstantsRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _Constants.Contract.ConstantsCaller.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_Constants *ConstantsRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _Constants.Contract.ConstantsTransactor.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_Constants *ConstantsRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _Constants.Contract.ConstantsTransactor.contract.Transact(opts, method, params...)
+}
+
+// Call invokes the (constant) contract method with params as input values and
+// sets the output to result. The result type might be a single field for simple
+// returns, a slice of interfaces for anonymous returns and a struct for named
+// returns.
+func (_Constants *ConstantsCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _Constants.Contract.contract.Call(opts, result, method, params...)
+}
+
+// Transfer initiates a plain transaction to move funds to the contract, calling
+// its default method if one is available.
+func (_Constants *ConstantsTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _Constants.Contract.contract.Transfer(opts)
+}
+
+// Transact invokes the (paid) contract method with params as input values.
+func (_Constants *ConstantsTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _Constants.Contract.contract.Transact(opts, method, params...)
 }
 
 // ECDSAMetaData contains all meta data concerning the ECDSA contract.
 var ECDSAMetaData = &bind.MetaData{
 	ABI: "[]",
-	Bin: "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea264697066735822122025f240e576c7649709d0e2ce55e10735241ebb77c818e0bfbda010676cd35a4e64736f6c63430008090033",
+	Bin: "0x60566037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212204d294be19df097f845e135c46ca541f26c9b64a484e10dc675363c2aa9d39e0f64736f6c634300080c0033",
 }
 
 // ECDSAABI is the input ABI used to generate the binding from.
@@ -365,113 +573,120 @@ func (_ECDSA *ECDSATransactorRaw) Transact(opts *bind.TransactOpts, method strin
 	return _ECDSA.Contract.contract.Transact(opts, method, params...)
 }
 
-// InitializableMetaData contains all meta data concerning the Initializable contract.
-var InitializableMetaData = &bind.MetaData{
-	ABI: "[]",
+// IDAOracleMetaData contains all meta data concerning the IDAOracle contract.
+var IDAOracleMetaData = &bind.MetaData{
+	ABI: "[{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_tupleRootIndex\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint256\",\"name\":\"height\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"dataRoot\",\"type\":\"bytes32\"}],\"internalType\":\"structDataRootTuple\",\"name\":\"_tuple\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"bytes32[]\",\"name\":\"sideNodes\",\"type\":\"bytes32[]\"},{\"internalType\":\"uint256\",\"name\":\"key\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"numLeaves\",\"type\":\"uint256\"}],\"internalType\":\"structBinaryMerkleProof\",\"name\":\"_proof\",\"type\":\"tuple\"}],\"name\":\"verifyAttestation\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
+	Sigs: map[string]string{
+		"1f3302a9": "verifyAttestation(uint256,(uint256,bytes32),(bytes32[],uint256,uint256))",
+	},
 }
 
-// InitializableABI is the input ABI used to generate the binding from.
-// Deprecated: Use InitializableMetaData.ABI instead.
-var InitializableABI = InitializableMetaData.ABI
+// IDAOracleABI is the input ABI used to generate the binding from.
+// Deprecated: Use IDAOracleMetaData.ABI instead.
+var IDAOracleABI = IDAOracleMetaData.ABI
 
-// Initializable is an auto generated Go binding around an Ethereum contract.
-type Initializable struct {
-	InitializableCaller     // Read-only binding to the contract
-	InitializableTransactor // Write-only binding to the contract
-	InitializableFilterer   // Log filterer for contract events
+// Deprecated: Use IDAOracleMetaData.Sigs instead.
+// IDAOracleFuncSigs maps the 4-byte function signature to its string representation.
+var IDAOracleFuncSigs = IDAOracleMetaData.Sigs
+
+// IDAOracle is an auto generated Go binding around an Ethereum contract.
+type IDAOracle struct {
+	IDAOracleCaller     // Read-only binding to the contract
+	IDAOracleTransactor // Write-only binding to the contract
+	IDAOracleFilterer   // Log filterer for contract events
 }
 
-// InitializableCaller is an auto generated read-only Go binding around an Ethereum contract.
-type InitializableCaller struct {
+// IDAOracleCaller is an auto generated read-only Go binding around an Ethereum contract.
+type IDAOracleCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// InitializableTransactor is an auto generated write-only Go binding around an Ethereum contract.
-type InitializableTransactor struct {
+// IDAOracleTransactor is an auto generated write-only Go binding around an Ethereum contract.
+type IDAOracleTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// InitializableFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
-type InitializableFilterer struct {
+// IDAOracleFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+type IDAOracleFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// InitializableSession is an auto generated Go binding around an Ethereum contract,
+// IDAOracleSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
-type InitializableSession struct {
-	Contract     *Initializable    // Generic contract binding to set the session for
+type IDAOracleSession struct {
+	Contract     *IDAOracle        // Generic contract binding to set the session for
 	CallOpts     bind.CallOpts     // Call options to use throughout this session
 	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
 }
 
-// InitializableCallerSession is an auto generated read-only Go binding around an Ethereum contract,
+// IDAOracleCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
-type InitializableCallerSession struct {
-	Contract *InitializableCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts        // Call options to use throughout this session
+type IDAOracleCallerSession struct {
+	Contract *IDAOracleCaller // Generic contract caller binding to set the session for
+	CallOpts bind.CallOpts    // Call options to use throughout this session
 }
 
-// InitializableTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
+// IDAOracleTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
-type InitializableTransactorSession struct {
-	Contract     *InitializableTransactor // Generic contract transactor binding to set the session for
-	TransactOpts bind.TransactOpts        // Transaction auth options to use throughout this session
+type IDAOracleTransactorSession struct {
+	Contract     *IDAOracleTransactor // Generic contract transactor binding to set the session for
+	TransactOpts bind.TransactOpts    // Transaction auth options to use throughout this session
 }
 
-// InitializableRaw is an auto generated low-level Go binding around an Ethereum contract.
-type InitializableRaw struct {
-	Contract *Initializable // Generic contract binding to access the raw methods on
+// IDAOracleRaw is an auto generated low-level Go binding around an Ethereum contract.
+type IDAOracleRaw struct {
+	Contract *IDAOracle // Generic contract binding to access the raw methods on
 }
 
-// InitializableCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
-type InitializableCallerRaw struct {
-	Contract *InitializableCaller // Generic read-only contract binding to access the raw methods on
+// IDAOracleCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
+type IDAOracleCallerRaw struct {
+	Contract *IDAOracleCaller // Generic read-only contract binding to access the raw methods on
 }
 
-// InitializableTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
-type InitializableTransactorRaw struct {
-	Contract *InitializableTransactor // Generic write-only contract binding to access the raw methods on
+// IDAOracleTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
+type IDAOracleTransactorRaw struct {
+	Contract *IDAOracleTransactor // Generic write-only contract binding to access the raw methods on
 }
 
-// NewInitializable creates a new instance of Initializable, bound to a specific deployed contract.
-func NewInitializable(address common.Address, backend bind.ContractBackend) (*Initializable, error) {
-	contract, err := bindInitializable(address, backend, backend, backend)
+// NewIDAOracle creates a new instance of IDAOracle, bound to a specific deployed contract.
+func NewIDAOracle(address common.Address, backend bind.ContractBackend) (*IDAOracle, error) {
+	contract, err := bindIDAOracle(address, backend, backend, backend)
 	if err != nil {
 		return nil, err
 	}
-	return &Initializable{InitializableCaller: InitializableCaller{contract: contract}, InitializableTransactor: InitializableTransactor{contract: contract}, InitializableFilterer: InitializableFilterer{contract: contract}}, nil
+	return &IDAOracle{IDAOracleCaller: IDAOracleCaller{contract: contract}, IDAOracleTransactor: IDAOracleTransactor{contract: contract}, IDAOracleFilterer: IDAOracleFilterer{contract: contract}}, nil
 }
 
-// NewInitializableCaller creates a new read-only instance of Initializable, bound to a specific deployed contract.
-func NewInitializableCaller(address common.Address, caller bind.ContractCaller) (*InitializableCaller, error) {
-	contract, err := bindInitializable(address, caller, nil, nil)
+// NewIDAOracleCaller creates a new read-only instance of IDAOracle, bound to a specific deployed contract.
+func NewIDAOracleCaller(address common.Address, caller bind.ContractCaller) (*IDAOracleCaller, error) {
+	contract, err := bindIDAOracle(address, caller, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &InitializableCaller{contract: contract}, nil
+	return &IDAOracleCaller{contract: contract}, nil
 }
 
-// NewInitializableTransactor creates a new write-only instance of Initializable, bound to a specific deployed contract.
-func NewInitializableTransactor(address common.Address, transactor bind.ContractTransactor) (*InitializableTransactor, error) {
-	contract, err := bindInitializable(address, nil, transactor, nil)
+// NewIDAOracleTransactor creates a new write-only instance of IDAOracle, bound to a specific deployed contract.
+func NewIDAOracleTransactor(address common.Address, transactor bind.ContractTransactor) (*IDAOracleTransactor, error) {
+	contract, err := bindIDAOracle(address, nil, transactor, nil)
 	if err != nil {
 		return nil, err
 	}
-	return &InitializableTransactor{contract: contract}, nil
+	return &IDAOracleTransactor{contract: contract}, nil
 }
 
-// NewInitializableFilterer creates a new log filterer instance of Initializable, bound to a specific deployed contract.
-func NewInitializableFilterer(address common.Address, filterer bind.ContractFilterer) (*InitializableFilterer, error) {
-	contract, err := bindInitializable(address, nil, nil, filterer)
+// NewIDAOracleFilterer creates a new log filterer instance of IDAOracle, bound to a specific deployed contract.
+func NewIDAOracleFilterer(address common.Address, filterer bind.ContractFilterer) (*IDAOracleFilterer, error) {
+	contract, err := bindIDAOracle(address, nil, nil, filterer)
 	if err != nil {
 		return nil, err
 	}
-	return &InitializableFilterer{contract: contract}, nil
+	return &IDAOracleFilterer{contract: contract}, nil
 }
 
-// bindInitializable binds a generic wrapper to an already deployed contract.
-func bindInitializable(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	parsed, err := abi.JSON(strings.NewReader(InitializableABI))
+// bindIDAOracle binds a generic wrapper to an already deployed contract.
+func bindIDAOracle(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
+	parsed, err := abi.JSON(strings.NewReader(IDAOracleABI))
 	if err != nil {
 		return nil, err
 	}
@@ -482,240 +697,46 @@ func bindInitializable(address common.Address, caller bind.ContractCaller, trans
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Initializable *InitializableRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
-	return _Initializable.Contract.InitializableCaller.contract.Call(opts, result, method, params...)
+func (_IDAOracle *IDAOracleRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _IDAOracle.Contract.IDAOracleCaller.contract.Call(opts, result, method, params...)
 }
 
 // Transfer initiates a plain transaction to move funds to the contract, calling
 // its default method if one is available.
-func (_Initializable *InitializableRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _Initializable.Contract.InitializableTransactor.contract.Transfer(opts)
+func (_IDAOracle *IDAOracleRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _IDAOracle.Contract.IDAOracleTransactor.contract.Transfer(opts)
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (_Initializable *InitializableRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _Initializable.Contract.InitializableTransactor.contract.Transact(opts, method, params...)
+func (_IDAOracle *IDAOracleRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _IDAOracle.Contract.IDAOracleTransactor.contract.Transact(opts, method, params...)
 }
 
 // Call invokes the (constant) contract method with params as input values and
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Initializable *InitializableCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
-	return _Initializable.Contract.contract.Call(opts, result, method, params...)
+func (_IDAOracle *IDAOracleCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
+	return _IDAOracle.Contract.contract.Call(opts, result, method, params...)
 }
 
 // Transfer initiates a plain transaction to move funds to the contract, calling
 // its default method if one is available.
-func (_Initializable *InitializableTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _Initializable.Contract.contract.Transfer(opts)
+func (_IDAOracle *IDAOracleTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _IDAOracle.Contract.contract.Transfer(opts)
 }
 
 // Transact invokes the (paid) contract method with params as input values.
-func (_Initializable *InitializableTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _Initializable.Contract.contract.Transact(opts, method, params...)
+func (_IDAOracle *IDAOracleTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
+	return _IDAOracle.Contract.contract.Transact(opts, method, params...)
 }
 
-// OwnableUpgradeableWithExpiryMetaData contains all meta data concerning the OwnableUpgradeableWithExpiry contract.
-var OwnableUpgradeableWithExpiryMetaData = &bind.MetaData{
-	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"getOwnershipExpiryTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"isOwnershipExpired\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnershipAfterExpiry\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
-	Sigs: map[string]string{
-		"1ee7a108": "getOwnershipExpiryTimestamp()",
-		"5afe97bb": "isOwnershipExpired()",
-		"8da5cb5b": "owner()",
-		"715018a6": "renounceOwnership()",
-		"8c64865f": "renounceOwnershipAfterExpiry()",
-		"f2fde38b": "transferOwnership(address)",
-	},
-}
-
-// OwnableUpgradeableWithExpiryABI is the input ABI used to generate the binding from.
-// Deprecated: Use OwnableUpgradeableWithExpiryMetaData.ABI instead.
-var OwnableUpgradeableWithExpiryABI = OwnableUpgradeableWithExpiryMetaData.ABI
-
-// Deprecated: Use OwnableUpgradeableWithExpiryMetaData.Sigs instead.
-// OwnableUpgradeableWithExpiryFuncSigs maps the 4-byte function signature to its string representation.
-var OwnableUpgradeableWithExpiryFuncSigs = OwnableUpgradeableWithExpiryMetaData.Sigs
-
-// OwnableUpgradeableWithExpiry is an auto generated Go binding around an Ethereum contract.
-type OwnableUpgradeableWithExpiry struct {
-	OwnableUpgradeableWithExpiryCaller     // Read-only binding to the contract
-	OwnableUpgradeableWithExpiryTransactor // Write-only binding to the contract
-	OwnableUpgradeableWithExpiryFilterer   // Log filterer for contract events
-}
-
-// OwnableUpgradeableWithExpiryCaller is an auto generated read-only Go binding around an Ethereum contract.
-type OwnableUpgradeableWithExpiryCaller struct {
-	contract *bind.BoundContract // Generic contract wrapper for the low level calls
-}
-
-// OwnableUpgradeableWithExpiryTransactor is an auto generated write-only Go binding around an Ethereum contract.
-type OwnableUpgradeableWithExpiryTransactor struct {
-	contract *bind.BoundContract // Generic contract wrapper for the low level calls
-}
-
-// OwnableUpgradeableWithExpiryFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
-type OwnableUpgradeableWithExpiryFilterer struct {
-	contract *bind.BoundContract // Generic contract wrapper for the low level calls
-}
-
-// OwnableUpgradeableWithExpirySession is an auto generated Go binding around an Ethereum contract,
-// with pre-set call and transact options.
-type OwnableUpgradeableWithExpirySession struct {
-	Contract     *OwnableUpgradeableWithExpiry // Generic contract binding to set the session for
-	CallOpts     bind.CallOpts                 // Call options to use throughout this session
-	TransactOpts bind.TransactOpts             // Transaction auth options to use throughout this session
-}
-
-// OwnableUpgradeableWithExpiryCallerSession is an auto generated read-only Go binding around an Ethereum contract,
-// with pre-set call options.
-type OwnableUpgradeableWithExpiryCallerSession struct {
-	Contract *OwnableUpgradeableWithExpiryCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts                       // Call options to use throughout this session
-}
-
-// OwnableUpgradeableWithExpiryTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
-// with pre-set transact options.
-type OwnableUpgradeableWithExpiryTransactorSession struct {
-	Contract     *OwnableUpgradeableWithExpiryTransactor // Generic contract transactor binding to set the session for
-	TransactOpts bind.TransactOpts                       // Transaction auth options to use throughout this session
-}
-
-// OwnableUpgradeableWithExpiryRaw is an auto generated low-level Go binding around an Ethereum contract.
-type OwnableUpgradeableWithExpiryRaw struct {
-	Contract *OwnableUpgradeableWithExpiry // Generic contract binding to access the raw methods on
-}
-
-// OwnableUpgradeableWithExpiryCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
-type OwnableUpgradeableWithExpiryCallerRaw struct {
-	Contract *OwnableUpgradeableWithExpiryCaller // Generic read-only contract binding to access the raw methods on
-}
-
-// OwnableUpgradeableWithExpiryTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
-type OwnableUpgradeableWithExpiryTransactorRaw struct {
-	Contract *OwnableUpgradeableWithExpiryTransactor // Generic write-only contract binding to access the raw methods on
-}
-
-// NewOwnableUpgradeableWithExpiry creates a new instance of OwnableUpgradeableWithExpiry, bound to a specific deployed contract.
-func NewOwnableUpgradeableWithExpiry(address common.Address, backend bind.ContractBackend) (*OwnableUpgradeableWithExpiry, error) {
-	contract, err := bindOwnableUpgradeableWithExpiry(address, backend, backend, backend)
-	if err != nil {
-		return nil, err
-	}
-	return &OwnableUpgradeableWithExpiry{OwnableUpgradeableWithExpiryCaller: OwnableUpgradeableWithExpiryCaller{contract: contract}, OwnableUpgradeableWithExpiryTransactor: OwnableUpgradeableWithExpiryTransactor{contract: contract}, OwnableUpgradeableWithExpiryFilterer: OwnableUpgradeableWithExpiryFilterer{contract: contract}}, nil
-}
-
-// NewOwnableUpgradeableWithExpiryCaller creates a new read-only instance of OwnableUpgradeableWithExpiry, bound to a specific deployed contract.
-func NewOwnableUpgradeableWithExpiryCaller(address common.Address, caller bind.ContractCaller) (*OwnableUpgradeableWithExpiryCaller, error) {
-	contract, err := bindOwnableUpgradeableWithExpiry(address, caller, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-	return &OwnableUpgradeableWithExpiryCaller{contract: contract}, nil
-}
-
-// NewOwnableUpgradeableWithExpiryTransactor creates a new write-only instance of OwnableUpgradeableWithExpiry, bound to a specific deployed contract.
-func NewOwnableUpgradeableWithExpiryTransactor(address common.Address, transactor bind.ContractTransactor) (*OwnableUpgradeableWithExpiryTransactor, error) {
-	contract, err := bindOwnableUpgradeableWithExpiry(address, nil, transactor, nil)
-	if err != nil {
-		return nil, err
-	}
-	return &OwnableUpgradeableWithExpiryTransactor{contract: contract}, nil
-}
-
-// NewOwnableUpgradeableWithExpiryFilterer creates a new log filterer instance of OwnableUpgradeableWithExpiry, bound to a specific deployed contract.
-func NewOwnableUpgradeableWithExpiryFilterer(address common.Address, filterer bind.ContractFilterer) (*OwnableUpgradeableWithExpiryFilterer, error) {
-	contract, err := bindOwnableUpgradeableWithExpiry(address, nil, nil, filterer)
-	if err != nil {
-		return nil, err
-	}
-	return &OwnableUpgradeableWithExpiryFilterer{contract: contract}, nil
-}
-
-// bindOwnableUpgradeableWithExpiry binds a generic wrapper to an already deployed contract.
-func bindOwnableUpgradeableWithExpiry(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	parsed, err := abi.JSON(strings.NewReader(OwnableUpgradeableWithExpiryABI))
-	if err != nil {
-		return nil, err
-	}
-	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
-}
-
-// Call invokes the (constant) contract method with params as input values and
-// sets the output to result. The result type might be a single field for simple
-// returns, a slice of interfaces for anonymous returns and a struct for named
-// returns.
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
-	return _OwnableUpgradeableWithExpiry.Contract.OwnableUpgradeableWithExpiryCaller.contract.Call(opts, result, method, params...)
-}
-
-// Transfer initiates a plain transaction to move funds to the contract, calling
-// its default method if one is available.
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _OwnableUpgradeableWithExpiry.Contract.OwnableUpgradeableWithExpiryTransactor.contract.Transfer(opts)
-}
-
-// Transact invokes the (paid) contract method with params as input values.
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _OwnableUpgradeableWithExpiry.Contract.OwnableUpgradeableWithExpiryTransactor.contract.Transact(opts, method, params...)
-}
-
-// Call invokes the (constant) contract method with params as input values and
-// sets the output to result. The result type might be a single field for simple
-// returns, a slice of interfaces for anonymous returns and a struct for named
-// returns.
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
-	return _OwnableUpgradeableWithExpiry.Contract.contract.Call(opts, result, method, params...)
-}
-
-// Transfer initiates a plain transaction to move funds to the contract, calling
-// its default method if one is available.
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryTransactorRaw) Transfer(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _OwnableUpgradeableWithExpiry.Contract.contract.Transfer(opts)
-}
-
-// Transact invokes the (paid) contract method with params as input values.
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
-	return _OwnableUpgradeableWithExpiry.Contract.contract.Transact(opts, method, params...)
-}
-
-// GetOwnershipExpiryTimestamp is a free data retrieval call binding the contract method 0x1ee7a108.
+// VerifyAttestation is a free data retrieval call binding the contract method 0x1f3302a9.
 //
-// Solidity: function getOwnershipExpiryTimestamp() view returns(uint256)
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryCaller) GetOwnershipExpiryTimestamp(opts *bind.CallOpts) (*big.Int, error) {
+// Solidity: function verifyAttestation(uint256 _tupleRootIndex, (uint256,bytes32) _tuple, (bytes32[],uint256,uint256) _proof) view returns(bool)
+func (_IDAOracle *IDAOracleCaller) VerifyAttestation(opts *bind.CallOpts, _tupleRootIndex *big.Int, _tuple DataRootTuple, _proof BinaryMerkleProof) (bool, error) {
 	var out []interface{}
-	err := _OwnableUpgradeableWithExpiry.contract.Call(opts, &out, "getOwnershipExpiryTimestamp")
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
-}
-
-// GetOwnershipExpiryTimestamp is a free data retrieval call binding the contract method 0x1ee7a108.
-//
-// Solidity: function getOwnershipExpiryTimestamp() view returns(uint256)
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpirySession) GetOwnershipExpiryTimestamp() (*big.Int, error) {
-	return _OwnableUpgradeableWithExpiry.Contract.GetOwnershipExpiryTimestamp(&_OwnableUpgradeableWithExpiry.CallOpts)
-}
-
-// GetOwnershipExpiryTimestamp is a free data retrieval call binding the contract method 0x1ee7a108.
-//
-// Solidity: function getOwnershipExpiryTimestamp() view returns(uint256)
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryCallerSession) GetOwnershipExpiryTimestamp() (*big.Int, error) {
-	return _OwnableUpgradeableWithExpiry.Contract.GetOwnershipExpiryTimestamp(&_OwnableUpgradeableWithExpiry.CallOpts)
-}
-
-// IsOwnershipExpired is a free data retrieval call binding the contract method 0x5afe97bb.
-//
-// Solidity: function isOwnershipExpired() view returns(bool)
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryCaller) IsOwnershipExpired(opts *bind.CallOpts) (bool, error) {
-	var out []interface{}
-	err := _OwnableUpgradeableWithExpiry.contract.Call(opts, &out, "isOwnershipExpired")
+	err := _IDAOracle.contract.Call(opts, &out, "verifyAttestation", _tupleRootIndex, _tuple, _proof)
 
 	if err != nil {
 		return *new(bool), err
@@ -727,287 +748,35 @@ func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryCaller) IsOwner
 
 }
 
-// IsOwnershipExpired is a free data retrieval call binding the contract method 0x5afe97bb.
+// VerifyAttestation is a free data retrieval call binding the contract method 0x1f3302a9.
 //
-// Solidity: function isOwnershipExpired() view returns(bool)
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpirySession) IsOwnershipExpired() (bool, error) {
-	return _OwnableUpgradeableWithExpiry.Contract.IsOwnershipExpired(&_OwnableUpgradeableWithExpiry.CallOpts)
+// Solidity: function verifyAttestation(uint256 _tupleRootIndex, (uint256,bytes32) _tuple, (bytes32[],uint256,uint256) _proof) view returns(bool)
+func (_IDAOracle *IDAOracleSession) VerifyAttestation(_tupleRootIndex *big.Int, _tuple DataRootTuple, _proof BinaryMerkleProof) (bool, error) {
+	return _IDAOracle.Contract.VerifyAttestation(&_IDAOracle.CallOpts, _tupleRootIndex, _tuple, _proof)
 }
 
-// IsOwnershipExpired is a free data retrieval call binding the contract method 0x5afe97bb.
+// VerifyAttestation is a free data retrieval call binding the contract method 0x1f3302a9.
 //
-// Solidity: function isOwnershipExpired() view returns(bool)
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryCallerSession) IsOwnershipExpired() (bool, error) {
-	return _OwnableUpgradeableWithExpiry.Contract.IsOwnershipExpired(&_OwnableUpgradeableWithExpiry.CallOpts)
-}
-
-// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
-//
-// Solidity: function owner() view returns(address)
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _OwnableUpgradeableWithExpiry.contract.Call(opts, &out, "owner")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
-//
-// Solidity: function owner() view returns(address)
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpirySession) Owner() (common.Address, error) {
-	return _OwnableUpgradeableWithExpiry.Contract.Owner(&_OwnableUpgradeableWithExpiry.CallOpts)
-}
-
-// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
-//
-// Solidity: function owner() view returns(address)
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryCallerSession) Owner() (common.Address, error) {
-	return _OwnableUpgradeableWithExpiry.Contract.Owner(&_OwnableUpgradeableWithExpiry.CallOpts)
-}
-
-// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
-//
-// Solidity: function renounceOwnership() returns()
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryTransactor) RenounceOwnership(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _OwnableUpgradeableWithExpiry.contract.Transact(opts, "renounceOwnership")
-}
-
-// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
-//
-// Solidity: function renounceOwnership() returns()
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpirySession) RenounceOwnership() (*types.Transaction, error) {
-	return _OwnableUpgradeableWithExpiry.Contract.RenounceOwnership(&_OwnableUpgradeableWithExpiry.TransactOpts)
-}
-
-// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
-//
-// Solidity: function renounceOwnership() returns()
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryTransactorSession) RenounceOwnership() (*types.Transaction, error) {
-	return _OwnableUpgradeableWithExpiry.Contract.RenounceOwnership(&_OwnableUpgradeableWithExpiry.TransactOpts)
-}
-
-// RenounceOwnershipAfterExpiry is a paid mutator transaction binding the contract method 0x8c64865f.
-//
-// Solidity: function renounceOwnershipAfterExpiry() returns()
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryTransactor) RenounceOwnershipAfterExpiry(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _OwnableUpgradeableWithExpiry.contract.Transact(opts, "renounceOwnershipAfterExpiry")
-}
-
-// RenounceOwnershipAfterExpiry is a paid mutator transaction binding the contract method 0x8c64865f.
-//
-// Solidity: function renounceOwnershipAfterExpiry() returns()
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpirySession) RenounceOwnershipAfterExpiry() (*types.Transaction, error) {
-	return _OwnableUpgradeableWithExpiry.Contract.RenounceOwnershipAfterExpiry(&_OwnableUpgradeableWithExpiry.TransactOpts)
-}
-
-// RenounceOwnershipAfterExpiry is a paid mutator transaction binding the contract method 0x8c64865f.
-//
-// Solidity: function renounceOwnershipAfterExpiry() returns()
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryTransactorSession) RenounceOwnershipAfterExpiry() (*types.Transaction, error) {
-	return _OwnableUpgradeableWithExpiry.Contract.RenounceOwnershipAfterExpiry(&_OwnableUpgradeableWithExpiry.TransactOpts)
-}
-
-// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
-//
-// Solidity: function transferOwnership(address newOwner) returns()
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryTransactor) TransferOwnership(opts *bind.TransactOpts, newOwner common.Address) (*types.Transaction, error) {
-	return _OwnableUpgradeableWithExpiry.contract.Transact(opts, "transferOwnership", newOwner)
-}
-
-// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
-//
-// Solidity: function transferOwnership(address newOwner) returns()
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpirySession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
-	return _OwnableUpgradeableWithExpiry.Contract.TransferOwnership(&_OwnableUpgradeableWithExpiry.TransactOpts, newOwner)
-}
-
-// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
-//
-// Solidity: function transferOwnership(address newOwner) returns()
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
-	return _OwnableUpgradeableWithExpiry.Contract.TransferOwnership(&_OwnableUpgradeableWithExpiry.TransactOpts, newOwner)
-}
-
-// OwnableUpgradeableWithExpiryOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the OwnableUpgradeableWithExpiry contract.
-type OwnableUpgradeableWithExpiryOwnershipTransferredIterator struct {
-	Event *OwnableUpgradeableWithExpiryOwnershipTransferred // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *OwnableUpgradeableWithExpiryOwnershipTransferredIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(OwnableUpgradeableWithExpiryOwnershipTransferred)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(OwnableUpgradeableWithExpiryOwnershipTransferred)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *OwnableUpgradeableWithExpiryOwnershipTransferredIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *OwnableUpgradeableWithExpiryOwnershipTransferredIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// OwnableUpgradeableWithExpiryOwnershipTransferred represents a OwnershipTransferred event raised by the OwnableUpgradeableWithExpiry contract.
-type OwnableUpgradeableWithExpiryOwnershipTransferred struct {
-	PreviousOwner common.Address
-	NewOwner      common.Address
-	Raw           types.Log // Blockchain specific contextual infos
-}
-
-// FilterOwnershipTransferred is a free log retrieval operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
-//
-// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryFilterer) FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*OwnableUpgradeableWithExpiryOwnershipTransferredIterator, error) {
-
-	var previousOwnerRule []interface{}
-	for _, previousOwnerItem := range previousOwner {
-		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
-	}
-	var newOwnerRule []interface{}
-	for _, newOwnerItem := range newOwner {
-		newOwnerRule = append(newOwnerRule, newOwnerItem)
-	}
-
-	logs, sub, err := _OwnableUpgradeableWithExpiry.contract.FilterLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
-	if err != nil {
-		return nil, err
-	}
-	return &OwnableUpgradeableWithExpiryOwnershipTransferredIterator{contract: _OwnableUpgradeableWithExpiry.contract, event: "OwnershipTransferred", logs: logs, sub: sub}, nil
-}
-
-// WatchOwnershipTransferred is a free log subscription operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
-//
-// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *OwnableUpgradeableWithExpiryOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error) {
-
-	var previousOwnerRule []interface{}
-	for _, previousOwnerItem := range previousOwner {
-		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
-	}
-	var newOwnerRule []interface{}
-	for _, newOwnerItem := range newOwner {
-		newOwnerRule = append(newOwnerRule, newOwnerItem)
-	}
-
-	logs, sub, err := _OwnableUpgradeableWithExpiry.contract.WatchLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(OwnableUpgradeableWithExpiryOwnershipTransferred)
-				if err := _OwnableUpgradeableWithExpiry.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseOwnershipTransferred is a log parse operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
-//
-// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_OwnableUpgradeableWithExpiry *OwnableUpgradeableWithExpiryFilterer) ParseOwnershipTransferred(log types.Log) (*OwnableUpgradeableWithExpiryOwnershipTransferred, error) {
-	event := new(OwnableUpgradeableWithExpiryOwnershipTransferred)
-	if err := _OwnableUpgradeableWithExpiry.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
+// Solidity: function verifyAttestation(uint256 _tupleRootIndex, (uint256,bytes32) _tuple, (bytes32[],uint256,uint256) _proof) view returns(bool)
+func (_IDAOracle *IDAOracleCallerSession) VerifyAttestation(_tupleRootIndex *big.Int, _tuple DataRootTuple, _proof BinaryMerkleProof) (bool, error) {
+	return _IDAOracle.Contract.VerifyAttestation(&_IDAOracle.CallOpts, _tupleRootIndex, _tuple, _proof)
 }
 
 // QuantumGravityBridgeMetaData contains all meta data concerning the QuantumGravityBridge contract.
 var QuantumGravityBridgeMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_bridge_id\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"_powerThreshold\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_validatorSetHash\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"InsufficientVotingPower\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidMessageTupleRootNonce\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidSignature\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidValidatorSetNonce\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"MalformedCurrentValidatorSet\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"SuppliedValidatorSetInvalid\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"messageTupleRoot\",\"type\":\"bytes32\"}],\"name\":\"MessageTupleRootEvent\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"powerThreshold\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"validatorSetHash\",\"type\":\"bytes32\"}],\"name\":\"ValidatorSetUpdatedEvent\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"BRIDGE_ID\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getOwnershipExpiryTimestamp\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"isOwnershipExpired\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnershipAfterExpiry\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"state_lastMessageTupleRootNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"state_lastValidatorSetCheckpoint\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"state_lastValidatorSetNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"state_messageTupleRoots\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"state_powerThreshold\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_nonce\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_messageTupleRoot\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"power\",\"type\":\"uint256\"}],\"internalType\":\"structValidator[]\",\"name\":\"_currentValidatorSet\",\"type\":\"tuple[]\"},{\"components\":[{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\"}],\"internalType\":\"structSignature[]\",\"name\":\"_sigs\",\"type\":\"tuple[]\"}],\"name\":\"submitMessageTupleRoot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_newNonce\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_newPowerThreshold\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_newValidatorSetHash\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"power\",\"type\":\"uint256\"}],\"internalType\":\"structValidator[]\",\"name\":\"_currentValidatorSet\",\"type\":\"tuple[]\"},{\"components\":[{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\"}],\"internalType\":\"structSignature[]\",\"name\":\"_sigs\",\"type\":\"tuple[]\"}],\"name\":\"updateValidatorSet\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_bridge_id\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"_powerThreshold\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_validatorSetHash\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"InsufficientVotingPower\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidDataRootTupleRootNonce\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidSignature\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidValidatorSetNonce\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"MalformedCurrentValidatorSet\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"SuppliedValidatorSetInvalid\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"dataRootTupleRoot\",\"type\":\"bytes32\"}],\"name\":\"DataRootTupleRootEvent\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"nonce\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"powerThreshold\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"validatorSetHash\",\"type\":\"bytes32\"}],\"name\":\"ValidatorSetUpdatedEvent\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"BRIDGE_ID\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"state_dataRootTupleRoots\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"state_lastDataRootTupleRootNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"state_lastValidatorSetCheckpoint\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"state_lastValidatorSetNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"state_powerThreshold\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_nonce\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_dataRootTupleRoot\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"power\",\"type\":\"uint256\"}],\"internalType\":\"structValidator[]\",\"name\":\"_currentValidatorSet\",\"type\":\"tuple[]\"},{\"components\":[{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\"}],\"internalType\":\"structSignature[]\",\"name\":\"_sigs\",\"type\":\"tuple[]\"}],\"name\":\"submitDataRootTupleRoot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_newNonce\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_newPowerThreshold\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"_newValidatorSetHash\",\"type\":\"bytes32\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"addr\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"power\",\"type\":\"uint256\"}],\"internalType\":\"structValidator[]\",\"name\":\"_currentValidatorSet\",\"type\":\"tuple[]\"},{\"components\":[{\"internalType\":\"uint8\",\"name\":\"v\",\"type\":\"uint8\"},{\"internalType\":\"bytes32\",\"name\":\"r\",\"type\":\"bytes32\"},{\"internalType\":\"bytes32\",\"name\":\"s\",\"type\":\"bytes32\"}],\"internalType\":\"structSignature[]\",\"name\":\"_sigs\",\"type\":\"tuple[]\"}],\"name\":\"updateValidatorSet\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_tupleRootIndex\",\"type\":\"uint256\"},{\"components\":[{\"internalType\":\"uint256\",\"name\":\"height\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"dataRoot\",\"type\":\"bytes32\"}],\"internalType\":\"structDataRootTuple\",\"name\":\"_tuple\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"bytes32[]\",\"name\":\"sideNodes\",\"type\":\"bytes32[]\"},{\"internalType\":\"uint256\",\"name\":\"key\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"numLeaves\",\"type\":\"uint256\"}],\"internalType\":\"structBinaryMerkleProof\",\"name\":\"_proof\",\"type\":\"tuple\"}],\"name\":\"verifyAttestation\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"}]",
 	Sigs: map[string]string{
 		"af4482af": "BRIDGE_ID()",
-		"1ee7a108": "getOwnershipExpiryTimestamp()",
-		"5afe97bb": "isOwnershipExpired()",
-		"8da5cb5b": "owner()",
-		"715018a6": "renounceOwnership()",
-		"8c64865f": "renounceOwnershipAfterExpiry()",
-		"9a1cfb83": "state_lastMessageTupleRootNonce()",
+		"817f985b": "state_dataRootTupleRoots(uint256)",
+		"179e64c5": "state_lastDataRootTupleRootNonce()",
 		"5433218c": "state_lastValidatorSetCheckpoint()",
 		"0f0cdf25": "state_lastValidatorSetNonce()",
-		"d8340ecf": "state_messageTupleRoots(uint256)",
 		"e5a2b5d2": "state_powerThreshold()",
-		"030643d7": "submitMessageTupleRoot(uint256,bytes32,(address,uint256)[],(uint8,bytes32,bytes32)[])",
-		"f2fde38b": "transferOwnership(address)",
+		"e3e51e19": "submitDataRootTupleRoot(uint256,bytes32,(address,uint256)[],(uint8,bytes32,bytes32)[])",
 		"4693c0df": "updateValidatorSet(uint256,uint256,bytes32,(address,uint256)[],(uint8,bytes32,bytes32)[])",
+		"1f3302a9": "verifyAttestation(uint256,(uint256,bytes32),(bytes32[],uint256,uint256))",
 	},
-	Bin: "0x60a060405234801561001057600080fd5b5060405161111b38038061111b83398101604081905261002f916101d6565b6100376100d8565b60808381526040805160208082018790526918da1958dadc1bda5b9d60b21b8284015260006060830181905293820186905260a08083018690528351808403909101815260c0830180855281519190920120606681905560678790559086905260e08201859052915183917fe55fb3cbbfe29b13c7f8a35ef23127e7df9ab88df16bac166ad254a20f02414c91908190036101000190a25050505050610204565b600054610100900460ff16806100f1575060005460ff16155b6101585760405162461bcd60e51b815260206004820152602e60248201527f496e697469616c697a61626c653a20636f6e747261637420697320616c72656160448201526d191e481a5b9a5d1a585b1a5e995960921b606482015260840160405180910390fd5b600054610100900460ff1615801561017a576000805461ffff19166101011790555b603380546001600160a01b031916339081179091554260345560405181906000907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908290a35080156101d3576000805461ff00191690555b50565b6000806000606084860312156101eb57600080fd5b8351925060208401519150604084015190509250925092565b608051610ee061023b600039600081816101950152818161024e0152818161029b015281816103e1015261042d0152610ee06000f3fe608060405234801561001057600080fd5b50600436106100ea5760003560e01c80638c64865f1161008c578063af4482af11610066578063af4482af14610190578063d8340ecf146101b7578063e5a2b5d2146101d7578063f2fde38b146101e057600080fd5b80638c64865f146101645780638da5cb5b1461016c5780639a1cfb831461018757600080fd5b80634693c0df116100c85780634693c0df146101285780635433218c1461013b5780635afe97bb14610144578063715018a61461015c57600080fd5b8063030643d7146100ef5780630f0cdf25146101045780631ee7a10814610120575b600080fd5b6101026100fd366004610c54565b6101f3565b005b61010d60685481565b6040519081526020015b60405180910390f35b61010d61036c565b610102610136366004610cd7565b610385565b61010d60665481565b61014c6104bb565b6040519015158152602001610117565b6101026104cc565b610102610535565b6033546040516001600160a01b039091168152602001610117565b61010d60695481565b61010d7f000000000000000000000000000000000000000000000000000000000000000081565b61010d6101c5366004610d64565b606a6020526000908152604090205481565b61010d60675481565b6101026101ee366004610d99565b610589565b606754606954871161021857604051632d37469760e01b815260040160405180910390fd5b8382146102385760405163c6617b7b60e01b815260040160405180910390fd5b600061024486866106a4565b90506066546102777f000000000000000000000000000000000000000000000000000000000000000060685485856106d7565b1461029557604051630bbdaec960e11b815260040160405180910390fd5b604080517f00000000000000000000000000000000000000000000000000000000000000006020808301919091526f0e8e4c2dce6c2c6e8d2dedc84c2e8c6d60831b82840152606082018b905260808083018b90528351808403909101815260a0909201909252805191012061030f878787878588610728565b60698990556000898152606a6020526040908190208990555189907f6f71145a387d176c99498fbbb78a98e85a46472eb5a4de9e06242e4edf4527e490610359908b815260200190565b60405180910390a2505050505050505050565b60006034546301dfe2006103809190610dd1565b905090565b6068546067548189116103ab576040516368a35ffd60e11b815260040160405180910390fd5b8483146103cb5760405163c6617b7b60e01b815260040160405180910390fd5b60006103d787876106a4565b90506066546104087f00000000000000000000000000000000000000000000000000000000000000008585856106d7565b1461042657604051630bbdaec960e11b815260040160405180910390fd5b60006104547f0000000000000000000000000000000000000000000000000000000000000000858c8c6106d7565b9050610464888888888588610728565b606681905560678a905560688b9055604080518b8152602081018b90528c917fe55fb3cbbfe29b13c7f8a35ef23127e7df9ab88df16bac166ad254a20f02414c910160405180910390a25050505050505050505050565b60006104c561036c565b4211905090565b6033546001600160a01b0316331461052b5760405162461bcd60e51b815260206004820181905260248201527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e657260448201526064015b60405180910390fd5b61053361080c565b565b61053d6104bb565b61052b5760405162461bcd60e51b815260206004820152601960248201527f4f776e657273686970206e6f74207965742065787069726564000000000000006044820152606401610522565b6033546001600160a01b031633146105e35760405162461bcd60e51b815260206004820181905260248201527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e65726044820152606401610522565b6001600160a01b0381166106485760405162461bcd60e51b815260206004820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201526564647265737360d01b6064820152608401610522565b6033546040516001600160a01b038084169216907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e090600090a3603380546001600160a01b0319166001600160a01b0392909216919091179055565b600082826040516020016106b9929190610de9565b60405160208183030381529060405280519060200120905092915050565b604080516020808201969096526918da1958dadc1bda5b9d60b21b818301526060810194909452608084019290925260a0808401919091528151808403909101815260c09092019052805191012090565b6000805b868110156107e15761077d88888381811061074957610749610e40565b61075f9260206040909202019081019150610d99565b8588888581811061077257610772610e40565b905060600201610856565b61079a57604051638baa579f60e01b815260040160405180910390fd5b8787828181106107ac576107ac610e40565b90506040020160200135826107c19190610dd1565b91508282106107cf576107e1565b806107d981610e56565b91505061072c565b50818110156108035760405163cabeb65560e01b815260040160405180910390fd5b50505050505050565b6033546040516000916001600160a01b0316907f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0908390a3603380546001600160a01b0319169055565b6000806108b0846040517f19457468657265756d205369676e6564204d6573736167653a0a3332000000006020820152603c8101829052600090605c01604051602081830303815290604052805190602001209050919050565b90506108d2816108c36020860186610e71565b856020013586604001356108f0565b6001600160a01b0316856001600160a01b0316149150509392505050565b600080600061090187878787610918565b9150915061090e81610a05565b5095945050505050565b6000807f7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a083111561094f57506000905060036109fc565b8460ff16601b1415801561096757508460ff16601c14155b1561097857506000905060046109fc565b6040805160008082526020820180845289905260ff881692820192909252606081018690526080810185905260019060a0016020604051602081039080840390855afa1580156109cc573d6000803e3d6000fd5b5050604051601f1901519150506001600160a01b0381166109f5576000600192509250506109fc565b9150600090505b94509492505050565b6000816004811115610a1957610a19610e94565b1415610a225750565b6001816004811115610a3657610a36610e94565b1415610a845760405162461bcd60e51b815260206004820152601860248201527f45434453413a20696e76616c6964207369676e617475726500000000000000006044820152606401610522565b6002816004811115610a9857610a98610e94565b1415610ae65760405162461bcd60e51b815260206004820152601f60248201527f45434453413a20696e76616c6964207369676e6174757265206c656e677468006044820152606401610522565b6003816004811115610afa57610afa610e94565b1415610b535760405162461bcd60e51b815260206004820152602260248201527f45434453413a20696e76616c6964207369676e6174757265202773272076616c604482015261756560f01b6064820152608401610522565b6004816004811115610b6757610b67610e94565b1415610bc05760405162461bcd60e51b815260206004820152602260248201527f45434453413a20696e76616c6964207369676e6174757265202776272076616c604482015261756560f01b6064820152608401610522565b50565b60008083601f840112610bd557600080fd5b50813567ffffffffffffffff811115610bed57600080fd5b6020830191508360208260061b8501011115610c0857600080fd5b9250929050565b60008083601f840112610c2157600080fd5b50813567ffffffffffffffff811115610c3957600080fd5b602083019150836020606083028501011115610c0857600080fd5b60008060008060008060808789031215610c6d57600080fd5b8635955060208701359450604087013567ffffffffffffffff80821115610c9357600080fd5b610c9f8a838b01610bc3565b90965094506060890135915080821115610cb857600080fd5b50610cc589828a01610c0f565b979a9699509497509295939492505050565b600080600080600080600060a0888a031215610cf257600080fd5b873596506020880135955060408801359450606088013567ffffffffffffffff80821115610d1f57600080fd5b610d2b8b838c01610bc3565b909650945060808a0135915080821115610d4457600080fd5b50610d518a828b01610c0f565b989b979a50959850939692959293505050565b600060208284031215610d7657600080fd5b5035919050565b80356001600160a01b0381168114610d9457600080fd5b919050565b600060208284031215610dab57600080fd5b610db482610d7d565b9392505050565b634e487b7160e01b600052601160045260246000fd5b60008219821115610de457610de4610dbb565b500190565b6020808252818101839052600090604080840186845b87811015610e33576001600160a01b03610e1883610d7d565b16835281850135858401529183019190830190600101610dff565b5090979650505050505050565b634e487b7160e01b600052603260045260246000fd5b6000600019821415610e6a57610e6a610dbb565b5060010190565b600060208284031215610e8357600080fd5b813560ff81168114610db457600080fd5b634e487b7160e01b600052602160045260246000fdfea26469706673582212203a212583a48144737e78ac7d584c0d904b5a0e6f136ddafd7a1c555ba3d58c9364736f6c63430008090033",
+	Bin: "0x60a060405234801561001057600080fd5b5060405161149a38038061149a83398101604081905261002f916100ce565b60808381526040805160208082018790526918da1958dadc1bda5b9d60b21b8284015260006060830181905293820186905260a08083018690528351808403909101815260c083018085528151919092012080855560018790559086905260e08201859052915183917fe55fb3cbbfe29b13c7f8a35ef23127e7df9ab88df16bac166ad254a20f02414c91908190036101000190a250505050506100fc565b6000806000606084860312156100e357600080fd5b8351925060208401519150604084015190509250925092565b608051611367610133600039600081816101230152818161021f0152818161026b0152818161035401526103a101526113676000f3fe608060405234801561001057600080fd5b50600436106100935760003560e01c80635433218c116100665780635433218c146100f5578063817f985b146100fe578063af4482af1461011e578063e3e51e1914610145578063e5a2b5d21461015857600080fd5b80630f0cdf2514610098578063179e64c5146100b45780631f3302a9146100bd5780634693c0df146100e0575b600080fd5b6100a160025481565b6040519081526020015b60405180910390f35b6100a160035481565b6100d06100cb366004610e53565b610161565b60405190151581526020016100ab565b6100f36100ee366004611006565b6101c3565b005b6100a160005481565b6100a161010c366004611093565b60046020526000908152604090205481565b6100a17f000000000000000000000000000000000000000000000000000000000000000081565b6100f36101533660046110ac565b6102f9565b6100a160015481565b6000600354841115610175575060006101bc565b60008481526004602090815260408083205481518751818501529287015183830152815180840383018152606090930190915291906101b79083908690610472565b925050505b9392505050565b6002546001548189116101e9576040516368a35ffd60e11b815260040160405180910390fd5b8483146102095760405163c6617b7b60e01b815260040160405180910390fd5b600061021587876106e0565b90506000546102467f0000000000000000000000000000000000000000000000000000000000000000858585610714565b1461026457604051630bbdaec960e11b815260040160405180910390fd5b60006102927f0000000000000000000000000000000000000000000000000000000000000000858c8c610714565b90506102a2888888888588610765565b600081905560018a905560028b9055604080518b8152602081018b90528c917fe55fb3cbbfe29b13c7f8a35ef23127e7df9ab88df16bac166ad254a20f02414c910160405180910390a25050505050505050505050565b600154600354871161031e5760405163e869766d60e01b815260040160405180910390fd5b83821461033e5760405163c6617b7b60e01b815260040160405180910390fd5b600061034a86866106e0565b905060005461037d7f00000000000000000000000000000000000000000000000000000000000000006002548585610714565b1461039b57604051630bbdaec960e11b815260040160405180910390fd5b604080517f00000000000000000000000000000000000000000000000000000000000000006020808301919091526f0e8e4c2dce6c2c6e8d2dedc84c2e8c6d60831b82840152606082018b905260808083018b90528351808403909101815260a09092019092528051910120610415878787878588610765565b6003899055600089815260046020526040908190208990555189907f6614d037bde4905e31ca5ff05de61964c267f28b0320ed49e59f7d99752e1c4f9061045f908b815260200190565b60405180910390a2505050505050505050565b600060018360400151116104955782515115610490575060006101bc565b6104b7565b6104a783602001518460400151610873565b835151146104b7575060006101bc565b82604001518360200151106104ce575060006101bc565b60006104d9836108fa565b845151909150610503578360400151600114156104f957841490506101bc565b60009150506101bc565b60208401516001905b60208601516000906001841b90610524908290611145565b61052e9190611167565b90506000600161054081861b84611186565b61054a919061119e565b90508760400151811061055e575050610624565b91508161056c60018561119e565b88515111610582576000955050505050506101bc565b61058d60018561119e565b6001901b8289602001516105a1919061119e565b10156105de5787516105d79086906105ba60018861119e565b815181106105ca576105ca6111b5565b602002602001015161096f565b9450610610565b875161060d906105ef60018761119e565b815181106105ff576105ff6111b5565b60200260200101518661096f565b94505b61061b600185611186565b9350505061050c565b60018660400151610635919061119e565b811461067d5761064660018361119e565b8651511161065a57600093505050506101bc565b855161066d9084906105ba60018661119e565b925061067a600183611186565b91505b85515161068b60018461119e565b10156106d45785516106c0906106a260018561119e565b815181106106b2576106b26111b5565b60200260200101518461096f565b92506106cd600183611186565b915061067d565b50509093149392505050565b600082826040516020016106f59291906111e7565b6040516020818303038152906040528051906020012090505b92915050565b604080516020808201969096526918da1958dadc1bda5b9d60b21b818301526060810194909452608084019290925260a0808401919091528151808403909101815260c09092019052805191012090565b6000805b8681101561084857610791868683818110610786576107866111b5565b9050606002016109ed565b1561079b57610836565b6107e48888838181106107b0576107b06111b5565b6107c6926020604090920201908101915061123e565b858888858181106107d9576107d96111b5565b905060600201610a21565b61080157604051638baa579f60e01b815260040160405180910390fd5b878782818110610813576108136111b5565b90506040020160200135826108289190611186565b915082821061083657610848565b8061084081611259565b915050610769565b508181101561086a5760405163cabeb65560e01b815260040160405180910390fd5b50505050505050565b600061087e82610abb565b61088a9061010061119e565b9050600061089960018361119e565b6001901b90506001816108ac919061119e565b84116108b8575061070e565b80600114156108cb57600191505061070e565b6108e76108d8828661119e565b6108e2838661119e565b610873565b6108f2906001611186565b91505061070e565b60006002600060f81b836040516020016109159291906112af565b60408051601f198184030181529082905261092f916112d3565b602060405180830381855afa15801561094c573d6000803e3d6000fd5b5050506040513d601f19601f8201168201806040525081019061070e91906112df565b604051600160f81b6020820152602181018390526041810182905260009060029060610160408051601f19818403018152908290526109ad916112d3565b602060405180830381855afa1580156109ca573d6000803e3d6000fd5b5050506040513d601f19601f820116820180604052508101906101bc91906112df565b60006020820135158015610a0357506040820135155b801561070e5750610a1760208301836112f8565b60ff161592915050565b600080610a7b846040517f19457468657265756d205369676e6564204d6573736167653a0a3332000000006020820152603c8101829052600090605c01604051602081830303815290604052805190602001209050919050565b9050610a9d81610a8e60208601866112f8565b85602001358660400135610ae8565b6001600160a01b0316856001600160a01b0316149150509392505050565b60005b81816001901b1015610adc57610ad5600182611186565b9050610abe565b61070e8161010061119e565b6000806000610af987878787610b10565b91509150610b0681610bfd565b5095945050505050565b6000807f7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0831115610b475750600090506003610bf4565b8460ff16601b14158015610b5f57508460ff16601c14155b15610b705750600090506004610bf4565b6040805160008082526020820180845289905260ff881692820192909252606081018690526080810185905260019060a0016020604051602081039080840390855afa158015610bc4573d6000803e3d6000fd5b5050604051601f1901519150506001600160a01b038116610bed57600060019250925050610bf4565b9150600090505b94509492505050565b6000816004811115610c1157610c1161131b565b1415610c1a5750565b6001816004811115610c2e57610c2e61131b565b1415610c815760405162461bcd60e51b815260206004820152601860248201527f45434453413a20696e76616c6964207369676e6174757265000000000000000060448201526064015b60405180910390fd5b6002816004811115610c9557610c9561131b565b1415610ce35760405162461bcd60e51b815260206004820152601f60248201527f45434453413a20696e76616c6964207369676e6174757265206c656e677468006044820152606401610c78565b6003816004811115610cf757610cf761131b565b1415610d505760405162461bcd60e51b815260206004820152602260248201527f45434453413a20696e76616c6964207369676e6174757265202773272076616c604482015261756560f01b6064820152608401610c78565b6004816004811115610d6457610d6461131b565b1415610dbd5760405162461bcd60e51b815260206004820152602260248201527f45434453413a20696e76616c6964207369676e6174757265202776272076616c604482015261756560f01b6064820152608401610c78565b50565b634e487b7160e01b600052604160045260246000fd5b6040805190810167ffffffffffffffff81118282101715610df957610df9610dc0565b60405290565b6040516060810167ffffffffffffffff81118282101715610df957610df9610dc0565b604051601f8201601f1916810167ffffffffffffffff81118282101715610e4b57610e4b610dc0565b604052919050565b60008060008385036080811215610e6957600080fd5b8435935060206040601f1983011215610e8157600080fd5b610e89610dd6565b86820135815260408701358282015293506060860135915067ffffffffffffffff80831115610eb757600080fd5b9186019160608389031215610ecb57600080fd5b610ed3610dff565b833582811115610ee257600080fd5b8401601f81018a13610ef357600080fd5b803583811115610f0557610f05610dc0565b8060051b9350610f16858501610e22565b818152938201850193858101908c861115610f3057600080fd5b928601925b85841015610f4e57833582529286019290860190610f35565b80855250505050828401358382015260408401356040820152809450505050509250925092565b60008083601f840112610f8757600080fd5b50813567ffffffffffffffff811115610f9f57600080fd5b6020830191508360208260061b8501011115610fba57600080fd5b9250929050565b60008083601f840112610fd357600080fd5b50813567ffffffffffffffff811115610feb57600080fd5b602083019150836020606083028501011115610fba57600080fd5b600080600080600080600060a0888a03121561102157600080fd5b873596506020880135955060408801359450606088013567ffffffffffffffff8082111561104e57600080fd5b61105a8b838c01610f75565b909650945060808a013591508082111561107357600080fd5b506110808a828b01610fc1565b989b979a50959850939692959293505050565b6000602082840312156110a557600080fd5b5035919050565b600080600080600080608087890312156110c557600080fd5b8635955060208701359450604087013567ffffffffffffffff808211156110eb57600080fd5b6110f78a838b01610f75565b9096509450606089013591508082111561111057600080fd5b5061111d89828a01610fc1565b979a9699509497509295939492505050565b634e487b7160e01b600052601160045260246000fd5b60008261116257634e487b7160e01b600052601260045260246000fd5b500490565b60008160001904831182151516156111815761118161112f565b500290565b600082198211156111995761119961112f565b500190565b6000828210156111b0576111b061112f565b500390565b634e487b7160e01b600052603260045260246000fd5b80356001600160a01b03811681146111e257600080fd5b919050565b6020808252818101839052600090604080840186845b87811015611231576001600160a01b03611216836111cb565b168352818501358584015291830191908301906001016111fd565b5090979650505050505050565b60006020828403121561125057600080fd5b6101bc826111cb565b600060001982141561126d5761126d61112f565b5060010190565b6000815160005b81811015611295576020818501810151868301520161127b565b818111156112a4576000828601525b509290920192915050565b6001600160f81b03198316815260006112cb6001830184611274565b949350505050565b60006101bc8284611274565b6000602082840312156112f157600080fd5b5051919050565b60006020828403121561130a57600080fd5b813560ff811681146101bc57600080fd5b634e487b7160e01b600052602160045260246000fdfea2646970667358221220f91c02b452291bac00bc82a80a18edfe0af5154e54bac31c41cf4236ff90e6bd64736f6c634300080c0033",
 }
 
 // QuantumGravityBridgeABI is the input ABI used to generate the binding from.
@@ -1212,12 +981,43 @@ func (_QuantumGravityBridge *QuantumGravityBridgeCallerSession) BRIDGEID() ([32]
 	return _QuantumGravityBridge.Contract.BRIDGEID(&_QuantumGravityBridge.CallOpts)
 }
 
-// GetOwnershipExpiryTimestamp is a free data retrieval call binding the contract method 0x1ee7a108.
+// StateDataRootTupleRoots is a free data retrieval call binding the contract method 0x817f985b.
 //
-// Solidity: function getOwnershipExpiryTimestamp() view returns(uint256)
-func (_QuantumGravityBridge *QuantumGravityBridgeCaller) GetOwnershipExpiryTimestamp(opts *bind.CallOpts) (*big.Int, error) {
+// Solidity: function state_dataRootTupleRoots(uint256 ) view returns(bytes32)
+func (_QuantumGravityBridge *QuantumGravityBridgeCaller) StateDataRootTupleRoots(opts *bind.CallOpts, arg0 *big.Int) ([32]byte, error) {
 	var out []interface{}
-	err := _QuantumGravityBridge.contract.Call(opts, &out, "getOwnershipExpiryTimestamp")
+	err := _QuantumGravityBridge.contract.Call(opts, &out, "state_dataRootTupleRoots", arg0)
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
+}
+
+// StateDataRootTupleRoots is a free data retrieval call binding the contract method 0x817f985b.
+//
+// Solidity: function state_dataRootTupleRoots(uint256 ) view returns(bytes32)
+func (_QuantumGravityBridge *QuantumGravityBridgeSession) StateDataRootTupleRoots(arg0 *big.Int) ([32]byte, error) {
+	return _QuantumGravityBridge.Contract.StateDataRootTupleRoots(&_QuantumGravityBridge.CallOpts, arg0)
+}
+
+// StateDataRootTupleRoots is a free data retrieval call binding the contract method 0x817f985b.
+//
+// Solidity: function state_dataRootTupleRoots(uint256 ) view returns(bytes32)
+func (_QuantumGravityBridge *QuantumGravityBridgeCallerSession) StateDataRootTupleRoots(arg0 *big.Int) ([32]byte, error) {
+	return _QuantumGravityBridge.Contract.StateDataRootTupleRoots(&_QuantumGravityBridge.CallOpts, arg0)
+}
+
+// StateLastDataRootTupleRootNonce is a free data retrieval call binding the contract method 0x179e64c5.
+//
+// Solidity: function state_lastDataRootTupleRootNonce() view returns(uint256)
+func (_QuantumGravityBridge *QuantumGravityBridgeCaller) StateLastDataRootTupleRootNonce(opts *bind.CallOpts) (*big.Int, error) {
+	var out []interface{}
+	err := _QuantumGravityBridge.contract.Call(opts, &out, "state_lastDataRootTupleRootNonce")
 
 	if err != nil {
 		return *new(*big.Int), err
@@ -1229,111 +1029,18 @@ func (_QuantumGravityBridge *QuantumGravityBridgeCaller) GetOwnershipExpiryTimes
 
 }
 
-// GetOwnershipExpiryTimestamp is a free data retrieval call binding the contract method 0x1ee7a108.
+// StateLastDataRootTupleRootNonce is a free data retrieval call binding the contract method 0x179e64c5.
 //
-// Solidity: function getOwnershipExpiryTimestamp() view returns(uint256)
-func (_QuantumGravityBridge *QuantumGravityBridgeSession) GetOwnershipExpiryTimestamp() (*big.Int, error) {
-	return _QuantumGravityBridge.Contract.GetOwnershipExpiryTimestamp(&_QuantumGravityBridge.CallOpts)
+// Solidity: function state_lastDataRootTupleRootNonce() view returns(uint256)
+func (_QuantumGravityBridge *QuantumGravityBridgeSession) StateLastDataRootTupleRootNonce() (*big.Int, error) {
+	return _QuantumGravityBridge.Contract.StateLastDataRootTupleRootNonce(&_QuantumGravityBridge.CallOpts)
 }
 
-// GetOwnershipExpiryTimestamp is a free data retrieval call binding the contract method 0x1ee7a108.
+// StateLastDataRootTupleRootNonce is a free data retrieval call binding the contract method 0x179e64c5.
 //
-// Solidity: function getOwnershipExpiryTimestamp() view returns(uint256)
-func (_QuantumGravityBridge *QuantumGravityBridgeCallerSession) GetOwnershipExpiryTimestamp() (*big.Int, error) {
-	return _QuantumGravityBridge.Contract.GetOwnershipExpiryTimestamp(&_QuantumGravityBridge.CallOpts)
-}
-
-// IsOwnershipExpired is a free data retrieval call binding the contract method 0x5afe97bb.
-//
-// Solidity: function isOwnershipExpired() view returns(bool)
-func (_QuantumGravityBridge *QuantumGravityBridgeCaller) IsOwnershipExpired(opts *bind.CallOpts) (bool, error) {
-	var out []interface{}
-	err := _QuantumGravityBridge.contract.Call(opts, &out, "isOwnershipExpired")
-
-	if err != nil {
-		return *new(bool), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
-
-	return out0, err
-
-}
-
-// IsOwnershipExpired is a free data retrieval call binding the contract method 0x5afe97bb.
-//
-// Solidity: function isOwnershipExpired() view returns(bool)
-func (_QuantumGravityBridge *QuantumGravityBridgeSession) IsOwnershipExpired() (bool, error) {
-	return _QuantumGravityBridge.Contract.IsOwnershipExpired(&_QuantumGravityBridge.CallOpts)
-}
-
-// IsOwnershipExpired is a free data retrieval call binding the contract method 0x5afe97bb.
-//
-// Solidity: function isOwnershipExpired() view returns(bool)
-func (_QuantumGravityBridge *QuantumGravityBridgeCallerSession) IsOwnershipExpired() (bool, error) {
-	return _QuantumGravityBridge.Contract.IsOwnershipExpired(&_QuantumGravityBridge.CallOpts)
-}
-
-// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
-//
-// Solidity: function owner() view returns(address)
-func (_QuantumGravityBridge *QuantumGravityBridgeCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
-	var out []interface{}
-	err := _QuantumGravityBridge.contract.Call(opts, &out, "owner")
-
-	if err != nil {
-		return *new(common.Address), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
-
-	return out0, err
-
-}
-
-// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
-//
-// Solidity: function owner() view returns(address)
-func (_QuantumGravityBridge *QuantumGravityBridgeSession) Owner() (common.Address, error) {
-	return _QuantumGravityBridge.Contract.Owner(&_QuantumGravityBridge.CallOpts)
-}
-
-// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
-//
-// Solidity: function owner() view returns(address)
-func (_QuantumGravityBridge *QuantumGravityBridgeCallerSession) Owner() (common.Address, error) {
-	return _QuantumGravityBridge.Contract.Owner(&_QuantumGravityBridge.CallOpts)
-}
-
-// StateLastMessageTupleRootNonce is a free data retrieval call binding the contract method 0x9a1cfb83.
-//
-// Solidity: function state_lastMessageTupleRootNonce() view returns(uint256)
-func (_QuantumGravityBridge *QuantumGravityBridgeCaller) StateLastMessageTupleRootNonce(opts *bind.CallOpts) (*big.Int, error) {
-	var out []interface{}
-	err := _QuantumGravityBridge.contract.Call(opts, &out, "state_lastMessageTupleRootNonce")
-
-	if err != nil {
-		return *new(*big.Int), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
-
-	return out0, err
-
-}
-
-// StateLastMessageTupleRootNonce is a free data retrieval call binding the contract method 0x9a1cfb83.
-//
-// Solidity: function state_lastMessageTupleRootNonce() view returns(uint256)
-func (_QuantumGravityBridge *QuantumGravityBridgeSession) StateLastMessageTupleRootNonce() (*big.Int, error) {
-	return _QuantumGravityBridge.Contract.StateLastMessageTupleRootNonce(&_QuantumGravityBridge.CallOpts)
-}
-
-// StateLastMessageTupleRootNonce is a free data retrieval call binding the contract method 0x9a1cfb83.
-//
-// Solidity: function state_lastMessageTupleRootNonce() view returns(uint256)
-func (_QuantumGravityBridge *QuantumGravityBridgeCallerSession) StateLastMessageTupleRootNonce() (*big.Int, error) {
-	return _QuantumGravityBridge.Contract.StateLastMessageTupleRootNonce(&_QuantumGravityBridge.CallOpts)
+// Solidity: function state_lastDataRootTupleRootNonce() view returns(uint256)
+func (_QuantumGravityBridge *QuantumGravityBridgeCallerSession) StateLastDataRootTupleRootNonce() (*big.Int, error) {
+	return _QuantumGravityBridge.Contract.StateLastDataRootTupleRootNonce(&_QuantumGravityBridge.CallOpts)
 }
 
 // StateLastValidatorSetCheckpoint is a free data retrieval call binding the contract method 0x5433218c.
@@ -1398,37 +1105,6 @@ func (_QuantumGravityBridge *QuantumGravityBridgeCallerSession) StateLastValidat
 	return _QuantumGravityBridge.Contract.StateLastValidatorSetNonce(&_QuantumGravityBridge.CallOpts)
 }
 
-// StateMessageTupleRoots is a free data retrieval call binding the contract method 0xd8340ecf.
-//
-// Solidity: function state_messageTupleRoots(uint256 ) view returns(bytes32)
-func (_QuantumGravityBridge *QuantumGravityBridgeCaller) StateMessageTupleRoots(opts *bind.CallOpts, arg0 *big.Int) ([32]byte, error) {
-	var out []interface{}
-	err := _QuantumGravityBridge.contract.Call(opts, &out, "state_messageTupleRoots", arg0)
-
-	if err != nil {
-		return *new([32]byte), err
-	}
-
-	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
-
-	return out0, err
-
-}
-
-// StateMessageTupleRoots is a free data retrieval call binding the contract method 0xd8340ecf.
-//
-// Solidity: function state_messageTupleRoots(uint256 ) view returns(bytes32)
-func (_QuantumGravityBridge *QuantumGravityBridgeSession) StateMessageTupleRoots(arg0 *big.Int) ([32]byte, error) {
-	return _QuantumGravityBridge.Contract.StateMessageTupleRoots(&_QuantumGravityBridge.CallOpts, arg0)
-}
-
-// StateMessageTupleRoots is a free data retrieval call binding the contract method 0xd8340ecf.
-//
-// Solidity: function state_messageTupleRoots(uint256 ) view returns(bytes32)
-func (_QuantumGravityBridge *QuantumGravityBridgeCallerSession) StateMessageTupleRoots(arg0 *big.Int) ([32]byte, error) {
-	return _QuantumGravityBridge.Contract.StateMessageTupleRoots(&_QuantumGravityBridge.CallOpts, arg0)
-}
-
 // StatePowerThreshold is a free data retrieval call binding the contract method 0xe5a2b5d2.
 //
 // Solidity: function state_powerThreshold() view returns(uint256)
@@ -1460,88 +1136,56 @@ func (_QuantumGravityBridge *QuantumGravityBridgeCallerSession) StatePowerThresh
 	return _QuantumGravityBridge.Contract.StatePowerThreshold(&_QuantumGravityBridge.CallOpts)
 }
 
-// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
+// VerifyAttestation is a free data retrieval call binding the contract method 0x1f3302a9.
 //
-// Solidity: function renounceOwnership() returns()
-func (_QuantumGravityBridge *QuantumGravityBridgeTransactor) RenounceOwnership(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _QuantumGravityBridge.contract.Transact(opts, "renounceOwnership")
+// Solidity: function verifyAttestation(uint256 _tupleRootIndex, (uint256,bytes32) _tuple, (bytes32[],uint256,uint256) _proof) view returns(bool)
+func (_QuantumGravityBridge *QuantumGravityBridgeCaller) VerifyAttestation(opts *bind.CallOpts, _tupleRootIndex *big.Int, _tuple DataRootTuple, _proof BinaryMerkleProof) (bool, error) {
+	var out []interface{}
+	err := _QuantumGravityBridge.contract.Call(opts, &out, "verifyAttestation", _tupleRootIndex, _tuple, _proof)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
-// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
+// VerifyAttestation is a free data retrieval call binding the contract method 0x1f3302a9.
 //
-// Solidity: function renounceOwnership() returns()
-func (_QuantumGravityBridge *QuantumGravityBridgeSession) RenounceOwnership() (*types.Transaction, error) {
-	return _QuantumGravityBridge.Contract.RenounceOwnership(&_QuantumGravityBridge.TransactOpts)
+// Solidity: function verifyAttestation(uint256 _tupleRootIndex, (uint256,bytes32) _tuple, (bytes32[],uint256,uint256) _proof) view returns(bool)
+func (_QuantumGravityBridge *QuantumGravityBridgeSession) VerifyAttestation(_tupleRootIndex *big.Int, _tuple DataRootTuple, _proof BinaryMerkleProof) (bool, error) {
+	return _QuantumGravityBridge.Contract.VerifyAttestation(&_QuantumGravityBridge.CallOpts, _tupleRootIndex, _tuple, _proof)
 }
 
-// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
+// VerifyAttestation is a free data retrieval call binding the contract method 0x1f3302a9.
 //
-// Solidity: function renounceOwnership() returns()
-func (_QuantumGravityBridge *QuantumGravityBridgeTransactorSession) RenounceOwnership() (*types.Transaction, error) {
-	return _QuantumGravityBridge.Contract.RenounceOwnership(&_QuantumGravityBridge.TransactOpts)
+// Solidity: function verifyAttestation(uint256 _tupleRootIndex, (uint256,bytes32) _tuple, (bytes32[],uint256,uint256) _proof) view returns(bool)
+func (_QuantumGravityBridge *QuantumGravityBridgeCallerSession) VerifyAttestation(_tupleRootIndex *big.Int, _tuple DataRootTuple, _proof BinaryMerkleProof) (bool, error) {
+	return _QuantumGravityBridge.Contract.VerifyAttestation(&_QuantumGravityBridge.CallOpts, _tupleRootIndex, _tuple, _proof)
 }
 
-// RenounceOwnershipAfterExpiry is a paid mutator transaction binding the contract method 0x8c64865f.
+// SubmitDataRootTupleRoot is a paid mutator transaction binding the contract method 0xe3e51e19.
 //
-// Solidity: function renounceOwnershipAfterExpiry() returns()
-func (_QuantumGravityBridge *QuantumGravityBridgeTransactor) RenounceOwnershipAfterExpiry(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _QuantumGravityBridge.contract.Transact(opts, "renounceOwnershipAfterExpiry")
+// Solidity: function submitDataRootTupleRoot(uint256 _nonce, bytes32 _dataRootTupleRoot, (address,uint256)[] _currentValidatorSet, (uint8,bytes32,bytes32)[] _sigs) returns()
+func (_QuantumGravityBridge *QuantumGravityBridgeTransactor) SubmitDataRootTupleRoot(opts *bind.TransactOpts, _nonce *big.Int, _dataRootTupleRoot [32]byte, _currentValidatorSet []Validator, _sigs []Signature) (*types.Transaction, error) {
+	return _QuantumGravityBridge.contract.Transact(opts, "submitDataRootTupleRoot", _nonce, _dataRootTupleRoot, _currentValidatorSet, _sigs)
 }
 
-// RenounceOwnershipAfterExpiry is a paid mutator transaction binding the contract method 0x8c64865f.
+// SubmitDataRootTupleRoot is a paid mutator transaction binding the contract method 0xe3e51e19.
 //
-// Solidity: function renounceOwnershipAfterExpiry() returns()
-func (_QuantumGravityBridge *QuantumGravityBridgeSession) RenounceOwnershipAfterExpiry() (*types.Transaction, error) {
-	return _QuantumGravityBridge.Contract.RenounceOwnershipAfterExpiry(&_QuantumGravityBridge.TransactOpts)
+// Solidity: function submitDataRootTupleRoot(uint256 _nonce, bytes32 _dataRootTupleRoot, (address,uint256)[] _currentValidatorSet, (uint8,bytes32,bytes32)[] _sigs) returns()
+func (_QuantumGravityBridge *QuantumGravityBridgeSession) SubmitDataRootTupleRoot(_nonce *big.Int, _dataRootTupleRoot [32]byte, _currentValidatorSet []Validator, _sigs []Signature) (*types.Transaction, error) {
+	return _QuantumGravityBridge.Contract.SubmitDataRootTupleRoot(&_QuantumGravityBridge.TransactOpts, _nonce, _dataRootTupleRoot, _currentValidatorSet, _sigs)
 }
 
-// RenounceOwnershipAfterExpiry is a paid mutator transaction binding the contract method 0x8c64865f.
+// SubmitDataRootTupleRoot is a paid mutator transaction binding the contract method 0xe3e51e19.
 //
-// Solidity: function renounceOwnershipAfterExpiry() returns()
-func (_QuantumGravityBridge *QuantumGravityBridgeTransactorSession) RenounceOwnershipAfterExpiry() (*types.Transaction, error) {
-	return _QuantumGravityBridge.Contract.RenounceOwnershipAfterExpiry(&_QuantumGravityBridge.TransactOpts)
-}
-
-// SubmitMessageTupleRoot is a paid mutator transaction binding the contract method 0x030643d7.
-//
-// Solidity: function submitMessageTupleRoot(uint256 _nonce, bytes32 _messageTupleRoot, (address,uint256)[] _currentValidatorSet, (uint8,bytes32,bytes32)[] _sigs) returns()
-func (_QuantumGravityBridge *QuantumGravityBridgeTransactor) SubmitMessageTupleRoot(opts *bind.TransactOpts, _nonce *big.Int, _messageTupleRoot [32]byte, _currentValidatorSet []Validator, _sigs []Signature) (*types.Transaction, error) {
-	return _QuantumGravityBridge.contract.Transact(opts, "submitMessageTupleRoot", _nonce, _messageTupleRoot, _currentValidatorSet, _sigs)
-}
-
-// SubmitMessageTupleRoot is a paid mutator transaction binding the contract method 0x030643d7.
-//
-// Solidity: function submitMessageTupleRoot(uint256 _nonce, bytes32 _messageTupleRoot, (address,uint256)[] _currentValidatorSet, (uint8,bytes32,bytes32)[] _sigs) returns()
-func (_QuantumGravityBridge *QuantumGravityBridgeSession) SubmitMessageTupleRoot(_nonce *big.Int, _messageTupleRoot [32]byte, _currentValidatorSet []Validator, _sigs []Signature) (*types.Transaction, error) {
-	return _QuantumGravityBridge.Contract.SubmitMessageTupleRoot(&_QuantumGravityBridge.TransactOpts, _nonce, _messageTupleRoot, _currentValidatorSet, _sigs)
-}
-
-// SubmitMessageTupleRoot is a paid mutator transaction binding the contract method 0x030643d7.
-//
-// Solidity: function submitMessageTupleRoot(uint256 _nonce, bytes32 _messageTupleRoot, (address,uint256)[] _currentValidatorSet, (uint8,bytes32,bytes32)[] _sigs) returns()
-func (_QuantumGravityBridge *QuantumGravityBridgeTransactorSession) SubmitMessageTupleRoot(_nonce *big.Int, _messageTupleRoot [32]byte, _currentValidatorSet []Validator, _sigs []Signature) (*types.Transaction, error) {
-	return _QuantumGravityBridge.Contract.SubmitMessageTupleRoot(&_QuantumGravityBridge.TransactOpts, _nonce, _messageTupleRoot, _currentValidatorSet, _sigs)
-}
-
-// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
-//
-// Solidity: function transferOwnership(address newOwner) returns()
-func (_QuantumGravityBridge *QuantumGravityBridgeTransactor) TransferOwnership(opts *bind.TransactOpts, newOwner common.Address) (*types.Transaction, error) {
-	return _QuantumGravityBridge.contract.Transact(opts, "transferOwnership", newOwner)
-}
-
-// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
-//
-// Solidity: function transferOwnership(address newOwner) returns()
-func (_QuantumGravityBridge *QuantumGravityBridgeSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
-	return _QuantumGravityBridge.Contract.TransferOwnership(&_QuantumGravityBridge.TransactOpts, newOwner)
-}
-
-// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
-//
-// Solidity: function transferOwnership(address newOwner) returns()
-func (_QuantumGravityBridge *QuantumGravityBridgeTransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
-	return _QuantumGravityBridge.Contract.TransferOwnership(&_QuantumGravityBridge.TransactOpts, newOwner)
+// Solidity: function submitDataRootTupleRoot(uint256 _nonce, bytes32 _dataRootTupleRoot, (address,uint256)[] _currentValidatorSet, (uint8,bytes32,bytes32)[] _sigs) returns()
+func (_QuantumGravityBridge *QuantumGravityBridgeTransactorSession) SubmitDataRootTupleRoot(_nonce *big.Int, _dataRootTupleRoot [32]byte, _currentValidatorSet []Validator, _sigs []Signature) (*types.Transaction, error) {
+	return _QuantumGravityBridge.Contract.SubmitDataRootTupleRoot(&_QuantumGravityBridge.TransactOpts, _nonce, _dataRootTupleRoot, _currentValidatorSet, _sigs)
 }
 
 // UpdateValidatorSet is a paid mutator transaction binding the contract method 0x4693c0df.
@@ -1565,9 +1209,9 @@ func (_QuantumGravityBridge *QuantumGravityBridgeTransactorSession) UpdateValida
 	return _QuantumGravityBridge.Contract.UpdateValidatorSet(&_QuantumGravityBridge.TransactOpts, _newNonce, _newPowerThreshold, _newValidatorSetHash, _currentValidatorSet, _sigs)
 }
 
-// QuantumGravityBridgeMessageTupleRootEventIterator is returned from FilterMessageTupleRootEvent and is used to iterate over the raw logs and unpacked data for MessageTupleRootEvent events raised by the QuantumGravityBridge contract.
-type QuantumGravityBridgeMessageTupleRootEventIterator struct {
-	Event *QuantumGravityBridgeMessageTupleRootEvent // Event containing the contract specifics and raw log
+// QuantumGravityBridgeDataRootTupleRootEventIterator is returned from FilterDataRootTupleRootEvent and is used to iterate over the raw logs and unpacked data for DataRootTupleRootEvent events raised by the QuantumGravityBridge contract.
+type QuantumGravityBridgeDataRootTupleRootEventIterator struct {
+	Event *QuantumGravityBridgeDataRootTupleRootEvent // Event containing the contract specifics and raw log
 
 	contract *bind.BoundContract // Generic contract to use for unpacking event data
 	event    string              // Event name to use for unpacking event data
@@ -1581,7 +1225,7 @@ type QuantumGravityBridgeMessageTupleRootEventIterator struct {
 // Next advances the iterator to the subsequent event, returning whether there
 // are any more events found. In case of a retrieval or parsing error, false is
 // returned and Error() can be queried for the exact failure.
-func (it *QuantumGravityBridgeMessageTupleRootEventIterator) Next() bool {
+func (it *QuantumGravityBridgeDataRootTupleRootEventIterator) Next() bool {
 	// If the iterator failed, stop iterating
 	if it.fail != nil {
 		return false
@@ -1590,7 +1234,7 @@ func (it *QuantumGravityBridgeMessageTupleRootEventIterator) Next() bool {
 	if it.done {
 		select {
 		case log := <-it.logs:
-			it.Event = new(QuantumGravityBridgeMessageTupleRootEvent)
+			it.Event = new(QuantumGravityBridgeDataRootTupleRootEvent)
 			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 				it.fail = err
 				return false
@@ -1605,7 +1249,7 @@ func (it *QuantumGravityBridgeMessageTupleRootEventIterator) Next() bool {
 	// Iterator still in progress, wait for either a data or an error event
 	select {
 	case log := <-it.logs:
-		it.Event = new(QuantumGravityBridgeMessageTupleRootEvent)
+		it.Event = new(QuantumGravityBridgeDataRootTupleRootEvent)
 		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
 			it.fail = err
 			return false
@@ -1621,52 +1265,52 @@ func (it *QuantumGravityBridgeMessageTupleRootEventIterator) Next() bool {
 }
 
 // Error returns any retrieval or parsing error occurred during filtering.
-func (it *QuantumGravityBridgeMessageTupleRootEventIterator) Error() error {
+func (it *QuantumGravityBridgeDataRootTupleRootEventIterator) Error() error {
 	return it.fail
 }
 
 // Close terminates the iteration process, releasing any pending underlying
 // resources.
-func (it *QuantumGravityBridgeMessageTupleRootEventIterator) Close() error {
+func (it *QuantumGravityBridgeDataRootTupleRootEventIterator) Close() error {
 	it.sub.Unsubscribe()
 	return nil
 }
 
-// QuantumGravityBridgeMessageTupleRootEvent represents a MessageTupleRootEvent event raised by the QuantumGravityBridge contract.
-type QuantumGravityBridgeMessageTupleRootEvent struct {
-	Nonce            *big.Int
-	MessageTupleRoot [32]byte
-	Raw              types.Log // Blockchain specific contextual infos
+// QuantumGravityBridgeDataRootTupleRootEvent represents a DataRootTupleRootEvent event raised by the QuantumGravityBridge contract.
+type QuantumGravityBridgeDataRootTupleRootEvent struct {
+	Nonce             *big.Int
+	DataRootTupleRoot [32]byte
+	Raw               types.Log // Blockchain specific contextual infos
 }
 
-// FilterMessageTupleRootEvent is a free log retrieval operation binding the contract event 0x6f71145a387d176c99498fbbb78a98e85a46472eb5a4de9e06242e4edf4527e4.
+// FilterDataRootTupleRootEvent is a free log retrieval operation binding the contract event 0x6614d037bde4905e31ca5ff05de61964c267f28b0320ed49e59f7d99752e1c4f.
 //
-// Solidity: event MessageTupleRootEvent(uint256 indexed nonce, bytes32 messageTupleRoot)
-func (_QuantumGravityBridge *QuantumGravityBridgeFilterer) FilterMessageTupleRootEvent(opts *bind.FilterOpts, nonce []*big.Int) (*QuantumGravityBridgeMessageTupleRootEventIterator, error) {
+// Solidity: event DataRootTupleRootEvent(uint256 indexed nonce, bytes32 dataRootTupleRoot)
+func (_QuantumGravityBridge *QuantumGravityBridgeFilterer) FilterDataRootTupleRootEvent(opts *bind.FilterOpts, nonce []*big.Int) (*QuantumGravityBridgeDataRootTupleRootEventIterator, error) {
 
 	var nonceRule []interface{}
 	for _, nonceItem := range nonce {
 		nonceRule = append(nonceRule, nonceItem)
 	}
 
-	logs, sub, err := _QuantumGravityBridge.contract.FilterLogs(opts, "MessageTupleRootEvent", nonceRule)
+	logs, sub, err := _QuantumGravityBridge.contract.FilterLogs(opts, "DataRootTupleRootEvent", nonceRule)
 	if err != nil {
 		return nil, err
 	}
-	return &QuantumGravityBridgeMessageTupleRootEventIterator{contract: _QuantumGravityBridge.contract, event: "MessageTupleRootEvent", logs: logs, sub: sub}, nil
+	return &QuantumGravityBridgeDataRootTupleRootEventIterator{contract: _QuantumGravityBridge.contract, event: "DataRootTupleRootEvent", logs: logs, sub: sub}, nil
 }
 
-// WatchMessageTupleRootEvent is a free log subscription operation binding the contract event 0x6f71145a387d176c99498fbbb78a98e85a46472eb5a4de9e06242e4edf4527e4.
+// WatchDataRootTupleRootEvent is a free log subscription operation binding the contract event 0x6614d037bde4905e31ca5ff05de61964c267f28b0320ed49e59f7d99752e1c4f.
 //
-// Solidity: event MessageTupleRootEvent(uint256 indexed nonce, bytes32 messageTupleRoot)
-func (_QuantumGravityBridge *QuantumGravityBridgeFilterer) WatchMessageTupleRootEvent(opts *bind.WatchOpts, sink chan<- *QuantumGravityBridgeMessageTupleRootEvent, nonce []*big.Int) (event.Subscription, error) {
+// Solidity: event DataRootTupleRootEvent(uint256 indexed nonce, bytes32 dataRootTupleRoot)
+func (_QuantumGravityBridge *QuantumGravityBridgeFilterer) WatchDataRootTupleRootEvent(opts *bind.WatchOpts, sink chan<- *QuantumGravityBridgeDataRootTupleRootEvent, nonce []*big.Int) (event.Subscription, error) {
 
 	var nonceRule []interface{}
 	for _, nonceItem := range nonce {
 		nonceRule = append(nonceRule, nonceItem)
 	}
 
-	logs, sub, err := _QuantumGravityBridge.contract.WatchLogs(opts, "MessageTupleRootEvent", nonceRule)
+	logs, sub, err := _QuantumGravityBridge.contract.WatchLogs(opts, "DataRootTupleRootEvent", nonceRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1676,8 +1320,8 @@ func (_QuantumGravityBridge *QuantumGravityBridgeFilterer) WatchMessageTupleRoot
 			select {
 			case log := <-logs:
 				// New log arrived, parse the event and forward to the user
-				event := new(QuantumGravityBridgeMessageTupleRootEvent)
-				if err := _QuantumGravityBridge.contract.UnpackLog(event, "MessageTupleRootEvent", log); err != nil {
+				event := new(QuantumGravityBridgeDataRootTupleRootEvent)
+				if err := _QuantumGravityBridge.contract.UnpackLog(event, "DataRootTupleRootEvent", log); err != nil {
 					return err
 				}
 				event.Raw = log
@@ -1698,165 +1342,12 @@ func (_QuantumGravityBridge *QuantumGravityBridgeFilterer) WatchMessageTupleRoot
 	}), nil
 }
 
-// ParseMessageTupleRootEvent is a log parse operation binding the contract event 0x6f71145a387d176c99498fbbb78a98e85a46472eb5a4de9e06242e4edf4527e4.
+// ParseDataRootTupleRootEvent is a log parse operation binding the contract event 0x6614d037bde4905e31ca5ff05de61964c267f28b0320ed49e59f7d99752e1c4f.
 //
-// Solidity: event MessageTupleRootEvent(uint256 indexed nonce, bytes32 messageTupleRoot)
-func (_QuantumGravityBridge *QuantumGravityBridgeFilterer) ParseMessageTupleRootEvent(log types.Log) (*QuantumGravityBridgeMessageTupleRootEvent, error) {
-	event := new(QuantumGravityBridgeMessageTupleRootEvent)
-	if err := _QuantumGravityBridge.contract.UnpackLog(event, "MessageTupleRootEvent", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
-}
-
-// QuantumGravityBridgeOwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the QuantumGravityBridge contract.
-type QuantumGravityBridgeOwnershipTransferredIterator struct {
-	Event *QuantumGravityBridgeOwnershipTransferred // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *QuantumGravityBridgeOwnershipTransferredIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(QuantumGravityBridgeOwnershipTransferred)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(QuantumGravityBridgeOwnershipTransferred)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *QuantumGravityBridgeOwnershipTransferredIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *QuantumGravityBridgeOwnershipTransferredIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// QuantumGravityBridgeOwnershipTransferred represents a OwnershipTransferred event raised by the QuantumGravityBridge contract.
-type QuantumGravityBridgeOwnershipTransferred struct {
-	PreviousOwner common.Address
-	NewOwner      common.Address
-	Raw           types.Log // Blockchain specific contextual infos
-}
-
-// FilterOwnershipTransferred is a free log retrieval operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
-//
-// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_QuantumGravityBridge *QuantumGravityBridgeFilterer) FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*QuantumGravityBridgeOwnershipTransferredIterator, error) {
-
-	var previousOwnerRule []interface{}
-	for _, previousOwnerItem := range previousOwner {
-		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
-	}
-	var newOwnerRule []interface{}
-	for _, newOwnerItem := range newOwner {
-		newOwnerRule = append(newOwnerRule, newOwnerItem)
-	}
-
-	logs, sub, err := _QuantumGravityBridge.contract.FilterLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
-	if err != nil {
-		return nil, err
-	}
-	return &QuantumGravityBridgeOwnershipTransferredIterator{contract: _QuantumGravityBridge.contract, event: "OwnershipTransferred", logs: logs, sub: sub}, nil
-}
-
-// WatchOwnershipTransferred is a free log subscription operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
-//
-// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_QuantumGravityBridge *QuantumGravityBridgeFilterer) WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *QuantumGravityBridgeOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error) {
-
-	var previousOwnerRule []interface{}
-	for _, previousOwnerItem := range previousOwner {
-		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
-	}
-	var newOwnerRule []interface{}
-	for _, newOwnerItem := range newOwner {
-		newOwnerRule = append(newOwnerRule, newOwnerItem)
-	}
-
-	logs, sub, err := _QuantumGravityBridge.contract.WatchLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(QuantumGravityBridgeOwnershipTransferred)
-				if err := _QuantumGravityBridge.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseOwnershipTransferred is a log parse operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
-//
-// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_QuantumGravityBridge *QuantumGravityBridgeFilterer) ParseOwnershipTransferred(log types.Log) (*QuantumGravityBridgeOwnershipTransferred, error) {
-	event := new(QuantumGravityBridgeOwnershipTransferred)
-	if err := _QuantumGravityBridge.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+// Solidity: event DataRootTupleRootEvent(uint256 indexed nonce, bytes32 dataRootTupleRoot)
+func (_QuantumGravityBridge *QuantumGravityBridgeFilterer) ParseDataRootTupleRootEvent(log types.Log) (*QuantumGravityBridgeDataRootTupleRootEvent, error) {
+	event := new(QuantumGravityBridgeDataRootTupleRootEvent)
+	if err := _QuantumGravityBridge.contract.UnpackLog(event, "DataRootTupleRootEvent", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
