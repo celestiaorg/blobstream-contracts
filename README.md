@@ -21,6 +21,14 @@ It is based on Umee's Gravity Bridge implementation, [Peggo](https://github.com/
 
 - [Go 1.17+](https://golang.org/dl/)
 
+To regenerate the Go ABI wrappers, you need the `abigen` tool. Install it with:
+
+```sh
+git clone https://github.com/ethereum/go-ethereum.git
+cd go-ethereum
+make devtools
+```
+
 <!--
 ## Installation
 
