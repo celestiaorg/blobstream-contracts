@@ -29,7 +29,7 @@ require (
 	github.com/shirou/gopsutil v3.21.6+incompatible // indirect
 	github.com/shopspring/decimal v1.3.1
 	github.com/sirkon/goproxy v1.4.8
-	github.com/spf13/cobra v1.2.1
+	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
 	github.com/tendermint/tendermint v0.34.14
