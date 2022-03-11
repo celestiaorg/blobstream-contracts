@@ -31,6 +31,20 @@ jobs:
           path: ~/go/bin
           key: ${{ runner.os }}-go-tparse-binary
 
+  forge-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
+      - name: Run forge test
+        working-directory: ./ethereum/solidity
+        run: forge test
+
   # test-integration:
   #   runs-on: ubuntu-latest
   #   timeout-minutes: 25
