@@ -14,17 +14,24 @@ It is based on Umee's Gravity Bridge implementation, [Peggo](https://github.com/
 
 ## Table of Contents
 
-- [Dependencies](#dependencies)
+- [Building From Source](#building-from-source)
+- [Send a message from Celestia to an EVM chain](#send-a-message-from-celestia-to-an-evm-chain)
 - [How it works](#how-it-works)
 
 ## Building From Source
-
 
 ### Dependencies
 
 Building requires [Go 1.17+](https://golang.org/dl/).
 
-To regenerate the Go ABI wrappers, you need the `abigen` tool. Install it with:
+Initialize git submodules, needed for Forge dependencies:
+
+```sh
+git submodule init
+git submodule update
+```
+
+To regenerate the Go ABI wrappers with `make gen`, you need the `abigen` tool. Install it with:
 
 ```sh
 git clone https://github.com/ethereum/go-ethereum.git
