@@ -239,7 +239,7 @@ contract QuantumGravityBridge is IDAOracle {
             }
         }
 
-        // Check that there was enough power
+        // Check that there was enough power.
         if (cumulativePower < _powerThreshold) {
             revert InsufficientVotingPower();
         }
