@@ -26,12 +26,13 @@ library NamespaceMerkleTree {
         NamespaceNode memory node = leafDigest(minmaxNID, data);
 
         // Since we're verifying a leaf, height parameter is 1.
-        return _doVerifyInner(root, proof, node, 1);
+        return verifyInner(root, proof, node, 1);
     }
 
     /// @notice Verify if inner node exists in Merkle tree, given node, proof, and root.
     /// @param root The root of the tree in which verify the given leaf.
     /// @param proof Namespace Merkle proof for the leaf.
+    /// proof.key is any key in the subtree rooted at the inner node.
     /// @param node The inner node to verify.
     /// @param startingHeight Starting height of the proof.
     /// @return `true` if the proof is valid, `false` otherwise.
@@ -65,23 +66,6 @@ library NamespaceMerkleTree {
         if (proof.key >= proof.numLeaves) {
             return false;
         }
-
-        return _doVerifyInner(root, proof, node, startingHeight);
-    }
-
-    /// @notice Verify if inner node exists in Merkle tree, given node, proof, and root.
-    /// @param root The root of the tree in which verify the given leaf.
-    /// @param proof Namespace Merkle proof for the leaf.
-    /// proof.key is any key in the subtree rooted at the inner node.
-    /// @param node The inner node to verify.
-    /// @return `true` if the proof is valid, `false` otherwise.
-    /// @dev proof.numLeaves is necessary to determine height of subtree containing the data to prove.
-    function _doVerifyInner(
-        NamespaceNode memory root,
-        NamespaceMerkleProof memory proof,
-        NamespaceNode memory node,
-        uint256 height
-    ) private pure returns (bool) {
         // Handle case where proof is empty: i.e, only one leaf exists, so verify hash(data) is root
         if (proof.sideNodes.length == 0) {
             if (proof.numLeaves == 1) {
@@ -91,6 +75,7 @@ library NamespaceMerkleTree {
             }
         }
 
+        uint256 height = startingHeight;
         uint256 stableEnd = proof.key;
 
         // While the current subtree (of height 'height') is complete, determine
