@@ -47,18 +47,14 @@ library NamespaceMerkleTree {
         if (startingHeight < 1) {
             return false;
         }
-        uint256 heightOffset;
-        unchecked {
-            // Guaranteed since starting height is at least 1, checked above
-            heightOffset = startingHeight - 1;
-        }
+        uint256 heightOffset = startingHeight - 1;
 
         // Check proof is correct length for the key it is proving
         if (proof.numLeaves <= 1) {
             if (proof.sideNodes.length != 0) {
                 return false;
             }
-        } else if (proof.sideNodes.length != pathLengthFromKey(proof.key, proof.numLeaves) - heightOffset) {
+        } else if (proof.sideNodes.length + heightOffset != pathLengthFromKey(proof.key, proof.numLeaves)) {
             return false;
         }
 
@@ -67,6 +63,7 @@ library NamespaceMerkleTree {
             return false;
         }
         // Handle case where proof is empty: i.e, only one leaf exists, so verify hash(data) is root
+        // TODO handle case where inner node is actually the root of a tree with more than one node
         if (proof.sideNodes.length == 0) {
             if (proof.numLeaves == 1) {
                 return namespaceNodeEquals(root, node);
@@ -104,13 +101,13 @@ library NamespaceMerkleTree {
 
             // Determine if the key is in the first or the second half of
             // the subtree.
-            if (proof.sideNodes.length <= height - 1) {
+            if (proof.sideNodes.length + heightOffset <= height - 1) {
                 return false;
             }
-            if (proof.key - subTreeStartIndex < (1 << (height - 1))) {
-                node = nodeDigest(node, proof.sideNodes[height - 1]);
+            if (proof.key - subTreeStartIndex < (1 << (height - heightOffset - 1))) {
+                node = nodeDigest(node, proof.sideNodes[height - heightOffset - 1]);
             } else {
-                node = nodeDigest(proof.sideNodes[height - 1], node);
+                node = nodeDigest(proof.sideNodes[height - heightOffset - 1], node);
             }
 
             height += 1;
@@ -123,13 +120,12 @@ library NamespaceMerkleTree {
             if (proof.sideNodes.length <= height - 1) {
                 return false;
             }
-            node = nodeDigest(node, proof.sideNodes[height - 1]);
+            node = nodeDigest(node, proof.sideNodes[height - heightOffset - 1]);
             height += 1;
         }
-
         // All remaining elements in the proof set will belong to a left sibling.
-        while (height - 1 < proof.sideNodes.length) {
-            node = nodeDigest(proof.sideNodes[height - 1], node);
+        while (height - heightOffset - 1 < proof.sideNodes.length) {
+            node = nodeDigest(proof.sideNodes[height - heightOffset - 1], node);
             height += 1;
         }
 
