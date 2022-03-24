@@ -292,7 +292,7 @@ contract QuantumGravityBridge is IDAOracle {
         // Check that enough current validators have signed off on the new validator set.
         bytes32 newCheckpoint = domainSeparateValidatorSetHash(
             BRIDGE_ID,
-            currentNonce,
+            _newNonce,
             _newPowerThreshold,
             _newValidatorSetHash
         );
