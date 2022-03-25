@@ -1,6 +1,3 @@
 [submodule "ethereum/solidity/lib/ds-test"]
 	path = ethereum/solidity/lib/ds-test
 	url = https://github.com/dapphub/ds-test
-[submodule "ethereum/solidity/lib/openzeppelin-contracts"]
-	path = ethereum/solidity/lib/openzeppelin-contracts
-	url = https://github.com/openzeppelin/openzeppelin-contracts
