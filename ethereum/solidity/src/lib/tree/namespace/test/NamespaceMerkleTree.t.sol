@@ -10,6 +10,7 @@ import "../NamespaceMerkleTree.sol";
 /**
 TEST VECTORS
 
+Data blocks: namespace id, data
 0x0000000000000010 0x01
 0x0000000000000020 0x02
 0x0000000000000030 0x03
@@ -19,6 +20,7 @@ TEST VECTORS
 0xffffffffffffffff 0x07
 0xffffffffffffffff 0x08
 
+Leaf nodes: min namespace, max namespace, data
 0x0000000000000010 0x0000000000000010 0xcb9b006518aa5b6e8f62dcda719f42a17033573e2cde97fe2748944f81638514
 0x0000000000000020 0x0000000000000020 0xf4653e02dfeff8eddbcf1c7230dfea1dd45b7bcc2fb1ce6d04c33f2229e10f6b
 0x0000000000000030 0x0000000000000030 0x1f7e7711dd732649f2599fa0a47330c48ad64e460c1fb1287ba531797702e5fd
@@ -28,14 +30,17 @@ TEST VECTORS
 0xffffffffffffffff 0xffffffffffffffff 0x24ddc56b10cebbf760b3a744ad3a0e91093db34b4d22995f6de6dac918e38ae5
 0xffffffffffffffff 0xffffffffffffffff 0xf5a80844a112828c28da280019cb6e97765f81e1e003cc78a198901494db2641
 
+Inner nodes(depth = 2): min namespace, max namespace, data
 0x0000000000000010 0x0000000000000020 0xe0a6f55a5c2d86e0057b89d79bf5c6c3fdc5a40061566c39e93077556e2e3482
 0x0000000000000030 0x0000000000000040 0x3f8ded56b6a8d4e1e36832e8be93234e2e3a18c1a42edfb505ecc09f0039a10f
 0xffffffffffffffff 0xffffffffffffffff 0x61d6762ff063c2008a412246bc6bb370885c4e1a935ca28ed8699dc5c68ff28a
 0xffffffffffffffff 0xffffffffffffffff 0x9086b06cbc327959e3c34546aadc886300aff3e5c8f96a328267abf64ca5d25b
 
+Inner nodes(depth = 1): min namespace, max namespace, data
 0x0000000000000010 0x0000000000000040 0xed6a82bfecd113f693065e3b1f271f21150b6d793917402f6c05a01feb6b3eb8
 0xffffffffffffffff 0xffffffffffffffff 0x27209d167edf7ea1463f462b850471ce31b124b0b3405c33f9c39e692c9170da
 
+Root node: min namespace, max namespace, data
 0x0000000000000010 0x0000000000000040 0x16c760661bc5ed683d27dc2f045a81a67e837928527e0de209a195b6db60f462
 **/
 
@@ -246,6 +251,95 @@ contract NamespaceMerkleTreeTest is DSTest {
         bytes memory data = hex"08";
         bool isValid = NamespaceMerkleTree.verify(root, proof, Constants.PARITY_SHARE_NAMESPACE_ID, data);
         assertTrue(isValid);
+    }
+
+    function testVerifyInnerLeafIsRoot() external {
+        bytes8 nid = 0x0000000000000000;
+        NamespaceNode memory root = NamespaceNode(
+            nid,
+            nid,
+            0xc59fa9c4ec515726c2b342544433f844c7b930cf7a5e7abab593332453ceaf70
+        );
+        NamespaceNode[] memory sideNodes;
+        uint256 key = 0;
+        uint256 numLeaves = 1;
+        NamespaceMerkleProof memory proof = NamespaceMerkleProof(sideNodes, key, numLeaves);
+        NamespaceNode memory node = NamespaceNode(
+            nid,
+            nid,
+            0xc59fa9c4ec515726c2b342544433f844c7b930cf7a5e7abab593332453ceaf70
+        );
+        uint256 startingHeight = 1;
+        bool isValid = NamespaceMerkleTree.verifyInner(root, proof, node, startingHeight);
+        assertTrue(isValid);
+    }
+
+    function testVerifyInnerFalseForStartingHeightZero() external {
+        bytes8 nid = 0x0000000000000000;
+        NamespaceNode memory root = NamespaceNode(
+            nid,
+            nid,
+            0xc59fa9c4ec515726c2b342544433f844c7b930cf7a5e7abab593332453ceaf70
+        );
+        NamespaceNode[] memory sideNodes;
+        uint256 key = 0;
+        uint256 numLeaves = 1;
+        NamespaceMerkleProof memory proof = NamespaceMerkleProof(sideNodes, key, numLeaves);
+        NamespaceNode memory node = NamespaceNode(
+            nid,
+            nid,
+            0xc59fa9c4ec515726c2b342544433f844c7b930cf7a5e7abab593332453ceaf70
+        );
+        uint256 startingHeight = 0;
+        bool isValid = NamespaceMerkleTree.verifyInner(root, proof, node, startingHeight);
+        assertTrue(!isValid);
+    }
+
+    function testVerifyInnerFalseForTooLargeKey() external {
+        bytes8 nid = 0x0000000000000000;
+        NamespaceNode memory root = NamespaceNode(
+            nid,
+            nid,
+            0xc59fa9c4ec515726c2b342544433f844c7b930cf7a5e7abab593332453ceaf70
+        );
+        NamespaceNode[] memory sideNodes;
+        uint256 key = 3; // key is larger than num leaves
+        uint256 numLeaves = 1;
+        NamespaceMerkleProof memory proof = NamespaceMerkleProof(sideNodes, key, numLeaves);
+        NamespaceNode memory node = NamespaceNode(
+            nid,
+            nid,
+            0xc59fa9c4ec515726c2b342544433f844c7b930cf7a5e7abab593332453ceaf70
+        );
+        uint256 startingHeight = 0;
+        bool isValid = NamespaceMerkleTree.verifyInner(root, proof, node, startingHeight);
+        assertTrue(!isValid);
+    }
+
+    function testVerifyInnerFalseForIncorrectProofLength() external {
+        bytes8 nid = 0x0000000000000000;
+        NamespaceNode memory root = NamespaceNode(
+            nid,
+            nid,
+            0xc59fa9c4ec515726c2b342544433f844c7b930cf7a5e7abab593332453ceaf70
+        );
+        NamespaceNode[] memory sideNodes = new NamespaceNode[](1);
+        sideNodes[0] = NamespaceNode(
+            Constants.PARITY_SHARE_NAMESPACE_ID,
+            Constants.PARITY_SHARE_NAMESPACE_ID,
+            0x24ddc56b10cebbf760b3a744ad3a0e91093db34b4d22995f6de6dac918e38ae5
+        );
+        uint256 key = 0;
+        uint256 numLeaves = 1;
+        NamespaceMerkleProof memory proof = NamespaceMerkleProof(sideNodes, key, numLeaves);
+        NamespaceNode memory node = NamespaceNode(
+            nid,
+            nid,
+            0xc59fa9c4ec515726c2b342544433f844c7b930cf7a5e7abab593332453ceaf70
+        );
+        uint256 startingHeight = 0;
+        bool isValid = NamespaceMerkleTree.verifyInner(root, proof, node, startingHeight);
+        assertTrue(!isValid);
     }
 
     function testVerifyInnerOneOfEight() external {
