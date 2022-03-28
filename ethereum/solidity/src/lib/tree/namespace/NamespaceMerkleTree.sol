@@ -10,7 +10,7 @@ import "./TreeHasher.sol";
 /// @title Namespace Merkle Tree.
 library NamespaceMerkleTree {
     /// @notice Verify if element exists in Merkle tree, given data, proof, and root.
-    /// @param root The root of the tree in which to verify the given leaf.
+    /// @param root The root of the tree in which the given leaf is verified.
     /// @param proof Namespace Merkle proof for the leaf.
     /// @param minmaxNID Namespace ID of the leaf.
     /// @param data The data of the leaf to verify.
