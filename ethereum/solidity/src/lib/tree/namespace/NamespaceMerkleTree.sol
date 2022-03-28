@@ -30,7 +30,7 @@ library NamespaceMerkleTree {
     }
 
     /// @notice Verify if inner node exists in Merkle tree, given node, proof, and root.
-    /// @param root The root of the tree in which to verify the given leaf.
+    /// @param root The root of the tree in which the given leaf is verified.
     /// @param proof Namespace Merkle proof for the leaf.
     /// proof.key is any key in the subtree rooted at the inner node.
     /// @param node The inner node to verify.
