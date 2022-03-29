@@ -53,8 +53,6 @@ contract RelayerTest is DSTest {
         uint256 newPowerThreshhold = 6668;
         bridge.updateValidatorSet(newNonce, newPowerThreshhold, newVSHash, oldVS, sigs);
         bytes32 newCheckpoint = domainSeparateValidatorSetHash(BRIDGE_ID, newNonce, newPowerThreshhold, newVSHash);
-
-
         assertEq(bridge.state_lastValidatorSetNonce(), newNonce);
         assertEq(bridge.state_powerThreshold(), newPowerThreshhold);
         assertEq(
