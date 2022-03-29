@@ -50,7 +50,7 @@ contract RelayerTest is DSTest {
         bytes32 newVSHash = keccak256(abi.encode(validators));
 
         uint256 newNonce = 1;
-        uint256 newPowerThreshhold = 6668; 
+        uint256 newPowerThreshhold = 6668;
         bridge.updateValidatorSet(newNonce, newPowerThreshhold, newVSHash, oldVS, sigs);
         bytes32 newCheckpoint = domainSeparateValidatorSetHash(BRIDGE_ID, newNonce, newPowerThreshhold, newVSHash);
 
