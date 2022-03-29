@@ -9,8 +9,7 @@ import "../QuantumGravityBridge.sol";
 import "ds-test/test.sol";
 
 contract RelayerTest is DSTest {
-
-    // private keys used for hardcoded signatures signatures
+    // private keys used for hardcoded signatures
     // testAddr  = "0x9c2B12b5a07FC6D719Ed7646e5041A7E85758329"
     // testPriv  = "64a1d6f0e760a8d62b4afdde4096f16f51b401eaaecc915740f71770ea76a8ad"
     // testAddr2 = "0xe650B084f05C6194f6e552e3b9f08718Bc8a9d56"
