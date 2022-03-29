@@ -31,8 +31,6 @@ contract RelayerTest is DSTest {
     uint256 private votingPower = 3334;
     uint256 private valsetNonce = 0;
     uint256 private dataTupleRootNonce = 0;
-
-
     function setUp() public {
         validators.push(Validator(0x9c2B12b5a07FC6D719Ed7646e5041A7E85758329, 5000));
         bytes32 hash = computeValidatorSetHash(validators);
