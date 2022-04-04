@@ -114,7 +114,7 @@ contract QuantumGravityBridge is IDAOracle {
 
     /// @param _bridge_id Identifier of the bridge, used in signatures for
     /// domain separation.
-    /// @param _nonce Celestia block height at which bride is initialized.
+    /// @param _nonce Celestia block height at which bridge is initialized.
     /// @param _powerThreshold Initial voting power that is needed to approve
     /// operations.
     /// @param _validatorSetHash Initial validator set hash. This does not need
