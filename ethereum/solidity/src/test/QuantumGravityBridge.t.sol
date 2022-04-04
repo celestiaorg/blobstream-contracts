@@ -33,7 +33,7 @@ contract RelayerTest is DSTest {
     function setUp() public {
         validators.push(Validator(0x9c2B12b5a07FC6D719Ed7646e5041A7E85758329, 5000));
         bytes32 hash = computeValidatorSetHash(validators);
-        bridge = new QuantumGravityBridge(BRIDGE_ID, votingPower, hash);
+        bridge = new QuantumGravityBridge(BRIDGE_ID, 0, votingPower, hash);
     }
 
     function testUpdateValidatorSet() public {

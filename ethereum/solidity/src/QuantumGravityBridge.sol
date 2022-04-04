@@ -114,6 +114,7 @@ contract QuantumGravityBridge is IDAOracle {
 
     /// @param _bridge_id Identifier of the bridge, used in signatures for
     /// domain separation.
+    /// @param _nonce Celestia block height at which bride is initialized.
     /// @param _powerThreshold Initial voting power that is needed to approve
     /// operations.
     /// @param _validatorSetHash Initial validator set hash. This does not need
@@ -121,6 +122,7 @@ contract QuantumGravityBridge is IDAOracle {
     /// validator set of the bridge.
     constructor(
         bytes32 _bridge_id,
+        uint256 _nonce,
         uint256 _powerThreshold,
         bytes32 _validatorSetHash
     ) {
@@ -128,17 +130,17 @@ contract QuantumGravityBridge is IDAOracle {
 
         // CHECKS
 
-        uint256 nonce = 0;
-        bytes32 newCheckpoint = domainSeparateValidatorSetHash(_bridge_id, nonce, _powerThreshold, _validatorSetHash);
+        bytes32 newCheckpoint = domainSeparateValidatorSetHash(_bridge_id, _nonce, _powerThreshold, _validatorSetHash);
 
         // EFFECTS
 
+        state_lastValidatorSetNonce = _nonce;
         state_lastValidatorSetCheckpoint = newCheckpoint;
         state_powerThreshold = _powerThreshold;
 
         // LOGS
 
-        emit ValidatorSetUpdatedEvent(nonce, _powerThreshold, _validatorSetHash);
+        emit ValidatorSetUpdatedEvent(_nonce, _powerThreshold, _validatorSetHash);
     }
 
     /// @notice Utility function to check if a signature is nil.
@@ -255,7 +257,7 @@ contract QuantumGravityBridge is IDAOracle {
     /// The validator set hash that is signed over is domain separated as per
     /// `domainSeparateValidatorSetHash`.
     /// @param _newValidatorSetHash The hash of the new validator set.
-    /// @param _newNonce The new nonce.
+    /// @param _newNonce The new Celestia block height.
     /// @param _currentValidatorSet The current validator set.
     /// @param _sigs Signatures.
     function updateValidatorSet(
@@ -270,7 +272,7 @@ contract QuantumGravityBridge is IDAOracle {
         uint256 currentNonce = state_lastValidatorSetNonce;
         uint256 currentPowerThreshold = state_powerThreshold;
 
-        // Check that the valset nonce is greater than the old one.
+        // Check that the new validator set nonce is greater than the old one.
         if (_newNonce <= currentNonce) {
             revert InvalidValidatorSetNonce();
         }
@@ -321,7 +323,8 @@ contract QuantumGravityBridge is IDAOracle {
     ///
     /// The data tuple root that is signed over is domain separated as per
     /// `domainSeparateDataRootTupleRoot`.
-    /// @param _nonce The data root tuple root nonce.
+    /// @param _nonce The Celestia block height up to which the data root tuple
+    /// root commits to.
     /// @param _dataRootTupleRoot The Merkle root of data root tuples.
     /// @param _currentValidatorSet The current validator set.
     /// @param _sigs Signatures.
