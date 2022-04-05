@@ -3,75 +3,90 @@ pragma solidity ^0.8.4;
 
 import "../lib/openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
+import "../Constants.sol";
 import "../DataRootTuple.sol";
 import "../QuantumGravityBridge.sol";
 
 import "ds-test/test.sol";
 
+interface CheatCodes {
+    function addr(uint256 privateKey) external returns (address);
+
+    function sign(uint256 privateKey, bytes32 digest)
+        external
+        returns (
+            uint8 v,
+            bytes32 r,
+            bytes32 s
+        );
+}
+
 contract RelayerTest is DSTest {
-    // private keys used for hardcoded signatures
-    // testAddr  = "0x9c2B12b5a07FC6D719Ed7646e5041A7E85758329"
-    // testPriv  = "64a1d6f0e760a8d62b4afdde4096f16f51b401eaaecc915740f71770ea76a8ad"
-    // testAddr2 = "0xe650B084f05C6194f6e552e3b9f08718Bc8a9d56"
-    // testPriv2 = "6e8bdfa979ab645b41c4d17cb1329b2a44684c82b61b1b060ea9b6e1c927a4f4"
+    // Private keys used for test signatures.
+    uint256 constant testPriv1 = 0x64a1d6f0e760a8d62b4afdde4096f16f51b401eaaecc915740f71770ea76a8ad;
+    uint256 constant testPriv2 = 0x6e8bdfa979ab645b41c4d17cb1329b2a44684c82b61b1b060ea9b6e1c927a4f4;
 
-    bytes32 constant VALIDATOR_SET_HASH_DOMAIN_SEPARATOR =
-        0x636865636b706f696e7400000000000000000000000000000000000000000000;
-
-    bytes32 constant DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR =
-        0x7472616e73616374696f6e426174636800000000000000000000000000000000;
-
-    bytes32 constant BRIDGE_ID =
-        VALIDATOR_SET_HASH_DOMAIN_SEPARATOR;
+    // 32 bytes, chosen at random.
+    bytes32 constant BRIDGE_ID = 0x6de92bac0b357560d821f8e7b6f5c9fe4f3f88f6c822283efd7ab51ad56a640e;
 
     QuantumGravityBridge bridge;
-    
+
     Validator[] private validators;
-    uint256 private votingPower = 3334;
+    uint256 private votingPower = 5000;
     uint256 private valsetNonce = 0;
     uint256 private dataTupleRootNonce = 0;
+
+    // Set up Foundry cheatcodes.
+    CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
+
     function setUp() public {
-        validators.push(Validator(0x9c2B12b5a07FC6D719Ed7646e5041A7E85758329, 5000));
+        validators.push(Validator(cheats.addr(testPriv1), votingPower));
         bytes32 hash = computeValidatorSetHash(validators);
-        bridge = new QuantumGravityBridge(BRIDGE_ID, 0, votingPower, hash);
+        bridge = new QuantumGravityBridge(BRIDGE_ID, valsetNonce, (2 * votingPower) / 3, hash);
     }
 
     function testUpdateValidatorSet() public {
-        // save the old test validator set before we add to it
+        // Save the old test validator set before we add to it.
         Validator[] memory oldVS = new Validator[](1);
-        oldVS[0] = Validator(0x9c2B12b5a07FC6D719Ed7646e5041A7E85758329, 5000);
-
-        // hardcoded signature for the first validator set update
-        Signature[] memory sigs = new Signature[](1);
-        sigs[0] = Signature(27, 0xbe1d908f5f4f307230f7f6489253ea3051096f0de57377bf1ac218cf7c560a08, 0x4eed1044b69cebcaf45aabc2363b55a7047ce7dd0dd219baec4c4ac3d097c6f8);
-
-        // change test validator set
-        validators.push(Validator(0xe650B084f05C6194f6e552e3b9f08718Bc8a9d56, 5000));
-        bytes32 newVSHash = keccak256(abi.encode(validators));
+        oldVS[0] = Validator(cheats.addr(testPriv1), votingPower);
 
         uint256 newNonce = 1;
-        uint256 newPowerThreshhold = 6668;
-        bridge.updateValidatorSet(newNonce, newPowerThreshhold, newVSHash, oldVS, sigs);
-        bytes32 newCheckpoint = domainSeparateValidatorSetHash(BRIDGE_ID, newNonce, newPowerThreshhold, newVSHash);
+        validators.push(Validator(cheats.addr(testPriv2), votingPower));
+        votingPower += votingPower;
+        uint256 newPowerThreshold = (2 * votingPower) / 3;
+        bytes32 newVSHash = keccak256(abi.encode(validators));
+        bytes32 newCheckpoint = domainSeparateValidatorSetHash(BRIDGE_ID, newNonce, newPowerThreshold, newVSHash);
+
+        // Signature for the first validator set update.
+        Signature[] memory sigs = new Signature[](1);
+        bytes32 digest_eip191 = ECDSA.toEthSignedMessageHash(newCheckpoint);
+        (uint8 v, bytes32 r, bytes32 s) = cheats.sign(testPriv1, digest_eip191);
+        sigs[0] = Signature(v, r, s);
+
+        bridge.updateValidatorSet(newNonce, newPowerThreshold, newVSHash, oldVS, sigs);
+
         assertEq(bridge.state_lastValidatorSetNonce(), newNonce);
-        assertEq(bridge.state_powerThreshold(), newPowerThreshhold);
-        assertEq(
-            bridge.state_lastValidatorSetCheckpoint(), 
-            newCheckpoint
-        );
+        assertEq(bridge.state_powerThreshold(), newPowerThreshold);
+        assertEq(bridge.state_lastValidatorSetCheckpoint(), newCheckpoint);
     }
 
     function testSubmitDataRootTupleRoot() public {
-        // hardcoded signature for the first validator set update
-        Signature[] memory sigs = new Signature[](1);
-        sigs[0] = Signature(28, 0x8a71b11dfc2f5bf6ac3a9e7f8e74a3e6d58aa24957c4a6a8fb6021b6b3c9a57e, 0x796de792753d60cdd79a922516c8345db6661fe1762a59c0aff7698ac4cb7eea);
-        
-        Validator[] memory vals = new Validator[](1);
-        vals[0] = Validator(0x9c2B12b5a07FC6D719Ed7646e5041A7E85758329, 5000);
-
         uint256 newNonce = 1;
-        bytes32 newTupleRoot = VALIDATOR_SET_HASH_DOMAIN_SEPARATOR;
-        bridge.submitDataRootTupleRoot(newNonce, newTupleRoot, vals, sigs);
+        // 32 bytes, chosen at random.
+        bytes32 newTupleRoot = 0x0de92bac0b356560d821f8e7b6f5c9fe4f3f88f6c822283efd7ab51ad56a640e;
+
+        bytes32 newDataRootTupleRoot = domainSeparateDataRootTupleRoot(BRIDGE_ID, valsetNonce, newNonce, newTupleRoot);
+
+        // Signature for the update.
+        Signature[] memory sigs = new Signature[](1);
+        bytes32 digest_eip191 = ECDSA.toEthSignedMessageHash(newDataRootTupleRoot);
+        (uint8 v, bytes32 r, bytes32 s) = cheats.sign(testPriv1, digest_eip191);
+        sigs[0] = Signature(v, r, s);
+
+        Validator[] memory valSet = new Validator[](1);
+        valSet[0] = Validator(cheats.addr(testPriv1), votingPower);
+
+        bridge.submitDataRootTupleRoot(newNonce, newTupleRoot, valSet, sigs);
 
         assertEq(bridge.state_lastDataRootTupleRootNonce(), newNonce);
         assertEq(bridge.state_dataRootTupleRoots(newNonce), newTupleRoot);
@@ -89,6 +104,19 @@ contract RelayerTest is DSTest {
     ) private pure returns (bytes32) {
         bytes32 c = keccak256(
             abi.encode(_bridge_id, VALIDATOR_SET_HASH_DOMAIN_SEPARATOR, _nonce, _powerThreshold, _validatorSetHash)
+        );
+
+        return c;
+    }
+
+    function domainSeparateDataRootTupleRoot(
+        bytes32 _bridge_id,
+        uint256 _oldNonce,
+        uint256 _newNonce,
+        bytes32 _dataRootTupleRoot
+    ) private pure returns (bytes32) {
+        bytes32 c = keccak256(
+            abi.encode(_bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _oldNonce, _newNonce, _dataRootTupleRoot)
         );
 
         return c;
