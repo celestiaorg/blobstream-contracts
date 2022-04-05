@@ -191,17 +191,19 @@ contract QuantumGravityBridge is IDAOracle {
     /// @dev Make a domain-separated commitment to a data root tuple root.
     /// A hash of all relevant information about a data root tuple root.
     /// The format of the hash is:
-    ///     keccak256(bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, nonce, _dataRootTupleRoot)
+    ///     keccak256(bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, oldNonce, newNonce, dataRootTupleRoot)
     /// @param _bridge_id Bridge ID.
-    /// @param _nonce Nonce.
+    /// @param _oldNonce Celestia block height at which commitment begins.
+    /// @param _newNonce Celestia block height at which commitment ends.
     /// @param _dataRootTupleRoot Data root tuple root.
     function domainSeparateDataRootTupleRoot(
         bytes32 _bridge_id,
-        uint256 _nonce,
+        uint256 _oldNonce,
+        uint256 _newNonce,
         bytes32 _dataRootTupleRoot
     ) private pure returns (bytes32) {
         bytes32 c = keccak256(
-            abi.encode(_bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _nonce, _dataRootTupleRoot)
+            abi.encode(_bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _oldNonce, _newNonce, _dataRootTupleRoot)
         );
 
         return c;
@@ -336,10 +338,11 @@ contract QuantumGravityBridge is IDAOracle {
     ) external {
         // CHECKS
 
+        uint256 currentNonce = state_lastDataRootTupleRootNonce;
         uint256 currentPowerThreshold = state_powerThreshold;
 
         // Check that the data root tuple root nonce is higher than the last nonce.
-        if (_nonce <= state_lastDataRootTupleRootNonce) {
+        if (_nonce <= currentNonce) {
             revert InvalidDataRootTupleRootNonce();
         }
 
@@ -363,7 +366,7 @@ contract QuantumGravityBridge is IDAOracle {
 
         // Check that enough current validators have signed off on the data
         // root tuple root and nonce.
-        bytes32 c = domainSeparateDataRootTupleRoot(BRIDGE_ID, _nonce, _dataRootTupleRoot);
+        bytes32 c = domainSeparateDataRootTupleRoot(BRIDGE_ID, currentNonce, _nonce, _dataRootTupleRoot);
         checkValidatorSignatures(_currentValidatorSet, _sigs, c, currentPowerThreshold);
 
         // EFFECTS
