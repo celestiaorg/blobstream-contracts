@@ -309,7 +309,7 @@ contract QuantumGravityBridge is IDAOracle {
         emit ValidatorSetUpdatedEvent(_newNonce, _newPowerThreshold, _newValidatorSetHash);
     }
 
-    /// @notice Relays a root of Celestia data root tuples. Anyone
+    /// @notice Relays a root of Celestia data root tuples to an EVM chain. Anyone
     /// can call this function, but they must supply valid signatures of the
     /// current validator set over the data root tuple root.
     ///
