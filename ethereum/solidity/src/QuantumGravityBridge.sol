@@ -19,7 +19,7 @@ struct Signature {
     bytes32 s;
 }
 
-/// @title Quantum Gravity Bridge: Celestia -> Ethereum, Data Availability relay.
+/// @title Quantum Gravity Bridge: Celestia -> EVM, Data Availability relay.
 /// @dev The relay relies on a set of signers to attest to some event on
 /// Celestia. These signers are the Celestia validator set, who sign over every
 /// Celestia block. Keeping track of the Celestia validator set is accomplished
@@ -309,7 +309,7 @@ contract QuantumGravityBridge is IDAOracle {
         emit ValidatorSetUpdatedEvent(_newNonce, _newPowerThreshold, _newValidatorSetHash);
     }
 
-    /// @notice Relays a root of Celestia -> Ethereum data root tuples. Anyone
+    /// @notice Relays a root of Celestia data root tuples to an EVM chain. Anyone
     /// can call this function, but they must supply valid signatures of the
     /// current validator set over the data root tuple root.
     ///
