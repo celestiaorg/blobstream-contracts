@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "./lib/openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
+import "./Constants.sol";
 import "./DataRootTuple.sol";
 import "./IDAOracle.sol";
 import "./lib/tree/binary/BinaryMerkleProof.sol";
@@ -35,18 +36,6 @@ contract QuantumGravityBridge is IDAOracle {
     // INHERITANCE VARIABLES! Inherited contracts contain storage slots and must
     // be accounted for in any upgrades. Always test an exact upgrade on testnet
     // and localhost before mainnet upgrades.
-
-    ///////////////
-    // Constants //
-    ///////////////
-
-    /// @dev bytes32 encoding of the string "checkpoint"
-    bytes32 constant VALIDATOR_SET_HASH_DOMAIN_SEPARATOR =
-        0x636865636b706f696e7400000000000000000000000000000000000000000000;
-
-    /// @dev bytes32 encoding of the string "transactionBatch"
-    bytes32 constant DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR =
-        0x7472616e73616374696f6e426174636800000000000000000000000000000000;
 
     ////////////////
     // Immutables //
@@ -114,6 +103,7 @@ contract QuantumGravityBridge is IDAOracle {
 
     /// @param _bridge_id Identifier of the bridge, used in signatures for
     /// domain separation.
+    /// @param _nonce Celestia block height at which bridge is initialized.
     /// @param _powerThreshold Initial voting power that is needed to approve
     /// operations.
     /// @param _validatorSetHash Initial validator set hash. This does not need
@@ -121,6 +111,7 @@ contract QuantumGravityBridge is IDAOracle {
     /// validator set of the bridge.
     constructor(
         bytes32 _bridge_id,
+        uint256 _nonce,
         uint256 _powerThreshold,
         bytes32 _validatorSetHash
     ) {
@@ -128,17 +119,17 @@ contract QuantumGravityBridge is IDAOracle {
 
         // CHECKS
 
-        uint256 nonce = 0;
-        bytes32 newCheckpoint = domainSeparateValidatorSetHash(_bridge_id, nonce, _powerThreshold, _validatorSetHash);
+        bytes32 newCheckpoint = domainSeparateValidatorSetHash(_bridge_id, _nonce, _powerThreshold, _validatorSetHash);
 
         // EFFECTS
 
+        state_lastValidatorSetNonce = _nonce;
         state_lastValidatorSetCheckpoint = newCheckpoint;
         state_powerThreshold = _powerThreshold;
 
         // LOGS
 
-        emit ValidatorSetUpdatedEvent(nonce, _powerThreshold, _validatorSetHash);
+        emit ValidatorSetUpdatedEvent(_nonce, _powerThreshold, _validatorSetHash);
     }
 
     /// @notice Utility function to check if a signature is nil.
@@ -189,17 +180,19 @@ contract QuantumGravityBridge is IDAOracle {
     /// @dev Make a domain-separated commitment to a data root tuple root.
     /// A hash of all relevant information about a data root tuple root.
     /// The format of the hash is:
-    ///     keccak256(bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, nonce, _dataRootTupleRoot)
+    ///     keccak256(bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, oldNonce, newNonce, dataRootTupleRoot)
     /// @param _bridge_id Bridge ID.
-    /// @param _nonce Nonce.
+    /// @param _oldNonce Celestia block height at which commitment begins.
+    /// @param _newNonce Celestia block height at which commitment ends.
     /// @param _dataRootTupleRoot Data root tuple root.
     function domainSeparateDataRootTupleRoot(
         bytes32 _bridge_id,
-        uint256 _nonce,
+        uint256 _oldNonce,
+        uint256 _newNonce,
         bytes32 _dataRootTupleRoot
     ) private pure returns (bytes32) {
         bytes32 c = keccak256(
-            abi.encode(_bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _nonce, _dataRootTupleRoot)
+            abi.encode(_bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _oldNonce, _newNonce, _dataRootTupleRoot)
         );
 
         return c;
@@ -255,7 +248,7 @@ contract QuantumGravityBridge is IDAOracle {
     /// The validator set hash that is signed over is domain separated as per
     /// `domainSeparateValidatorSetHash`.
     /// @param _newValidatorSetHash The hash of the new validator set.
-    /// @param _newNonce The new nonce.
+    /// @param _newNonce The new Celestia block height.
     /// @param _currentValidatorSet The current validator set.
     /// @param _sigs Signatures.
     function updateValidatorSet(
@@ -270,7 +263,7 @@ contract QuantumGravityBridge is IDAOracle {
         uint256 currentNonce = state_lastValidatorSetNonce;
         uint256 currentPowerThreshold = state_powerThreshold;
 
-        // Check that the valset nonce is greater than the old one.
+        // Check that the new validator set nonce is greater than the old one.
         if (_newNonce <= currentNonce) {
             revert InvalidValidatorSetNonce();
         }
@@ -321,7 +314,8 @@ contract QuantumGravityBridge is IDAOracle {
     ///
     /// The data tuple root that is signed over is domain separated as per
     /// `domainSeparateDataRootTupleRoot`.
-    /// @param _nonce The data root tuple root nonce.
+    /// @param _nonce The Celestia block height up to which the data root tuple
+    /// root commits to.
     /// @param _dataRootTupleRoot The Merkle root of data root tuples.
     /// @param _currentValidatorSet The current validator set.
     /// @param _sigs Signatures.
@@ -333,10 +327,11 @@ contract QuantumGravityBridge is IDAOracle {
     ) external {
         // CHECKS
 
+        uint256 currentNonce = state_lastDataRootTupleRootNonce;
         uint256 currentPowerThreshold = state_powerThreshold;
 
         // Check that the data root tuple root nonce is higher than the last nonce.
-        if (_nonce <= state_lastDataRootTupleRootNonce) {
+        if (_nonce <= currentNonce) {
             revert InvalidDataRootTupleRootNonce();
         }
 
@@ -360,7 +355,7 @@ contract QuantumGravityBridge is IDAOracle {
 
         // Check that enough current validators have signed off on the data
         // root tuple root and nonce.
-        bytes32 c = domainSeparateDataRootTupleRoot(BRIDGE_ID, _nonce, _dataRootTupleRoot);
+        bytes32 c = domainSeparateDataRootTupleRoot(BRIDGE_ID, currentNonce, _nonce, _dataRootTupleRoot);
         checkValidatorSignatures(_currentValidatorSet, _sigs, c, currentPowerThreshold);
 
         // EFFECTS
