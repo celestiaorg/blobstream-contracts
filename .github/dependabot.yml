@@ -5,15 +5,3 @@ updates:
     schedule:
       interval: daily
     open-pull-requests-limit: 10
-  - package-ecosystem: gomod
-    directory: "/"
-    schedule:
-      interval: daily
-    commit-message:
-      prefix: "chore"
-    open-pull-requests-limit: 10
-    reviewers:
-      - liamsi
-    labels:
-      - "A:Automerge"
-      - "T:Dependencies"
