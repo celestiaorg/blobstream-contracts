@@ -47,3 +47,12 @@ solidity/deployment/.env
 
 # Foundry
 cache/
+
+artifacts
+build
+cache
+.coverage_*
+coverage
+**/typechain/**/*
+node_modules
+out/

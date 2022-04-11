@@ -1,8 +1,0 @@
-artifacts
-build
-cache
-.coverage_*
-coverage
-**/typechain/**/*
-node_modules
-out/
