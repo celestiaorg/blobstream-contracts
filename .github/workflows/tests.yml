@@ -15,22 +15,6 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
     if: "!startsWith(github.ref, 'refs/tags/') && github.ref != 'refs/heads/master'"
 
-  install-tparse:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/setup-go@v3
-        with:
-          go-version: 1.17
-      - name: Display Go Version
-        run: go version
-      - name: Install tparse
-        run: |
-          export GO111MODULE="on" && go get github.com/mfridman/tparse@v0.8.3
-      - uses: actions/cache@v3
-        with:
-          path: ~/go/bin
-          key: ${{ runner.os }}-go-tparse-binary
-
   forge-test:
     runs-on: ubuntu-latest
     steps:
@@ -42,24 +26,5 @@ jobs:
         with:
           version: nightly
       - name: Run forge test
-        working-directory: ./ethereum/solidity
+        working-directory: ./
         run: forge test
-
-  # test-integration:
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 25
-  #   steps:
-  #     - uses: actions/setup-go@v3
-  #       with:
-  #         go-version: 1.17
-  #     - uses: actions/checkout@v3
-  #     - uses: technote-space/get-diff-action@v6.0.1
-  #       with:
-  #         PATTERNS: |
-  #           **/**.go
-  #           go.mod
-  #           go.sum
-  #     - name: Test Integration
-  #       run: ./test/run-gh-tests.sh
-  #       if: env.GIT_DIFF
-# TODO: Add job for unit and coverage testing!

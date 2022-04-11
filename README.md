@@ -42,7 +42,7 @@ make devtools
 ### Building
 
 ```sh
-make build
+make
 ```
 
 ## Send a message from Celestia to an EVM chain
