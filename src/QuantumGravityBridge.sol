@@ -20,83 +20,95 @@ struct Signature {
     bytes32 s;
 }
 
-/// 量子引力桥：Celestia -> EVM，数据可用性中继。
-/// 中继依靠一组签名者来证明 Celestia 上的某些事件。 这些签名者是 Celestia 验证者集，他们签署每个 Celestia 区块。
-/// 跟踪 Celestia 验证器集是通过使用 `updateValidatorSet()` 更新此合约的验证器集视图来完成的。
-/// 验证者集当前视图的至少 2/3 的投票权必须签署新的中继事件，并使用 `submitDataRootTupleRoot()` 提交。
-/// 每个事件都是一批 `DataRootTuple`（参见 ./DataRootTuple.sol），每个元组代表 Celestia 块头中的单个数据根。 中继元组与块头的顺序相同。
-
+/// @title Quantum Gravity Bridge: Celestia -> EVM, Data Availability relay.
+/// @dev The relay relies on a set of signers to attest to some event on
+/// Celestia. These signers are the Celestia validator set, who sign over every
+/// Celestia block. Keeping track of the Celestia validator set is accomplished
+/// by updating this contract's view of the validator set with
+/// `updateValidatorSet()`. At least 2/3 of the voting power of the current
+/// view of the validator set must sign off on new relayed events, submitted
+/// with `submitDataRootTupleRoot()`. Each event is a batch of `DataRootTuple`s
+/// (see ./DataRootTuple.sol), with each tuple representing a single data root
+/// in a Celestia block header. Relayed tuples are in the same order as the
+/// block headers.
 contract QuantumGravityBridge is IDAOracle {
-    // 不要更改工作升级的状态顺序并注意继承变量！
-    // 继承的合约包含存储槽，并且必须在任何升级中加以考虑。 在主网升级之前，始终在测试网和本地主机上测试精确的升级。
+    // Don't change the order of state for working upgrades AND BE AWARE OF
+    // INHERITANCE VARIABLES! Inherited contracts contain storage slots and must
+    // be accounted for in any upgrades. Always test an exact upgrade on testnet
+    // and localhost before mainnet upgrades.
 
     ////////////////
-    // Immutables //可变变量 BRIDGE_ID
+    // Immutables //
     ////////////////
 
     bytes32 public immutable BRIDGE_ID;
 
     /////////////
-    // Storage //存储
+    // Storage //
     /////////////
 
-    ///对最新区块的验证
+    /// @notice Domain-separated commitment to the latest validator set.
     bytes32 public state_lastValidatorSetCheckpoint;
-    ///2/3验证通过才能更新区块
+    /// @notice Voting power required to submit a new update.
     uint256 public state_powerThreshold;
-    ///验证者的唯一随机数
+    /// @notice Unique nonce of validator set updates.
     uint256 public state_lastValidatorSetNonce;
-    ///数据根元组根更新的唯一随机数。
+    /// @notice Unique nonce of data root tuple root updates.
     uint256 public state_lastDataRootTupleRootNonce;
-    /// 数据根随机数到数据根的映射
+    /// @notice Mapping of data root tuple root nonces to data root tuple roots.
     mapping(uint256 => bytes32) public state_dataRootTupleRoots;
 
     ////////////
     // Events //
     ////////////
 
-    /// 当中继数据根元组的新根时发出。
-    /// dataRootTupleRoot 中继数据根元组的默克尔根。
+    /// @notice Emitted when a new root of data root tuples is relayed.
+    /// @param nonce Nonce.
+    /// @param dataRootTupleRoot Merkle root of relayed data root tuples.
+    /// See `submitDataRootTupleRoot`.
     event DataRootTupleRootEvent(uint256 indexed nonce, bytes32 dataRootTupleRoot);
 
-    /// @notice 新验证者进入时执行的事件
+    /// @notice Emitted when the validator set is updated.
     /// @param nonce Nonce.
-    /// @param powerThreshold 新的投票门槛（2/3）
-    /// @param validatorSetHash ///新验证器集的哈希。
+    /// @param powerThreshold New voting power threshold.
+    /// @param validatorSetHash Hash of new validator set.
     /// See `updateValidatorSet`.
     event ValidatorSetUpdatedEvent(uint256 indexed nonce, uint256 powerThreshold, bytes32 validatorSetHash);
 
     ////////////
-    // Errors //定义特殊要求
+    // Errors //
     ////////////
 
-    /// 格式错误
+    /// @notice Malformed current validator set.
     error MalformedCurrentValidatorSet();
 
-    ///验证者签名不匹配
+    /// @notice Validator signature does not match.
     error InvalidSignature();
 
-    /// 提交的验证者集权利不足
+    /// @notice Submitted validator set signatures do not have enough power.
     error InsufficientVotingPower();
 
-    /// 新的验证器集随机数必须大于当前随机数
+    /// @notice New validator set nonce must be greater than the current nonce.
     error InvalidValidatorSetNonce();
 
-    /// 提供的当前验证器和权力与检查点不匹配（需要深入研究）
+    /// @notice Supplied current validators and powers do not match checkpoint.
     error SuppliedValidatorSetInvalid();
 
-    /// 数据根元组根随机数必须大于当前随机数。
+    /// @notice Data root tuple root nonce nonce must be greater than the current nonce.
     error InvalidDataRootTupleRootNonce();
 
     ///////////////
-    // Functions //函数
+    // Functions //
     ///////////////
 
-    /// @param _bridge_id 桥的标识符，用于域分离的签名。
-    /// @param _nonce Celestia 初始化桥的高度。
-    /// @param _powerThreshold 批准操作所需的初始投票权。
-    /// @param _validatorSetHash 初始验证器集哈希。 这不需要是桥接链的创世验证者集，只需桥的初始验证者集。
-
+    /// @param _bridge_id Identifier of the bridge, used in signatures for
+    /// domain separation.
+    /// @param _nonce Celestia block height at which bridge is initialized.
+    /// @param _powerThreshold Initial voting power that is needed to approve
+    /// operations.
+    /// @param _validatorSetHash Initial validator set hash. This does not need
+    /// to be the genesis validator set of the bridged chain, only the initial
+    /// validator set of the bridge.
     constructor(
         bytes32 _bridge_id,
         uint256 _nonce,
@@ -111,22 +123,22 @@ contract QuantumGravityBridge is IDAOracle {
 
         // EFFECTS
 
-        state_lastValidatorSetNonce = _nonce;///验证者状态
-        state_lastValidatorSetCheckpoint = newCheckpoint;///检查数据可用
-        state_powerThreshold = _powerThreshold;///检查数据投票权
+        state_lastValidatorSetNonce = _nonce;
+        state_lastValidatorSetCheckpoint = newCheckpoint;
+        state_powerThreshold = _powerThreshold;
 
         // LOGS
 
-        emit ValidatorSetUpdatedEvent(_nonce, _powerThreshold, _validatorSetHash);///连接到以太坊，输入三个验证结果，确定数据的可用性
+        emit ValidatorSetUpdatedEvent(_nonce, _powerThreshold, _validatorSetHash);
     }
 
-    /// 检查签名是否为 nil 的实用函数。如果 65 字节签名的所有字节都为零，则它是 nil 签名。
-
+    /// @notice Utility function to check if a signature is nil.
+    /// If all bytes of the 65-byte signature are zero, then it's a nil signature.
     function isSigNil(Signature calldata _sig) private pure returns (bool) {
         return (_sig.r == 0 && _sig.s == 0 && _sig.v == 0);
     }
 
-    ////// @notice 用于验证 EIP-191 签名的实用程序函数。
+    /// @notice Utility function to verify EIP-191 signatures.
     function verifySig(
         address _signer,
         bytes32 _digest,
