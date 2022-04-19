@@ -129,29 +129,25 @@ contract QuantumGravityBridge is IDAOracle {
     ////// @notice 用于验证 EIP-191 签名的实用程序函数。
     function verifySig(
         address _signer,
-        bytes32 _digest,
+        bytes32 _digest,        ///哈希值
         Signature calldata _sig
     ) private pure returns (bool) {
         bytes32 digest_eip191 = ECDSA.toEthSignedMessageHash(_digest);
 
-        return _signer == ECDSA.recover(digest_eip191, _sig.v, _sig.r, _sig.s);
+        return _signer == ECDSA.recover(digest_eip191, _sig.v, _sig.r, _sig.s); ///检查所有数据是否符合
     }
 
-    /// @dev Computes the hash of a validator set.
-    /// @param _validators The validator set to hash.
+    /// 计算验证器集的哈希。 @param _validators 设置为散列的验证器。
+    
     function computeValidatorSetHash(Validator[] calldata _validators) private pure returns (bytes32) {
         return keccak256(abi.encode(_validators));
     }
 
-    /// @dev Make a domain-separated commitment to the validator set.
-    /// A hash of all relevant information about the validator set.
-    /// The format of the hash is:
+    /// 将验证者分开的实现
+    /// 关于验证者的哈希值：
+    /// 格式:
     ///     keccak256(bridge_id, VALIDATOR_SET_HASH_DOMAIN_SEPARATOR, nonce, power_threshold, validator_set_hash)
-    /// The elements in the validator set should be monotonically decreasing by power.
-    /// @param _bridge_id Bridge ID.
-    /// @param _nonce Nonce.
-    /// @param _powerThreshold The voting power threshold.
-    /// @param _validatorSetHash Validator set hash.
+    /// 验证器集合中的元素应该按幂单调递减。（没看明白）
     function domainSeparateValidatorSetHash(
         bytes32 _bridge_id,
         uint256 _nonce,
@@ -165,10 +161,11 @@ contract QuantumGravityBridge is IDAOracle {
         return c;
     }
 
-    /// @dev Make a domain-separated commitment to a data root tuple root.
-    /// A hash of all relevant information about a data root tuple root.
-    /// The format of the hash is:
-    ///     keccak256(bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, oldNonce, newNonce, dataRootTupleRoot)
+
+    /// 对数据根元组根进行域分隔的承诺。
+    /// 有关数据根元组根的所有相关信息的哈希。
+    /// 格式：
+    /// keccak256(bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, oldNonce, newNonce, dataRootTupleRoot)
     /// @param _bridge_id Bridge ID.
     /// @param _oldNonce Celestia block height at which commitment begins.
     /// @param _newNonce Celestia block height at which commitment ends.
