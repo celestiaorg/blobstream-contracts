@@ -167,10 +167,10 @@ contract QuantumGravityBridge is IDAOracle {
     /// 格式：
     /// keccak256(bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, oldNonce, newNonce, dataRootTupleRoot)
     /// @param _bridge_id Bridge ID.
-    /// @param _oldNonce Celestia block height at which commitment begins.
-    /// @param _newNonce Celestia block height at which commitment ends.
-    /// @param _dataRootTupleRoot Data root tuple root.
-    function domainSeparateDataRootTupleRoot(
+    /// @param _oldNonce 开始的 Celestia 区块高度。
+    /// @param _newNonce 结束的 Celestia 区块高度。
+    /// @param _dataRootTupleRoot 数据根
+    function domainSeparateDataRootTupleRoot( ///区分不同的数据根
         bytes32 _bridge_id,
         uint256 _oldNonce,
         uint256 _newNonce,
@@ -182,6 +182,8 @@ contract QuantumGravityBridge is IDAOracle {
 
         return c;
     }
+
+////////////////验证环节：
 
     /// @dev Checks that enough voting power signed over a digest.
     /// @param _currentValidators The current validators.
@@ -213,7 +215,7 @@ contract QuantumGravityBridge is IDAOracle {
 
             // Break early to avoid wasting gas.
             if (cumulativePower >= _powerThreshold) {
-                break;
+                break;         ///////停止循环，验证通过
             }
         }
 
@@ -223,15 +225,11 @@ contract QuantumGravityBridge is IDAOracle {
         }
     }
 
-    /// @notice This updates the validator set by checking that the validators
-    /// in the current validator set have signed off on the new validator set.
-    /// The signatures supplied are the signatures of the current validator set
-    /// over the checkpoint hash generated from the new validator set. Anyone
-    /// can call this function, but they must supply valid signatures of the
-    /// current validator set over the new validator set.
+    /// @notice 这通过检查验证器来更新验证器集
+     /// 在当前验证者集中已经签署了新的验证者集。
+     /// 提供的签名是当前验证器集在新验证器集生成的检查点哈希上的签名。 任何人都可以调用此函数，但他们必须提供当前验证者集的有效签名，而不是新的验证者集。
     ///
-    /// The validator set hash that is signed over is domain separated as per
-    /// `domainSeparateValidatorSetHash`.
+    /// 签名的验证器集哈希是域分隔的 `domainSeparateValidatorSetHash`.
     /// @param _newValidatorSetHash The hash of the new validator set.
     /// @param _newNonce The new Celestia block height.
     /// @param _currentValidatorSet The current validator set.
@@ -287,18 +285,12 @@ contract QuantumGravityBridge is IDAOracle {
         emit ValidatorSetUpdatedEvent(_newNonce, _newPowerThreshold, _newValidatorSetHash);
     }
 
-    /// @notice Relays a root of Celestia data root tuples to an EVM chain. Anyone
-    /// can call this function, but they must supply valid signatures of the
-    /// current validator set over the data root tuple root.
-    ///
-    /// The data root root is the Merkle root of the binary Merkle tree
-    /// (https://github.com/celestiaorg/celestia-specs/blob/master/src/specs/data_structures.md#binary-merkle-tree)
-    /// where each leaf in an ABI-encoded `DataRootTuple`. Each relayed data
-    /// root tuple will 1:1 mirror data roots as they are included in headers
-    /// on Celestia, _in order of inclusion_.
-    ///
-    /// The data tuple root that is signed over is domain separated as per
-    /// `domainSeparateDataRootTupleRoot`.
+    /// @notice 将 Celestia 数据根元组的根中继到 EVM 链。 任何人都可以调用此函数，但他们必须提供当前验证器集在数据根元组根上的有效签名。
+     ///数据根根是二叉Merkle树的Merkle根
+     /// (https://github.com/celestiaorg/celestia-specs/blob/master/src/specs/data_structures.md#binary-merkle-tree)
+     /// 其中每个叶子都在 ABI 编码的 `DataRootTuple` 中。 每个中继的数据根元组将 1:1 镜像数据根，因为它们包含在 Celestia 的标头中，_按包含顺序_。
+     /// 被签名的数据元组根是按照 `domainSeparateDataRootTupleRoot` 进行域分隔的。
+     
     /// @param _nonce The Celestia block height up to which the data root tuple
     /// root commits to.
     /// @param _dataRootTupleRoot The Merkle root of data root tuples.
