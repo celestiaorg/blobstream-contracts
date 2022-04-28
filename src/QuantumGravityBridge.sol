@@ -365,3 +365,6 @@ contract QuantumGravityBridge is IDAOracle {
         return isProofValid;
     }
 }
+
+
+//桥接合约验证Celestia返回的数据根，返回Bool 来确认数据可用性，同时对 数据根 进行排序
