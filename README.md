@@ -22,8 +22,6 @@ It is based on Umee's Gravity Bridge implementation, [Peggo](https://github.com/
 
 ### Dependencies
 
-Building requires [Go 1.17+](https://golang.org/dl/).
-
 Initialize git submodules, needed for Forge dependencies:
 
 ```sh
@@ -31,7 +29,9 @@ git submodule init
 git submodule update
 ```
 
-To regenerate the Go ABI wrappers with `make gen`, you need the `abigen` tool. Install it with:
+To regenerate the Go ABI wrappers with `make gen`, you need the `abigen` tool.
+Building requires [Go 1.17+](https://golang.org/dl/).
+Install `abigen` with:
 
 ```sh
 git clone https://github.com/ethereum/go-ethereum.git
@@ -39,7 +39,23 @@ cd go-ethereum
 make devtools
 ```
 
-### Building
+### Build and Test Contracts
+
+Build with:
+
+```sh
+forge build
+```
+
+Test with:
+
+```sh
+forge test
+```
+
+### Regenerate Go Wrappers
+
+Go wrappers can be regenerated with:
 
 ```sh
 make
