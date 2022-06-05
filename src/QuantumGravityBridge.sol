@@ -51,10 +51,8 @@ contract QuantumGravityBridge is IDAOracle {
     bytes32 public state_lastValidatorSetCheckpoint;
     /// @notice Voting power required to submit a new update.
     uint256 public state_powerThreshold;
-    /// @notice Unique nonce of validator set updates.
-    uint256 public state_lastValidatorSetNonce;
-    /// @notice Unique nonce of data root tuple root updates.
-    uint256 public state_lastDataRootTupleRootNonce;
+    /// @notice Nonce for bridge events. Must be incremented sequentially.
+    uint256 public state_eventNonce;
     /// @notice Mapping of data root tuple root nonces to data root tuple roots.
     mapping(uint256 => bytes32) public state_dataRootTupleRoots;
 
@@ -63,13 +61,13 @@ contract QuantumGravityBridge is IDAOracle {
     ////////////
 
     /// @notice Emitted when a new root of data root tuples is relayed.
-    /// @param nonce Nonce.
+    /// @param nonce Event nonce.
     /// @param dataRootTupleRoot Merkle root of relayed data root tuples.
     /// See `submitDataRootTupleRoot`.
     event DataRootTupleRootEvent(uint256 indexed nonce, bytes32 dataRootTupleRoot);
 
     /// @notice Emitted when the validator set is updated.
-    /// @param nonce Nonce.
+    /// @param nonce Event nonce.
     /// @param powerThreshold New voting power threshold.
     /// @param validatorSetHash Hash of new validator set.
     /// See `updateValidatorSet`.
@@ -103,7 +101,7 @@ contract QuantumGravityBridge is IDAOracle {
 
     /// @param _bridge_id Identifier of the bridge, used in signatures for
     /// domain separation.
-    /// @param _nonce Celestia block height at which bridge is initialized.
+    /// @param _nonce Initial event nonce.
     /// @param _powerThreshold Initial voting power that is needed to approve
     /// operations.
     /// @param _validatorSetHash Initial validator set hash. This does not need
@@ -123,7 +121,7 @@ contract QuantumGravityBridge is IDAOracle {
 
         // EFFECTS
 
-        state_lastValidatorSetNonce = _nonce;
+        state_eventNonce = _nonce;
         state_lastValidatorSetCheckpoint = newCheckpoint;
         state_powerThreshold = _powerThreshold;
 
@@ -180,19 +178,17 @@ contract QuantumGravityBridge is IDAOracle {
     /// @dev Make a domain-separated commitment to a data root tuple root.
     /// A hash of all relevant information about a data root tuple root.
     /// The format of the hash is:
-    ///     keccak256(bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, oldNonce, newNonce, dataRootTupleRoot)
+    ///     keccak256(bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, nonce, dataRootTupleRoot)
     /// @param _bridge_id Bridge ID.
-    /// @param _oldNonce Celestia block height at which commitment begins.
-    /// @param _newNonce Celestia block height at which commitment ends.
+    /// @param _nonce Event nonce.
     /// @param _dataRootTupleRoot Data root tuple root.
     function domainSeparateDataRootTupleRoot(
         bytes32 _bridge_id,
-        uint256 _oldNonce,
-        uint256 _newNonce,
+        uint256 _nonce,
         bytes32 _dataRootTupleRoot
     ) private pure returns (bytes32) {
         bytes32 c = keccak256(
-            abi.encode(_bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _oldNonce, _newNonce, _dataRootTupleRoot)
+            abi.encode(_bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _nonce, _dataRootTupleRoot)
         );
 
         return c;
@@ -248,7 +244,7 @@ contract QuantumGravityBridge is IDAOracle {
     /// The validator set hash that is signed over is domain separated as per
     /// `domainSeparateValidatorSetHash`.
     /// @param _newValidatorSetHash The hash of the new validator set.
-    /// @param _newNonce The new Celestia block height.
+    /// @param _newNonce The new event nonce.
     /// @param _currentValidatorSet The current validator set.
     /// @param _sigs Signatures.
     function updateValidatorSet(
@@ -260,11 +256,11 @@ contract QuantumGravityBridge is IDAOracle {
     ) external {
         // CHECKS
 
-        uint256 currentNonce = state_lastValidatorSetNonce;
+        uint256 currentNonce = state_eventNonce;
         uint256 currentPowerThreshold = state_powerThreshold;
 
-        // Check that the new validator set nonce is greater than the old one.
-        if (_newNonce <= currentNonce) {
+        // Check that the new nonce is one more than the current one.
+        if (_newNonce != currentNonce + 1) {
             revert InvalidValidatorSetNonce();
         }
 
@@ -295,7 +291,7 @@ contract QuantumGravityBridge is IDAOracle {
 
         state_lastValidatorSetCheckpoint = newCheckpoint;
         state_powerThreshold = _newPowerThreshold;
-        state_lastValidatorSetNonce = _newNonce;
+        state_eventNonce = _newNonce;
 
         // LOGS
 
@@ -314,24 +310,26 @@ contract QuantumGravityBridge is IDAOracle {
     ///
     /// The data tuple root that is signed over is domain separated as per
     /// `domainSeparateDataRootTupleRoot`.
-    /// @param _nonce The Celestia block height up to which the data root tuple
-    /// root commits to.
+    /// @param _newNonce The new event nonce.
+    /// @param _validatorSetNonce The nonce of the latest update to the
+    /// validator set.
     /// @param _dataRootTupleRoot The Merkle root of data root tuples.
     /// @param _currentValidatorSet The current validator set.
     /// @param _sigs Signatures.
     function submitDataRootTupleRoot(
-        uint256 _nonce,
+        uint256 _newNonce,
+        uint256 _validatorSetNonce,
         bytes32 _dataRootTupleRoot,
         Validator[] calldata _currentValidatorSet,
         Signature[] calldata _sigs
     ) external {
         // CHECKS
 
-        uint256 currentNonce = state_lastDataRootTupleRootNonce;
+        uint256 currentNonce = state_eventNonce;
         uint256 currentPowerThreshold = state_powerThreshold;
 
-        // Check that the data root tuple root nonce is higher than the last nonce.
-        if (_nonce <= currentNonce) {
+        // Check that the new nonce is one more than the current one.
+        if (_newNonce != currentNonce + 1) {
             revert InvalidDataRootTupleRootNonce();
         }
 
@@ -345,7 +343,7 @@ contract QuantumGravityBridge is IDAOracle {
         if (
             domainSeparateValidatorSetHash(
                 BRIDGE_ID,
-                state_lastValidatorSetNonce,
+                _validatorSetNonce,
                 currentPowerThreshold,
                 currentValidatorSetHash
             ) != state_lastValidatorSetCheckpoint
@@ -355,32 +353,32 @@ contract QuantumGravityBridge is IDAOracle {
 
         // Check that enough current validators have signed off on the data
         // root tuple root and nonce.
-        bytes32 c = domainSeparateDataRootTupleRoot(BRIDGE_ID, currentNonce, _nonce, _dataRootTupleRoot);
+        bytes32 c = domainSeparateDataRootTupleRoot(BRIDGE_ID, _newNonce, _dataRootTupleRoot);
         checkValidatorSignatures(_currentValidatorSet, _sigs, c, currentPowerThreshold);
 
         // EFFECTS
 
-        state_lastDataRootTupleRootNonce = _nonce;
-        state_dataRootTupleRoots[_nonce] = _dataRootTupleRoot;
+        state_eventNonce = _newNonce;
+        state_dataRootTupleRoots[_newNonce] = _dataRootTupleRoot;
 
         // LOGS
 
-        emit DataRootTupleRootEvent(_nonce, _dataRootTupleRoot);
+        emit DataRootTupleRootEvent(_newNonce, _dataRootTupleRoot);
     }
 
     /// @dev see "./IDAOracle.sol"
     function verifyAttestation(
-        uint256 _tupleRootIndex,
+        uint256 _tupleRootNonce,
         DataRootTuple memory _tuple,
         BinaryMerkleProof memory _proof
     ) external view override returns (bool) {
         // Tuple must have been committed before.
-        if (_tupleRootIndex > state_lastDataRootTupleRootNonce) {
+        if (_tupleRootNonce > state_eventNonce) {
             return false;
         }
 
         // Load the tuple root at the given index from storage.
-        bytes32 root = state_dataRootTupleRoots[_tupleRootIndex];
+        bytes32 root = state_dataRootTupleRoots[_tupleRootNonce];
 
         // Verify the proof.
         bool isProofValid = BinaryMerkleTree.verify(root, _proof, abi.encode(_tuple));
