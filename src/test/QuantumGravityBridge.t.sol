@@ -33,16 +33,17 @@ contract RelayerTest is DSTest {
 
     Validator[] private validators;
     uint256 private votingPower = 5000;
-    uint256 private valsetNonce = 0;
     uint256 private dataTupleRootNonce = 0;
 
     // Set up Foundry cheatcodes.
     CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
 
     function setUp() public {
+        uint256 initialVelsetNonce = 0;
+
         validators.push(Validator(cheats.addr(testPriv1), votingPower));
         bytes32 hash = computeValidatorSetHash(validators);
-        bridge = new QuantumGravityBridge(BRIDGE_ID, valsetNonce, (2 * votingPower) / 3, hash);
+        bridge = new QuantumGravityBridge(BRIDGE_ID, initialVelsetNonce, (2 * votingPower) / 3, hash);
     }
 
     function testUpdateValidatorSet() public {
@@ -65,17 +66,18 @@ contract RelayerTest is DSTest {
 
         bridge.updateValidatorSet(newNonce, newPowerThreshold, newVSHash, oldVS, sigs);
 
-        assertEq(bridge.state_lastValidatorSetNonce(), newNonce);
+        assertEq(bridge.state_eventNonce(), newNonce);
         assertEq(bridge.state_powerThreshold(), newPowerThreshold);
         assertEq(bridge.state_lastValidatorSetCheckpoint(), newCheckpoint);
     }
 
     function testSubmitDataRootTupleRoot() public {
-        uint256 newNonce = 1;
+        uint256 initialVelsetNonce = 0;
+        uint256 nonce = 1;
         // 32 bytes, chosen at random.
         bytes32 newTupleRoot = 0x0de92bac0b356560d821f8e7b6f5c9fe4f3f88f6c822283efd7ab51ad56a640e;
 
-        bytes32 newDataRootTupleRoot = domainSeparateDataRootTupleRoot(BRIDGE_ID, valsetNonce, newNonce, newTupleRoot);
+        bytes32 newDataRootTupleRoot = domainSeparateDataRootTupleRoot(BRIDGE_ID, nonce, newTupleRoot);
 
         // Signature for the update.
         Signature[] memory sigs = new Signature[](1);
@@ -86,10 +88,10 @@ contract RelayerTest is DSTest {
         Validator[] memory valSet = new Validator[](1);
         valSet[0] = Validator(cheats.addr(testPriv1), votingPower);
 
-        bridge.submitDataRootTupleRoot(newNonce, newTupleRoot, valSet, sigs);
+        bridge.submitDataRootTupleRoot(nonce, initialVelsetNonce, newTupleRoot, valSet, sigs);
 
-        assertEq(bridge.state_lastDataRootTupleRootNonce(), newNonce);
-        assertEq(bridge.state_dataRootTupleRoots(newNonce), newTupleRoot);
+        assertEq(bridge.state_eventNonce(), nonce);
+        assertEq(bridge.state_dataRootTupleRoots(nonce), newTupleRoot);
     }
 
     function computeValidatorSetHash(Validator[] memory _validators) private pure returns (bytes32) {
@@ -111,12 +113,11 @@ contract RelayerTest is DSTest {
 
     function domainSeparateDataRootTupleRoot(
         bytes32 _bridge_id,
-        uint256 _oldNonce,
-        uint256 _newNonce,
+        uint256 _nonce,
         bytes32 _dataRootTupleRoot
     ) private pure returns (bytes32) {
         bytes32 c = keccak256(
-            abi.encode(_bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _oldNonce, _newNonce, _dataRootTupleRoot)
+            abi.encode(_bridge_id, DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _nonce, _dataRootTupleRoot)
         );
 
         return c;
