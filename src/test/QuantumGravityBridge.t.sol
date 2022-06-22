@@ -47,6 +47,8 @@ contract RelayerTest is DSTest {
     }
 
     function testUpdateValidatorSet() public {
+        uint256 initialVelsetNonce = 0;
+
         // Save the old test validator set before we add to it.
         Validator[] memory oldVS = new Validator[](1);
         oldVS[0] = Validator(cheats.addr(testPriv1), votingPower);
@@ -64,7 +66,7 @@ contract RelayerTest is DSTest {
         (uint8 v, bytes32 r, bytes32 s) = cheats.sign(testPriv1, digest_eip191);
         sigs[0] = Signature(v, r, s);
 
-        bridge.updateValidatorSet(newNonce, newPowerThreshold, newVSHash, oldVS, sigs);
+        bridge.updateValidatorSet(newNonce, initialVelsetNonce, newPowerThreshold, newVSHash, oldVS, sigs);
 
         assertEq(bridge.state_eventNonce(), newNonce);
         assertEq(bridge.state_powerThreshold(), newPowerThreshold);
