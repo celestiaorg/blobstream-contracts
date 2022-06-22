@@ -243,12 +243,15 @@ contract QuantumGravityBridge is IDAOracle {
     ///
     /// The validator set hash that is signed over is domain separated as per
     /// `domainSeparateValidatorSetHash`.
-    /// @param _newValidatorSetHash The hash of the new validator set.
     /// @param _newNonce The new event nonce.
+    /// @param _oldNonce The nonce of the latest update to the validator set.
+    /// @param _newPowerThreshold At least this much power must have signed.
+    /// @param _newValidatorSetHash The hash of the new validator set.
     /// @param _currentValidatorSet The current validator set.
     /// @param _sigs Signatures.
     function updateValidatorSet(
         uint256 _newNonce,
+        uint256 _oldNonce,
         uint256 _newPowerThreshold,
         bytes32 _newValidatorSetHash,
         Validator[] calldata _currentValidatorSet,
@@ -272,7 +275,7 @@ contract QuantumGravityBridge is IDAOracle {
         // Check that the supplied current validator set matches the saved checkpoint.
         bytes32 currentValidatorSetHash = computeValidatorSetHash(_currentValidatorSet);
         if (
-            domainSeparateValidatorSetHash(BRIDGE_ID, currentNonce, currentPowerThreshold, currentValidatorSetHash) !=
+            domainSeparateValidatorSetHash(BRIDGE_ID, _oldNonce, currentPowerThreshold, currentValidatorSetHash) !=
             state_lastValidatorSetCheckpoint
         ) {
             revert SuppliedValidatorSetInvalid();
