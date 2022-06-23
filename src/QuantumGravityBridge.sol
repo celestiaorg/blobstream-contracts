@@ -195,6 +195,7 @@ contract QuantumGravityBridge is IDAOracle {
     }
 
     /// @dev Checks that enough voting power signed over a digest.
+    /// It expects the signatures to be in the same order as the _currentValidators.
     /// @param _currentValidators The current validators.
     /// @param _sigs The current validators' signatures.
     /// @param _digest This is what we are checking they have signed.
