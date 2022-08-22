@@ -6,7 +6,6 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/celestiaorg/quantum-gravity-bridge?style=flat-square)](https://goreportcard.com/report/github.com/celestiaorg/quantum-gravity-bridge)
 [![Version](https://img.shields.io/github/tag/celestiaorg/quantum-gravity-bridge.svg?style=flat-square)](https://github.com/celestiaorg/quantum-gravity-bridge/releases/latest)
 [![License: Apache-2.0](https://img.shields.io/github/license/celestiaorg/quantum-gravity-bridge.svg?style=flat-square)](https://github.com/celestiaorg/quantum-gravity-bridge/blob/main/LICENSE)
-[![GitHub Super-Linter](https://img.shields.io/github/workflow/status/celestiaorg/quantum-gravity-bridge/Lint?style=flat-square&label=Lint)](https://github.com/marketplace/actions/super-linter)
 
 The Quantum Gravity Bridge (QGB) is a Celestia -> EVM message relay.
 It is based on Umee's Gravity Bridge implementation, [Peggo](https://github.com/umee-network/peggo).
