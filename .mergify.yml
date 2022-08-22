@@ -7,8 +7,6 @@ pull_request_rules:
     actions:
       merge:
         method: squash
-        strict: true
-        commit_message: title+body
   - name: Backport patches to release/v0.1.x branch
     conditions:
       - base=master
