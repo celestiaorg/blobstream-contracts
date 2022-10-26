@@ -92,7 +92,7 @@ contract QuantumGravityBridge is IDAOracle {
     /// @notice Supplied current validators and powers do not match checkpoint.
     error SuppliedValidatorSetInvalid();
 
-    /// @notice Data root tuple root nonce nonce must be greater than the current nonce.
+    /// @notice Data root tuple root nonce must be greater than the current nonce.
     error InvalidDataRootTupleRootNonce();
 
     ///////////////
