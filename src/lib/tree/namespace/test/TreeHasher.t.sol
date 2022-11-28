@@ -21,7 +21,7 @@ contract TreeHasherTest is DSTest {
         NamespaceNode memory expected = NamespaceNode(
             nid,
             nid,
-            0x0a88111852095cae045340ea1f0b279944b2a756a213d9b50107d7489771e159
+            0x3e7077fd2f66d689e0cee6a7cf5b37bf2dca7c979af356d0a31cbc5c85605c7d
         );
         bytes memory data;
         NamespaceNode memory node = leafDigest(nid, data);
@@ -33,7 +33,7 @@ contract TreeHasherTest is DSTest {
         NamespaceNode memory expected = NamespaceNode(
             nid,
             nid,
-            0x2f8203f6673f9dffe69ca0b64e530656eb7445b062f69c32e2163931e637a659
+            0x7c5146e5a2fe11d16375bfebe907722d77fad468411a2704f3863e41993186bb
         );
         bytes memory data = hex"69";
         NamespaceNode memory node = leafDigest(nid, data);
