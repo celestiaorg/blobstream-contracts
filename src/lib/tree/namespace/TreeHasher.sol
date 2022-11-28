@@ -30,7 +30,7 @@ function namespaceMax(bytes8 l, bytes8 r) pure returns (bytes8) {
 /// @dev More details in https://github.com/celestiaorg/celestia-specs/blob/master/src/specs/data_structures.md#namespace-merkle-tree
 // solhint-disable-next-line func-visibility
 function leafDigest(bytes8 minmaxNID, bytes memory data) pure returns (NamespaceNode memory) {
-    bytes32 digest = sha256(abi.encodePacked(Constants.LEAF_PREFIX, minmaxNID, minmaxNID, data));
+    bytes32 digest = sha256(abi.encodePacked(Constants.LEAF_PREFIX, minmaxNID, data));
     NamespaceNode memory node = NamespaceNode(minmaxNID, minmaxNID, digest);
     return node;
 }
