@@ -78,8 +78,8 @@ contract NamespaceMerkleMultiproofTest is DSTest {
             0xb3da10c55a205c40528dd8a65e5be607e8a08d5a02198fdd6407419ae3c373c9
         );
 
-        uint256 beginKey = 0;
-        uint256 endKey = 1;
+        uint256 beginKey = 1;
+        uint256 endKey = 3;
         uint256 numLeaves = 8;
         NamespaceMerkleMultiproof memory proof = NamespaceMerkleMultiproof(beginKey, endKey, sideNodes, numLeaves);
         bytes[] memory data = new bytes[](2);
