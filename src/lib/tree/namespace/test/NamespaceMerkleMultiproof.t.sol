@@ -56,47 +56,35 @@ contract NamespaceMerkleMultiproofTest is DSTest {
     /// @notice Verify inclusion of leaves 0 and 1.
     function testVerifyMulti01() external {
         bytes8 nid = 0x0000000000000000;
-        NamespaceNode memory root = NamespaceNode(nid, nid, sha256(""));
-        NamespaceNode[] memory sideNodes;
-        uint256 keyBegin = 0;
-        uint256 keyEnd = 0;
-        uint256 numLeaves = 0;
-        NamespaceMerkleMultiproof memory proof = NamespaceMerkleMultiproof(keyBegin, keyEnd, sideNodes, numLeaves);
-        bytes[] memory data;
-        bool isValid = NamespaceMerkleTree.verifyMulti(root, proof, nid, data);
-        assertTrue(!isValid);
-    }
-
-    /// @notice Verify inclusion of leaves 0 and 1.
-    function testVerifyMulti01() external {
-        bytes8 nid = 0x0000000000000000;
         NamespaceNode memory root = NamespaceNode(
             0x0000000000000010,
             0x0000000000000040,
-            0x16c760661bc5ed683d27dc2f045a81a67e837928527e0de209a195b6db60f462
+            0x02f1d195cf45f96f9bf0875cb3a8aedff5df35605fb3f50ce52a272c30822466
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](3);
         sideNodes[0] = NamespaceNode(
-            0x0000000000000020,
-            0x0000000000000020,
-            0xf4653e02dfeff8eddbcf1c7230dfea1dd45b7bcc2fb1ce6d04c33f2229e10f6b
+            0x0000000000000010,
+            0x0000000000000010,
+            0x531d57c729081d903721f7584b2fa031c8308918779e47d9ef68991b7a30eadf
         );
         sideNodes[1] = NamespaceNode(
-            0x0000000000000030,
-            0x0000000000000040,
-            0x3f8ded56b6a8d4e1e36832e8be93234e2e3a18c1a42edfb505ecc09f0039a10f
+            0x0000000000000010,
+            0x0000000000000010,
+            0x47ea271b50de032f8b021550f19350a09dc8d0e2372d1c2d876794487517f16e
         );
         sideNodes[2] = NamespaceNode(
             Constants.PARITY_SHARE_NAMESPACE_ID,
             Constants.PARITY_SHARE_NAMESPACE_ID,
-            0x27209d167edf7ea1463f462b850471ce31b124b0b3405c33f9c39e692c9170da
+            0xb3da10c55a205c40528dd8a65e5be607e8a08d5a02198fdd6407419ae3c373c9
         );
 
         uint256 beginKey = 0;
         uint256 endKey = 1;
         uint256 numLeaves = 8;
         NamespaceMerkleMultiproof memory proof = NamespaceMerkleMultiproof(beginKey, endKey, sideNodes, numLeaves);
-        bytes memory data = hex"01";
+        bytes[] memory data = new bytes[](2);
+        data[0] = hex"02";
+        data[1] = hex"03";
         bool isValid = NamespaceMerkleTree.verifyMulti(root, proof, nid, data);
         assertTrue(isValid);
     }
