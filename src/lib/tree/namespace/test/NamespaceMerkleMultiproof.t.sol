@@ -55,7 +55,7 @@ contract NamespaceMerkleMultiproofTest is DSTest {
 
     /// @notice Verify inclusion of leaves 0 and 1.
     function testVerifyMulti01() external {
-        bytes8 nid = 0x0000000000000000;
+        bytes8 nid = 0x0000000000000010;
         NamespaceNode memory root = NamespaceNode(
             0x0000000000000010,
             0x0000000000000040,
