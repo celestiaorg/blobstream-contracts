@@ -43,13 +43,13 @@ make devtools
 Build with:
 
 ```sh
-forge build
+forge build --via-ir
 ```
 
 Test with:
 
 ```sh
-forge test
+forge test --via-ir
 ```
 
 ### Regenerate Go Wrappers
