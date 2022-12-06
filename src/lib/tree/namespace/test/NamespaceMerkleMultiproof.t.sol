@@ -58,7 +58,7 @@ contract NamespaceMerkleMultiproofTest is DSTest {
         bytes8 nid = 0x0000000000000010;
         NamespaceNode memory root = NamespaceNode(
             0x0000000000000010,
-            0x0000000000000040,
+            0x0000000000000010,
             0x02f1d195cf45f96f9bf0875cb3a8aedff5df35605fb3f50ce52a272c30822466
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](3);
