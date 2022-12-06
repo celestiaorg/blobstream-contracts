@@ -179,8 +179,16 @@ library NamespaceMerkleTree {
         if (proofRangeSubtreeEstimate < 1) {
             proofRangeSubtreeEstimate = 1;
         }
-        (NamespaceNode memory rootHash, ) = _computeRoot(proof, leafNodes, 0, proofRangeSubtreeEstimate);
-        for (uint256 i = 0; i < proof.sideNodes.length; ++i) {
+
+        (NamespaceNode memory rootHash, uint256 proofHead, , ) = _computeRoot(
+            proof,
+            leafNodes,
+            0,
+            proofRangeSubtreeEstimate,
+            0,
+            0
+        );
+        for (uint256 i = proofHead; i < proof.sideNodes.length; ++i) {
             rootHash = nodeDigest(rootHash, proof.sideNodes[i]);
         }
 
@@ -204,7 +212,7 @@ library NamespaceMerkleTree {
         uint256 mask = 1;
         uint256 count = 0;
 
-        while (mask & x == 0) {
+        while (x != 0 && mask & x == 0) {
             count++;
             x >>= 1;
         }
@@ -243,51 +251,123 @@ library NamespaceMerkleTree {
         NamespaceMerkleMultiproof memory proof,
         NamespaceNode[] memory leafNodes,
         uint256 begin,
-        uint256 end
-    ) private pure returns (NamespaceNode memory, bool isNil) {
+        uint256 end,
+        uint256 headProof,
+        uint256 headLeaves
+    )
+        private
+        pure
+        returns (
+            NamespaceNode memory,
+            uint256,
+            uint256,
+            bool
+        )
+    {
         // reached a leaf
         if (end - begin == 1) {
             // if current range overlaps with proof range, pop and return a leaf
             if (proof.beginKey <= begin && begin < proof.endKey) {
-                NamespaceNode memory leafNode = leafNodes[begin];
-                return (leafNode, false);
+                // Note: second return value is guaranteed to be `false` by
+                // construction.
+                return _popLeavesIfNonEmpty(leafNodes, headLeaves, leafNodes.length, headProof);
             }
 
             // if current range does not overlap with proof range,
             // pop and return a proof node (leaf) if present,
             // else return nil because leaf doesn't exist
-            return _popIfNonEmpty(proof.sideNodes, begin, end);
+            return _popProofIfNonEmpty(proof.sideNodes, headProof, end, headLeaves);
         }
 
         // if current range does not overlap with proof range,
         // pop and return a proof node if present,
         // else return nil because subtree doesn't exist
         if (end <= proof.beginKey || begin >= proof.endKey) {
-            return _popIfNonEmpty(proof.sideNodes, begin, end);
+            return _popProofIfNonEmpty(proof.sideNodes, headProof, end, headLeaves);
         }
 
         // Recursively get left and right subtree
         uint256 k = _getSplitPoint(end - begin);
-        (NamespaceNode memory left, ) = _computeRoot(proof, leafNodes, begin, begin + k);
-        (NamespaceNode memory right, bool rightIsNil) = _computeRoot(proof, leafNodes, begin + k, end);
+        (NamespaceNode memory left, uint256 newHeadProofLeft, uint256 newHeadLeavesLeft, ) = _computeRoot(
+            proof,
+            leafNodes,
+            begin,
+            begin + k,
+            headProof,
+            headLeaves
+        );
+        (NamespaceNode memory right, uint256 newHeadProof, uint256 newHeadLeaves, bool rightIsNil) = _computeRoot(
+            proof,
+            leafNodes,
+            begin + k,
+            end,
+            newHeadProofLeft,
+            newHeadLeavesLeft
+        );
 
         // only right leaf/subtree can be non-existent
         if (rightIsNil == true) {
-            return (left, false);
+            return (left, newHeadProof, newHeadLeaves, false);
         }
         NamespaceNode memory hash = nodeDigest(left, right);
-        return (hash, false);
+        return (hash, newHeadProof, newHeadLeaves, false);
+    }
+
+    function _popLeavesIfNonEmpty(
+        NamespaceNode[] memory nodes,
+        uint256 headLeaves,
+        uint256 end,
+        uint256 headProof
+    )
+        private
+        pure
+        returns (
+            NamespaceNode memory,
+            uint256,
+            uint256,
+            bool
+        )
+    {
+        (NamespaceNode memory node, uint256 newHead, bool isNil) = _popIfNonEmpty(nodes, headLeaves, end);
+        return (node, headProof, newHead, isNil);
+    }
+
+    function _popProofIfNonEmpty(
+        NamespaceNode[] memory nodes,
+        uint256 headProof,
+        uint256 end,
+        uint256 headLeaves
+    )
+        private
+        pure
+        returns (
+            NamespaceNode memory,
+            uint256,
+            uint256,
+            bool
+        )
+    {
+        (NamespaceNode memory node, uint256 newHead, bool isNil) = _popIfNonEmpty(nodes, headProof, end);
+        return (node, newHead, headLeaves, isNil);
     }
 
     function _popIfNonEmpty(
-        NamespaceNode[] memory sideNodes,
-        uint256 begin,
+        NamespaceNode[] memory nodes,
+        uint256 head,
         uint256 end
-    ) private pure returns (NamespaceNode memory, bool isNil) {
-        if (sideNodes.length == 0 || begin >= end) {
+    )
+        private
+        pure
+        returns (
+            NamespaceNode memory,
+            uint256,
+            bool
+        )
+    {
+        if (nodes.length == 0 || head >= nodes.length || head >= end) {
             NamespaceNode memory node;
-            return (node, true);
+            return (node, head, true);
         }
-        return (sideNodes[begin], false);
+        return (nodes[head], head + 1, false);
     }
 }
