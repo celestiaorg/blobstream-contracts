@@ -240,7 +240,10 @@ library NamespaceMerkleTree {
     /// @notice Returns the largest power of 2 less than `x`.
     /// @param x Number.
     function _getSplitPoint(uint256 x) private pure returns (uint256) {
-        // TODO should this return an error instead?
+        // Note: since `x` is always an unsigned int * 2, the only way for this
+        // to be violated is if the input == 0. Since the input is the end
+        // index exclusive, an input of 0 is guaranteed to be invalid (it would
+        // be a proof of inclusion of nothing, which is vacuous).
         require(x >= 1);
 
         uint256 bitLen = _bitsLen(x);
