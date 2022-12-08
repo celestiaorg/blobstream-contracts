@@ -27,4 +27,4 @@ jobs:
           version: nightly
       - name: Run forge test
         working-directory: ./
-        run: forge test --via-ir
+        run: forge test
