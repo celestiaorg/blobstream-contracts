@@ -133,33 +133,33 @@ library NamespaceMerkleTree {
         return namespaceNodeEquals(root, node);
     }
 
-    /// @notice Verify if elements exists in Merkle tree, given data, proof, and root.
+    /// @notice Verify if elements exists in Merkle tree, given leaves, mutliproof, and root.
     /// @param root The root of the tree in which the given leaves are verified.
     /// @param proof Namespace Merkle multiproof for the leaves.
     /// @param minmaxNID Namespace ID of the leaves. All leaves must have the same namespace ID.
-    /// @param data The data of the leaves to verify.
+    /// @param data The leaves to verify. Note: leaf data must be the _entire_ share (including namespace ID prefixing).
     /// @return `true` if the proof is valid, `false` otherwise.
-    /// @dev proof.numLeaves is necessary to determine height of subtree containing the data to prove.
     function verifyMulti(
         NamespaceNode memory root,
         NamespaceMerkleMultiproof memory proof,
         bytes8 minmaxNID,
         bytes[] memory data
     ) internal pure returns (bool) {
+        // Hash all the leaves to get leaf nodes.
         NamespaceNode[] memory nodes = new NamespaceNode[](data.length);
         for (uint256 i = 0; i < data.length; ++i) {
             nodes[i] = leafDigest(minmaxNID, data[i]);
         }
 
+        // Verify inclusion of leaf nodes.
         return verifyMultiHashes(root, proof, nodes);
     }
 
-    /// @notice Verify if leaf hashes exists in Merkle tree, given leaf hashes, proof, and root.
-    /// @param root The root of the tree in which the given leaf hashes are verified.
+    /// @notice Verify if leaf hashes exists in Merkle tree, given leaf nodes, multiproof, and root.
+    /// @param root The root of the tree in which the given leaf nodes are verified.
     /// @param proof Namespace Merkle multiproof for the leaves.
     /// @param leafNodes The leaf nodes to verify.
     /// @return `true` if the proof is valid, `false` otherwise.
-    /// @dev proof.numLeaves is necessary to determine height of subtree containing the data to prove.
     function verifyMultiHashes(
         NamespaceNode memory root,
         NamespaceMerkleMultiproof memory proof,

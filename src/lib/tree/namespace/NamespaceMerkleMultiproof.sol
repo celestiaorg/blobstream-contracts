@@ -11,6 +11,4 @@ struct NamespaceMerkleMultiproof {
     uint256 endKey;
     // List of side nodes to verify and calculate tree.
     NamespaceNode[] sideNodes;
-    // The number of leaves in the tree.
-    uint256 numLeaves;
 }
