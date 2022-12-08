@@ -133,7 +133,7 @@ library NamespaceMerkleTree {
         return namespaceNodeEquals(root, node);
     }
 
-    /// @notice Verify if elements exists in Merkle tree, given leaves, mutliproof, and root.
+    /// @notice Verify if contiguous elements exists in Merkle tree, given leaves, mutliproof, and root.
     /// @param root The root of the tree in which the given leaves are verified.
     /// @param proof Namespace Merkle multiproof for the leaves.
     /// @param minmaxNID Namespace ID of the leaves. All leaves must have the same namespace ID.
@@ -155,7 +155,7 @@ library NamespaceMerkleTree {
         return verifyMultiHashes(root, proof, nodes);
     }
 
-    /// @notice Verify if leaf hashes exists in Merkle tree, given leaf nodes, multiproof, and root.
+    /// @notice Verify if contiguous leaf hashes exists in Merkle tree, given leaf nodes, multiproof, and root.
     /// @param root The root of the tree in which the given leaf nodes are verified.
     /// @param proof Namespace Merkle multiproof for the leaves.
     /// @param leafNodes The leaf nodes to verify.
@@ -195,8 +195,10 @@ library NamespaceMerkleTree {
         return namespaceNodeEquals(rootHash, root);
     }
 
-    /// @notice Returns the size of the subtree adjacent to begin that does not
-    /// overlap end.
+    /// @notice Returns the size of the subtree adjacent to `begin` that does
+    /// not overlap `end`.
+    /// @param begin Begin index, inclusive.
+    /// @param end End index, exclusive.
     function _nextSubtreeSize(uint256 begin, uint256 end) private pure returns (uint256) {
         uint256 ideal = _bitsTrailingZeroes(begin);
         uint256 max = _bitsLen(end - begin) - 1;
@@ -206,8 +208,9 @@ library NamespaceMerkleTree {
         return 1 << ideal;
     }
 
-    /// @notice Returns the number of trailing zero bits in x; the result is
-    /// 256 for x == 0.
+    /// @notice Returns the number of trailing zero bits in `x`; the result is
+    /// 256 for `x` == 0.
+    /// @param x Number.
     function _bitsTrailingZeroes(uint256 x) private pure returns (uint256) {
         uint256 mask = 1;
         uint256 count = 0;
@@ -220,8 +223,9 @@ library NamespaceMerkleTree {
         return count;
     }
 
-    /// @notice Returns the minimum number of bits required to represent x; the
-    /// result is 0 for x == 0.
+    /// @notice Returns the minimum number of bits required to represent `x`; the
+    /// result is 0 for `x` == 0.
+    /// @param x Number.
     function _bitsLen(uint256 x) private pure returns (uint256) {
         uint256 count = 0;
 
@@ -233,20 +237,31 @@ library NamespaceMerkleTree {
         return count;
     }
 
-    /// @notice Returns the largest power of 2 less than length.
-    function _getSplitPoint(uint256 length) private pure returns (uint256) {
+    /// @notice Returns the largest power of 2 less than `x`.
+    /// @param x Number.
+    function _getSplitPoint(uint256 x) private pure returns (uint256) {
         // TODO should this return an error instead?
-        require(length >= 1);
+        require(x >= 1);
 
-        uint256 bitLen = _bitsLen(length);
+        uint256 bitLen = _bitsLen(x);
         uint256 k = 1 << (bitLen - 1);
-        if (k == length) {
+        if (k == x) {
             k >>= 1;
         }
         return k;
     }
 
     /// @notice Computes the NMT root recursively.
+    /// @param proof Namespace Merkle multiproof for the leaves.
+    /// @param leafNodes Leaf nodes for which inclusion is proven.
+    /// @param begin Begin index, inclusive.
+    /// @param end End index, exclusive.
+    /// @param headProof Internal detail: head of proof sidenodes array. Used for recursion. Set to `0` on first call.
+    /// @param headLeaves Internal detail: head of leaves array. Used for recursion. Set to `0` on first call.
+    /// @return _ Subtree root.
+    /// @return _ New proof sidenodes array head. Used for recursion.
+    /// @return _ New leaves array head. Used for recursion.
+    /// @return _ If the subtree root is "nil."
     function _computeRoot(
         NamespaceMerkleMultiproof memory proof,
         NamespaceNode[] memory leafNodes,
@@ -313,6 +328,15 @@ library NamespaceMerkleTree {
         return (hash, newHeadProof, newHeadLeaves, false);
     }
 
+    /// @notice Pop from the leaf nodes array slice if it's not empty.
+    /// @param nodes Entire leaf nodes array.
+    /// @param headLeaves Head of leaf nodes array slice.
+    /// @param end End of leaf nodes array slice.
+    /// @param headProof Used only to return for recursion.
+    /// @return _ Popped node.
+    /// @return _ Head of proof sidenodes array slice (unchanged).
+    /// @return _ New head of leaf nodes array slice.
+    /// @return _ If the popped node is "nil."
     function _popLeavesIfNonEmpty(
         NamespaceNode[] memory nodes,
         uint256 headLeaves,
@@ -332,6 +356,15 @@ library NamespaceMerkleTree {
         return (node, headProof, newHead, isNil);
     }
 
+    /// @notice Pop from the proof sidenodes array slice if it's not empty.
+    /// @param nodes Entire proof sidenodes array.
+    /// @param headLeaves Head of proof sidenodes array slice.
+    /// @param end End of proof sidenodes array slice.
+    /// @param headProof Used only to return for recursion.
+    /// @return _ Popped node.
+    /// @return _ New head of proof sidenodes array slice.
+    /// @return _ Head of proof sidenodes array slice (unchanged).
+    /// @return _ If the popped node is "nil."
     function _popProofIfNonEmpty(
         NamespaceNode[] memory nodes,
         uint256 headProof,
@@ -351,6 +384,13 @@ library NamespaceMerkleTree {
         return (node, newHead, headLeaves, isNil);
     }
 
+    /// @notice Pop from an array slice if it's not empty.
+    /// @param nodes Entire array.
+    /// @param head Head of array slice.
+    /// @param end End of array slice.
+    /// @return _ Popped node.
+    /// @return _ New head of array slice.
+    /// @return _ If the popped node is "nil."
     function _popIfNonEmpty(
         NamespaceNode[] memory nodes,
         uint256 head,
