@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import "../Constants.sol";
 import "../Utils.sol";
 import "./NamespaceMerkleProof.sol";
+import "./NamespaceMerkleMultiproof.sol";
 import "./NamespaceNode.sol";
 import "./TreeHasher.sol";
 
@@ -130,5 +131,286 @@ library NamespaceMerkleTree {
         }
 
         return namespaceNodeEquals(root, node);
+    }
+
+    /// @notice Verify if contiguous elements exists in Merkle tree, given leaves, mutliproof, and root.
+    /// @param root The root of the tree in which the given leaves are verified.
+    /// @param proof Namespace Merkle multiproof for the leaves.
+    /// @param minmaxNID Namespace ID of the leaves. All leaves must have the same namespace ID.
+    /// @param data The leaves to verify. Note: leaf data must be the _entire_ share (including namespace ID prefixing).
+    /// @return `true` if the proof is valid, `false` otherwise.
+    function verifyMulti(
+        NamespaceNode memory root,
+        NamespaceMerkleMultiproof memory proof,
+        bytes8 minmaxNID,
+        bytes[] memory data
+    ) internal pure returns (bool) {
+        // Hash all the leaves to get leaf nodes.
+        NamespaceNode[] memory nodes = new NamespaceNode[](data.length);
+        for (uint256 i = 0; i < data.length; ++i) {
+            nodes[i] = leafDigest(minmaxNID, data[i]);
+        }
+
+        // Verify inclusion of leaf nodes.
+        return verifyMultiHashes(root, proof, nodes);
+    }
+
+    /// @notice Verify if contiguous leaf hashes exists in Merkle tree, given leaf nodes, multiproof, and root.
+    /// @param root The root of the tree in which the given leaf nodes are verified.
+    /// @param proof Namespace Merkle multiproof for the leaves.
+    /// @param leafNodes The leaf nodes to verify.
+    /// @return `true` if the proof is valid, `false` otherwise.
+    function verifyMultiHashes(
+        NamespaceNode memory root,
+        NamespaceMerkleMultiproof memory proof,
+        NamespaceNode[] memory leafNodes
+    ) internal pure returns (bool) {
+        uint256 leafIndex = 0;
+        NamespaceNode[] memory leftSubtrees = new NamespaceNode[](proof.sideNodes.length);
+
+        for (uint256 i = 0; leafIndex != proof.beginKey && i < proof.sideNodes.length; ++i) {
+            uint256 subtreeSize = _nextSubtreeSize(leafIndex, proof.beginKey);
+            leftSubtrees[i] = proof.sideNodes[i];
+            leafIndex += subtreeSize;
+        }
+
+        // estimate the leaf size of the subtree containing the proof range
+        uint256 proofRangeSubtreeEstimate = _getSplitPoint(proof.endKey) * 2;
+        if (proofRangeSubtreeEstimate < 1) {
+            proofRangeSubtreeEstimate = 1;
+        }
+
+        (NamespaceNode memory rootHash, uint256 proofHead, , ) = _computeRoot(
+            proof,
+            leafNodes,
+            0,
+            proofRangeSubtreeEstimate,
+            0,
+            0
+        );
+        for (uint256 i = proofHead; i < proof.sideNodes.length; ++i) {
+            rootHash = nodeDigest(rootHash, proof.sideNodes[i]);
+        }
+
+        return namespaceNodeEquals(rootHash, root);
+    }
+
+    /// @notice Returns the size of the subtree adjacent to `begin` that does
+    /// not overlap `end`.
+    /// @param begin Begin index, inclusive.
+    /// @param end End index, exclusive.
+    function _nextSubtreeSize(uint256 begin, uint256 end) private pure returns (uint256) {
+        uint256 ideal = _bitsTrailingZeroes(begin);
+        uint256 max = _bitsLen(end - begin) - 1;
+        if (ideal > max) {
+            return 1 << max;
+        }
+        return 1 << ideal;
+    }
+
+    /// @notice Returns the number of trailing zero bits in `x`; the result is
+    /// 256 for `x` == 0.
+    /// @param x Number.
+    function _bitsTrailingZeroes(uint256 x) private pure returns (uint256) {
+        uint256 mask = 1;
+        uint256 count = 0;
+
+        while (x != 0 && mask & x == 0) {
+            count++;
+            x >>= 1;
+        }
+
+        return count;
+    }
+
+    /// @notice Returns the minimum number of bits required to represent `x`; the
+    /// result is 0 for `x` == 0.
+    /// @param x Number.
+    function _bitsLen(uint256 x) private pure returns (uint256) {
+        uint256 count = 0;
+
+        while (x != 0) {
+            count++;
+            x >>= 1;
+        }
+
+        return count;
+    }
+
+    /// @notice Returns the largest power of 2 less than `x`.
+    /// @param x Number.
+    function _getSplitPoint(uint256 x) private pure returns (uint256) {
+        // Note: since `x` is always an unsigned int * 2, the only way for this
+        // to be violated is if the input == 0. Since the input is the end
+        // index exclusive, an input of 0 is guaranteed to be invalid (it would
+        // be a proof of inclusion of nothing, which is vacuous).
+        require(x >= 1);
+
+        uint256 bitLen = _bitsLen(x);
+        uint256 k = 1 << (bitLen - 1);
+        if (k == x) {
+            k >>= 1;
+        }
+        return k;
+    }
+
+    /// @notice Computes the NMT root recursively.
+    /// @param proof Namespace Merkle multiproof for the leaves.
+    /// @param leafNodes Leaf nodes for which inclusion is proven.
+    /// @param begin Begin index, inclusive.
+    /// @param end End index, exclusive.
+    /// @param headProof Internal detail: head of proof sidenodes array. Used for recursion. Set to `0` on first call.
+    /// @param headLeaves Internal detail: head of leaves array. Used for recursion. Set to `0` on first call.
+    /// @return _ Subtree root.
+    /// @return _ New proof sidenodes array head. Used for recursion.
+    /// @return _ New leaves array head. Used for recursion.
+    /// @return _ If the subtree root is "nil."
+    function _computeRoot(
+        NamespaceMerkleMultiproof memory proof,
+        NamespaceNode[] memory leafNodes,
+        uint256 begin,
+        uint256 end,
+        uint256 headProof,
+        uint256 headLeaves
+    )
+        private
+        pure
+        returns (
+            NamespaceNode memory,
+            uint256,
+            uint256,
+            bool
+        )
+    {
+        // reached a leaf
+        if (end - begin == 1) {
+            // if current range overlaps with proof range, pop and return a leaf
+            if (proof.beginKey <= begin && begin < proof.endKey) {
+                // Note: second return value is guaranteed to be `false` by
+                // construction.
+                return _popLeavesIfNonEmpty(leafNodes, headLeaves, leafNodes.length, headProof);
+            }
+
+            // if current range does not overlap with proof range,
+            // pop and return a proof node (leaf) if present,
+            // else return nil because leaf doesn't exist
+            return _popProofIfNonEmpty(proof.sideNodes, headProof, end, headLeaves);
+        }
+
+        // if current range does not overlap with proof range,
+        // pop and return a proof node if present,
+        // else return nil because subtree doesn't exist
+        if (end <= proof.beginKey || begin >= proof.endKey) {
+            return _popProofIfNonEmpty(proof.sideNodes, headProof, end, headLeaves);
+        }
+
+        // Recursively get left and right subtree
+        uint256 k = _getSplitPoint(end - begin);
+        (NamespaceNode memory left, uint256 newHeadProofLeft, uint256 newHeadLeavesLeft, ) = _computeRoot(
+            proof,
+            leafNodes,
+            begin,
+            begin + k,
+            headProof,
+            headLeaves
+        );
+        (NamespaceNode memory right, uint256 newHeadProof, uint256 newHeadLeaves, bool rightIsNil) = _computeRoot(
+            proof,
+            leafNodes,
+            begin + k,
+            end,
+            newHeadProofLeft,
+            newHeadLeavesLeft
+        );
+
+        // only right leaf/subtree can be non-existent
+        if (rightIsNil == true) {
+            return (left, newHeadProof, newHeadLeaves, false);
+        }
+        NamespaceNode memory hash = nodeDigest(left, right);
+        return (hash, newHeadProof, newHeadLeaves, false);
+    }
+
+    /// @notice Pop from the leaf nodes array slice if it's not empty.
+    /// @param nodes Entire leaf nodes array.
+    /// @param headLeaves Head of leaf nodes array slice.
+    /// @param end End of leaf nodes array slice.
+    /// @param headProof Used only to return for recursion.
+    /// @return _ Popped node.
+    /// @return _ Head of proof sidenodes array slice (unchanged).
+    /// @return _ New head of leaf nodes array slice.
+    /// @return _ If the popped node is "nil."
+    function _popLeavesIfNonEmpty(
+        NamespaceNode[] memory nodes,
+        uint256 headLeaves,
+        uint256 end,
+        uint256 headProof
+    )
+        private
+        pure
+        returns (
+            NamespaceNode memory,
+            uint256,
+            uint256,
+            bool
+        )
+    {
+        (NamespaceNode memory node, uint256 newHead, bool isNil) = _popIfNonEmpty(nodes, headLeaves, end);
+        return (node, headProof, newHead, isNil);
+    }
+
+    /// @notice Pop from the proof sidenodes array slice if it's not empty.
+    /// @param nodes Entire proof sidenodes array.
+    /// @param headLeaves Head of proof sidenodes array slice.
+    /// @param end End of proof sidenodes array slice.
+    /// @param headProof Used only to return for recursion.
+    /// @return _ Popped node.
+    /// @return _ New head of proof sidenodes array slice.
+    /// @return _ Head of proof sidenodes array slice (unchanged).
+    /// @return _ If the popped node is "nil."
+    function _popProofIfNonEmpty(
+        NamespaceNode[] memory nodes,
+        uint256 headProof,
+        uint256 end,
+        uint256 headLeaves
+    )
+        private
+        pure
+        returns (
+            NamespaceNode memory,
+            uint256,
+            uint256,
+            bool
+        )
+    {
+        (NamespaceNode memory node, uint256 newHead, bool isNil) = _popIfNonEmpty(nodes, headProof, end);
+        return (node, newHead, headLeaves, isNil);
+    }
+
+    /// @notice Pop from an array slice if it's not empty.
+    /// @param nodes Entire array.
+    /// @param head Head of array slice.
+    /// @param end End of array slice.
+    /// @return _ Popped node.
+    /// @return _ New head of array slice.
+    /// @return _ If the popped node is "nil."
+    function _popIfNonEmpty(
+        NamespaceNode[] memory nodes,
+        uint256 head,
+        uint256 end
+    )
+        private
+        pure
+        returns (
+            NamespaceNode memory,
+            uint256,
+            bool
+        )
+    {
+        if (nodes.length == 0 || head >= nodes.length || head >= end) {
+            NamespaceNode memory node;
+            return (node, head, true);
+        }
+        return (nodes[head], head + 1, false);
     }
 }
