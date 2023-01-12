@@ -134,7 +134,7 @@ contract RelayerTest is DSTest {
         t.dataRoot = newTuple;
 
         // verify that the tuple was committed to
-        bool committedTo = bridge.verifyAttestation(1, t, newTupleProof);
+        bool committedTo = bridge.verifyAttestation(nonce, t, newTupleProof);
         assertTrue(committedTo);
     }
 
