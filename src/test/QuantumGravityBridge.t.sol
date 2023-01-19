@@ -108,6 +108,8 @@ contract RelayerTest is DSTest {
         // data root tuple root nonce.
         uint256 nonce = 1;
         // commitment to a set of roots.
+        // these values were generated using the tendermint implementation of binary merkle trees:
+        // https://github.com/celestiaorg/celestia-core/blob/60310e7aa554bb76b735a010847a6613bcfe06e8/crypto/merkle/proof.go#L33-L48
         bytes32 newTupleRoot = 0x82dc1607d84557d3579ce602a45f5872e821c36dbda7ec926dfa17ebc8d5c013;
         // a data root committed to by the above tuple root.
         bytes32 newTuple = 0x0101010101010101010101010101010101010101010101010101010101010101;
