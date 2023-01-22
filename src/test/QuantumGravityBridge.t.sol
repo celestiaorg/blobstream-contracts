@@ -6,6 +6,7 @@ import "../lib/openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "../Constants.sol";
 import "../DataRootTuple.sol";
 import "../QuantumGravityBridge.sol";
+import "../lib/tree/binary/BinaryMerkleProof.sol";
 
 import "ds-test/test.sol";
 
@@ -91,6 +92,61 @@ contract RelayerTest is DSTest {
 
         assertEq(bridge.state_eventNonce(), nonce);
         assertEq(bridge.state_dataRootTupleRoots(nonce), newTupleRoot);
+    }
+
+    /*
+    the values used in the verify attestation test are in the format `<height padded to 32 bytes || data root>`, which
+    represent an encoded `abi.encode(DataRootTuple)`:
+
+    0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+    0x00000000000000000000000000000000000000000000000000000000000000010101010101010101010101010101010101010101010101010101010101010101
+    0x00000000000000000000000000000000000000000000000000000000000000020202020202020202020202020202020202020202020202020202020202020202
+    0x00000000000000000000000000000000000000000000000000000000000000030303030303030303030303030303030303030303030303030303030303030303
+    */
+    function testVerifyAttestation() public {
+        uint256 initialVelsetNonce = 0;
+        // data root tuple root nonce.
+        uint256 nonce = 1;
+        // commitment to a set of roots.
+        // these values were generated using the tendermint implementation of binary merkle trees:
+        // https://github.com/celestiaorg/celestia-core/blob/60310e7aa554bb76b735a010847a6613bcfe06e8/crypto/merkle/proof.go#L33-L48
+        bytes32 newTupleRoot = 0x82dc1607d84557d3579ce602a45f5872e821c36dbda7ec926dfa17ebc8d5c013;
+        // a data root committed to by the above tuple root.
+        bytes32 newTuple = 0x0101010101010101010101010101010101010101010101010101010101010101;
+        // the height of the data root.
+        uint256 height = 1;
+        // the binary merkle proof of the data root to the data root tuple root.
+        bytes32[] memory sideNodes = new bytes32[](2);
+        sideNodes[0] = 0x98ce42deef51d40269d542f5314bef2c7468d401ad5d85168bfab4c0108f75f7;
+        sideNodes[1] = 0x575664048c9e64260eca2304d177b11d1566d0c954f1417fc76a4f9f27350063;
+        BinaryMerkleProof memory newTupleProof;
+        newTupleProof.sideNodes = sideNodes;
+        newTupleProof.key = 1;
+        newTupleProof.numLeaves = 4;
+
+        bytes32 newDataRootTupleRoot = domainSeparateDataRootTupleRoot(nonce, newTupleRoot);
+
+        // Signature for the update.
+        Signature[] memory sigs = new Signature[](1);
+        bytes32 digest_eip191 = ECDSA.toEthSignedMessageHash(newDataRootTupleRoot);
+        (uint8 v, bytes32 r, bytes32 s) = cheats.sign(testPriv1, digest_eip191);
+        sigs[0] = Signature(v, r, s);
+
+        Validator[] memory valSet = new Validator[](1);
+        valSet[0] = Validator(cheats.addr(testPriv1), votingPower);
+
+        bridge.submitDataRootTupleRoot(nonce, initialVelsetNonce, newTupleRoot, valSet, sigs);
+
+        assertEq(bridge.state_eventNonce(), nonce);
+        assertEq(bridge.state_dataRootTupleRoots(nonce), newTupleRoot);
+
+        DataRootTuple memory t;
+        t.height = height;
+        t.dataRoot = newTuple;
+
+        // verify that the tuple was committed to
+        bool committedTo = bridge.verifyAttestation(nonce, t, newTupleProof);
+        assertTrue(committedTo);
     }
 
     function computeValidatorSetHash(Validator[] memory _validators) private pure returns (bytes32) {
