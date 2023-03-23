@@ -177,9 +177,9 @@ library NamespaceMerkleTree {
         NamespaceMerkleMultiproof memory proof,
         NamespaceNode[] memory leafNodes
     ) internal pure returns (bool) {
+        uint256 leafIndex = 0;
         NamespaceNode[] memory leftSubtrees = new NamespaceNode[](proof.sideNodes.length);
 
-        uint256 leafIndex = 0;
         for (uint256 i = 0; leafIndex != proof.beginKey && i < proof.sideNodes.length; ++i) {
             uint256 subtreeSize = _nextSubtreeSize(leafIndex, proof.beginKey);
             leftSubtrees[i] = proof.sideNodes[i];
