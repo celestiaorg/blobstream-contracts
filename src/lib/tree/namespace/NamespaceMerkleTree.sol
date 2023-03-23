@@ -18,9 +18,9 @@ library NamespaceMerkleTree {
     /// @return `true` if the proof is valid, `false` otherwise.
     /// @dev proof.numLeaves is necessary to determine height of subtree containing the data to prove.
     function verify(NamespaceNode memory root, NamespaceMerkleProof memory proof, bytes8 minmaxNID, bytes memory data)
-    internal
-    pure
-    returns (bool)
+        internal
+        pure
+        returns (bool)
     {
         // A sibling at height 1 is created by getting the leafDigest of the original data.
         NamespaceNode memory node = leafDigest(minmaxNID, data);
@@ -157,9 +157,13 @@ library NamespaceMerkleTree {
     /// @notice An intermediate struct used to reduce the stack size of the internal
     /// tree operations.
     struct TreeResp {
+        // Subtree root.
         NamespaceNode subtreeRoot;
+        // New proof side-nodes array head. Used for recursion.
         uint256 sideNodesHead;
+        // New leaves array head. Used for recursion.
         uint256 leavesHead;
+        // If the subtree root is "nil."
         bool isSubtreeRootNil;
     }
 
@@ -259,11 +263,17 @@ library NamespaceMerkleTree {
     /// @notice A struct used to contain the _computeRoot parameters to reduce
     /// the stack size.
     struct ComputeRootParams {
+        // Namespace Merkle multi-proof for the leaves.
         NamespaceMerkleMultiproof proof;
+        // Leaf nodes for which inclusion is proven.
         NamespaceNode[] leafNodes;
+        // Begin index, inclusive.
         uint256 begin;
+        // End index, exclusive.
         uint256 end;
+        // Internal detail: head of proof side-nodes array. Used for recursion. Set to `0` on first call.
         uint256 headProof;
+        // Internal detail: head of leaves array. Used for recursion. Set to `0` on first call.
         uint256 headLeaves;
     }
 
@@ -278,7 +288,7 @@ library NamespaceMerkleTree {
                 // Note: second return value is guaranteed to be `false` by
                 // construction.
                 return
-                _popLeavesIfNonEmpty(params.leafNodes, params.headLeaves, params.leafNodes.length, params.headProof);
+                    _popLeavesIfNonEmpty(params.leafNodes, params.headLeaves, params.leafNodes.length, params.headProof);
             }
 
             // if current range does not overlap with proof range,
@@ -327,9 +337,9 @@ library NamespaceMerkleTree {
     /// @param headProof Used only to return for recursion.
     /// @return _ The intermediary tree response struct.
     function _popLeavesIfNonEmpty(NamespaceNode[] memory nodes, uint256 headLeaves, uint256 end, uint256 headProof)
-    private
-    pure
-    returns (TreeResp memory)
+        private
+        pure
+        returns (TreeResp memory)
     {
         (NamespaceNode memory node, uint256 newHead, bool isNil) = _popIfNonEmpty(nodes, headLeaves, end);
         return TreeResp(node, headProof, newHead, isNil);
@@ -342,9 +352,9 @@ library NamespaceMerkleTree {
     /// @param headProof Used only to return for recursion.
     /// @return _ The intermediary tree response struct.
     function _popProofIfNonEmpty(NamespaceNode[] memory nodes, uint256 headProof, uint256 end, uint256 headLeaves)
-    private
-    pure
-    returns (TreeResp memory)
+        private
+        pure
+        returns (TreeResp memory)
     {
         (NamespaceNode memory node, uint256 newHead, bool isNil) = _popIfNonEmpty(nodes, headProof, end);
         return TreeResp(node, newHead, headLeaves, isNil);
@@ -358,9 +368,9 @@ library NamespaceMerkleTree {
     /// @return _ New head of array slice.
     /// @return _ If the popped node is "nil."
     function _popIfNonEmpty(NamespaceNode[] memory nodes, uint256 head, uint256 end)
-    private
-    pure
-    returns (NamespaceNode memory, uint256, bool)
+        private
+        pure
+        returns (NamespaceNode memory, uint256, bool)
     {
         if (nodes.length == 0 || head >= nodes.length || head >= end) {
             NamespaceNode memory node;
