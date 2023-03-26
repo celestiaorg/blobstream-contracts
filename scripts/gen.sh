@@ -19,7 +19,7 @@ for file in "${@: 2}"; do
     contractName=$(basename "${file}" .sol)
 
     jq .abi < ../out/"${file}"/"${contractName}".json > ../out/"${file}"/"${contractName}".abi
-    jq .bytecode.object < ../out/"${file}"/"${contractName}".json | cut -d \" -f 2 > ../out/"${file}"/"${contractName}".bin
+    jq -r .bytecode.object < ../out/"${file}"/"${contractName}".json > ../out/"${file}"/"${contractName}".bin
 
     abigen --type=qgb --pkg wrappers \
         --out=../wrappers/"${file}"/wrapper.go \
