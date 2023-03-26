@@ -8,6 +8,6 @@ gen: solidity-wrappers
 
 SOLIDITY_DIR = .
 SOLIDITY_SRC_DIR = $(SOLIDITY_DIR)/src
-CONTRACTS = QuantumGravityBridge.sol
+CONTRACTS = QuantumGravityBridge.sol IDAOracle.sol
 solidity-wrappers:
-	SOLIDITY_SRC_DIR=$(SOLIDITY_SRC_DIR) CONTRACTS=$(CONTRACTS) /bin/bash ./scripts/gen.sh
+	./scripts/gen.sh $(SOLIDITY_SRC_DIR) $(CONTRACTS)

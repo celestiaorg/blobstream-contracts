@@ -2,13 +2,21 @@
 
 set -e
 
+if (( $# < 2 )); then
+    echo "Go wrappers generator script. Make sure to specify the following params:"
+    echo " - first parameter: the contracts source directory"
+    echo " - second parameter: the contracts names (including the .sol extension) separated by a space"
+    echo "the output files will be in the ./wrappers directory."
+    exit 1
+fi
+
 forge build > /dev/null
 
-cd "${SOLIDITY_SRC_DIR}"
+cd "$1"
 
-for file in "${CONTRACTS[@]}"; do
+for file in "${@: 2}"; do
     mkdir -p ../wrappers/"${file}"
-    contractName=$(echo "${file}" | cut -d . -f 1)
+    contractName=$(basename "${file}" .sol)
 
     jq .abi < ../out/"${file}"/"${contractName}".json > ../out/"${file}"/"${contractName}".abi
     jq .bytecode.object < ../out/"${file}"/"${contractName}".json | cut -d \" -f 2 > ../out/"${file}"/"${contractName}".bin
