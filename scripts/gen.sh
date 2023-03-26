@@ -6,8 +6,7 @@ forge build > /dev/null
 
 cd "${SOLIDITY_SRC_DIR}"
 
-for file in ${CONTRACTS}
-do
+for file in "${CONTRACTS[@]}"; do
     mkdir -p ../wrappers/"${file}"
     contractName=$(echo "${file}" | cut -d . -f 1)
 
