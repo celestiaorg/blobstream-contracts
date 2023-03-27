@@ -21,7 +21,7 @@ for file in "${@: 2}"; do
     jq .abi < ../out/"${file}"/"${contractName}".json > ../out/"${file}"/"${contractName}".abi
     jq -r .bytecode.object < ../out/"${file}"/"${contractName}".json > ../out/"${file}"/"${contractName}".bin
 
-    abigen --type=qgb --pkg wrappers \
+    abigen --pkg wrappers \
         --out=../wrappers/"${file}"/wrapper.go \
         --abi ../out/"${file}"/"${contractName}".abi \
         --bin ../out/"${file}"/"${contractName}".bin
