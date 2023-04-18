@@ -116,7 +116,7 @@ contract RelayerTest is DSTest {
         bytes32 newTuple = 0x0202020202020202020202020202020202020202020202020202020202020202;
         // the height of the data root.
         uint256 height = 2;
-        uint256 size = 32;
+        uint256 squareSize = 32;
         // the binary merkle proof of the data root to the data root tuple root.
         bytes32[] memory sideNodes = new bytes32[](2);
         sideNodes[0] = 0x1ce3b03bea51b24a60e147396ced1b7eec566129aa43ed98c5b5060b937b4ea8;
@@ -145,7 +145,7 @@ contract RelayerTest is DSTest {
         DataRootTuple memory t;
         t.height = height;
         t.dataRoot = newTuple;
-        t.squareSize = size;
+        t.squareSize = squareSize;
 
         // verify that the tuple was committed to
         bool committedTo = bridge.verifyAttestation(nonce, t, newTupleProof);
