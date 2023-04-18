@@ -96,7 +96,7 @@ contract RelayerTest is DSTest {
 
     /*
     the values used in the verify attestation test are in the format
-    `<height padded to 32 bytes || data root || original block size padded to 32 bytes>`,
+    `<height padded to 32 bytes || data root || original square size padded to 32 bytes>`,
     which represent an encoded `abi.encode(DataRootTuple)`:
 
     0x000000000000000000000000000000000000000000000000000000000000000101010101010101010101010101010101010101010101010101010101010101010000000000000000000000000000000000000000000000000000000000000020
