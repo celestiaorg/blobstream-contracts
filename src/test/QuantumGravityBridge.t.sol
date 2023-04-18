@@ -145,7 +145,7 @@ contract RelayerTest is DSTest {
         DataRootTuple memory t;
         t.height = height;
         t.dataRoot = newTuple;
-        t.blockSize = size;
+        t.squareSize = size;
 
         // verify that the tuple was committed to
         bool committedTo = bridge.verifyAttestation(nonce, t, newTupleProof);

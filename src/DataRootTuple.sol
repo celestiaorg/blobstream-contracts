@@ -11,6 +11,6 @@ struct DataRootTuple {
     uint256 height;
     // Data root.
     bytes32 dataRoot;
-    // Celestia original block size.
-    uint256 blockSize;
+    // Celestia block original square size.
+    uint256 squareSize;
 }
