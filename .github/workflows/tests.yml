@@ -25,6 +25,9 @@ jobs:
         uses: onbjerg/foundry-toolchain@v1
         with:
           version: nightly
+      - name: Check formatting
+        working-directory: ./
+        run: forge fmt --check
       - name: Run forge test
         working-directory: ./
         run: forge test

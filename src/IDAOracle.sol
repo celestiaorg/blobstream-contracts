@@ -11,9 +11,8 @@ interface IDAOracle {
     /// @param _tuple Data root tuple to prove inclusion of.
     /// @param _proof Binary Merkle tree proof that `tuple` is in the root at `_tupleRootNonce`.
     /// @return `true` is proof is valid, `false` otherwise.
-    function verifyAttestation(
-        uint256 _tupleRootNonce,
-        DataRootTuple memory _tuple,
-        BinaryMerkleProof memory _proof
-    ) external view returns (bool);
+    function verifyAttestation(uint256 _tupleRootNonce, DataRootTuple memory _tuple, BinaryMerkleProof memory _proof)
+        external
+        view
+        returns (bool);
 }

@@ -99,11 +99,7 @@ contract QuantumGravityBridge is IDAOracle {
     /// @param _validatorSetHash Initial validator set hash. This does not need
     /// to be the genesis validator set of the bridged chain, only the initial
     /// validator set of the bridge.
-    constructor(
-        uint256 _nonce,
-        uint256 _powerThreshold,
-        bytes32 _validatorSetHash
-    ) {
+    constructor(uint256 _nonce, uint256 _powerThreshold, bytes32 _validatorSetHash) {
         // CHECKS
 
         bytes32 newCheckpoint = domainSeparateValidatorSetHash(_nonce, _powerThreshold, _validatorSetHash);
@@ -126,11 +122,7 @@ contract QuantumGravityBridge is IDAOracle {
     }
 
     /// @notice Utility function to verify EIP-191 signatures.
-    function verifySig(
-        address _signer,
-        bytes32 _digest,
-        Signature calldata _sig
-    ) private pure returns (bool) {
+    function verifySig(address _signer, bytes32 _digest, Signature calldata _sig) private pure returns (bool) {
         bytes32 digest_eip191 = ECDSA.toEthSignedMessageHash(_digest);
 
         return _signer == ECDSA.recover(digest_eip191, _sig.v, _sig.r, _sig.s);
@@ -150,14 +142,13 @@ contract QuantumGravityBridge is IDAOracle {
     /// @param _nonce Nonce.
     /// @param _powerThreshold The voting power threshold.
     /// @param _validatorSetHash Validator set hash.
-    function domainSeparateValidatorSetHash(
-        uint256 _nonce,
-        uint256 _powerThreshold,
-        bytes32 _validatorSetHash
-    ) private pure returns (bytes32) {
-        bytes32 c = keccak256(
-            abi.encode(VALIDATOR_SET_HASH_DOMAIN_SEPARATOR, _nonce, _powerThreshold, _validatorSetHash)
-        );
+    function domainSeparateValidatorSetHash(uint256 _nonce, uint256 _powerThreshold, bytes32 _validatorSetHash)
+        private
+        pure
+        returns (bytes32)
+    {
+        bytes32 c =
+            keccak256(abi.encode(VALIDATOR_SET_HASH_DOMAIN_SEPARATOR, _nonce, _powerThreshold, _validatorSetHash));
 
         return c;
     }
@@ -168,13 +159,12 @@ contract QuantumGravityBridge is IDAOracle {
     ///     keccak256(DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, nonce, dataRootTupleRoot)
     /// @param _nonce Event nonce.
     /// @param _dataRootTupleRoot Data root tuple root.
-    function domainSeparateDataRootTupleRoot(
-        uint256 _nonce,
-        bytes32 _dataRootTupleRoot
-    ) private pure returns (bytes32) {
-        bytes32 c = keccak256(
-            abi.encode(DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _nonce, _dataRootTupleRoot)
-        );
+    function domainSeparateDataRootTupleRoot(uint256 _nonce, bytes32 _dataRootTupleRoot)
+        private
+        pure
+        returns (bytes32)
+    {
+        bytes32 c = keccak256(abi.encode(DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _nonce, _dataRootTupleRoot));
 
         return c;
     }
@@ -261,18 +251,14 @@ contract QuantumGravityBridge is IDAOracle {
         // Check that the supplied current validator set matches the saved checkpoint.
         bytes32 currentValidatorSetHash = computeValidatorSetHash(_currentValidatorSet);
         if (
-            domainSeparateValidatorSetHash(_oldNonce, currentPowerThreshold, currentValidatorSetHash) !=
-            state_lastValidatorSetCheckpoint
+            domainSeparateValidatorSetHash(_oldNonce, currentPowerThreshold, currentValidatorSetHash)
+                != state_lastValidatorSetCheckpoint
         ) {
             revert SuppliedValidatorSetInvalid();
         }
 
         // Check that enough current validators have signed off on the new validator set.
-        bytes32 newCheckpoint = domainSeparateValidatorSetHash(
-            _newNonce,
-            _newPowerThreshold,
-            _newValidatorSetHash
-        );
+        bytes32 newCheckpoint = domainSeparateValidatorSetHash(_newNonce, _newPowerThreshold, _newValidatorSetHash);
         checkValidatorSignatures(_currentValidatorSet, _sigs, newCheckpoint, currentPowerThreshold);
 
         // EFFECTS
@@ -329,11 +315,8 @@ contract QuantumGravityBridge is IDAOracle {
         // Check that the supplied current validator set matches the saved checkpoint.
         bytes32 currentValidatorSetHash = computeValidatorSetHash(_currentValidatorSet);
         if (
-            domainSeparateValidatorSetHash(
-                _validatorSetNonce,
-                currentPowerThreshold,
-                currentValidatorSetHash
-            ) != state_lastValidatorSetCheckpoint
+            domainSeparateValidatorSetHash(_validatorSetNonce, currentPowerThreshold, currentValidatorSetHash)
+                != state_lastValidatorSetCheckpoint
         ) {
             revert SuppliedValidatorSetInvalid();
         }
@@ -354,11 +337,12 @@ contract QuantumGravityBridge is IDAOracle {
     }
 
     /// @dev see "./IDAOracle.sol"
-    function verifyAttestation(
-        uint256 _tupleRootNonce,
-        DataRootTuple memory _tuple,
-        BinaryMerkleProof memory _proof
-    ) external view override returns (bool) {
+    function verifyAttestation(uint256 _tupleRootNonce, DataRootTuple memory _tuple, BinaryMerkleProof memory _proof)
+        external
+        view
+        override
+        returns (bool)
+    {
         // Tuple must have been committed before.
         if (_tupleRootNonce > state_eventNonce) {
             return false;
