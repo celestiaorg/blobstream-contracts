@@ -52,6 +52,14 @@ Test with:
 forge test
 ```
 
+### Format
+
+Format Solidity with:
+
+```sh
+forge fmt
+```
+
 ### Regenerate Go Wrappers
 
 Go wrappers can be regenerated with:
