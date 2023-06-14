@@ -13,13 +13,7 @@ import "ds-test/test.sol";
 interface CheatCodes {
     function addr(uint256 privateKey) external returns (address);
 
-    function sign(uint256 privateKey, bytes32 digest)
-        external
-        returns (
-            uint8 v,
-            bytes32 r,
-            bytes32 s
-        );
+    function sign(uint256 privateKey, bytes32 digest) external returns (uint8 v, bytes32 r, bytes32 s);
 }
 
 contract RelayerTest is DSTest {
@@ -156,25 +150,23 @@ contract RelayerTest is DSTest {
         return keccak256(abi.encode(_validators));
     }
 
-    function domainSeparateValidatorSetHash(
-        uint256 _nonce,
-        uint256 _powerThreshold,
-        bytes32 _validatorSetHash
-    ) private pure returns (bytes32) {
-        bytes32 c = keccak256(
-            abi.encode(VALIDATOR_SET_HASH_DOMAIN_SEPARATOR, _nonce, _powerThreshold, _validatorSetHash)
-        );
+    function domainSeparateValidatorSetHash(uint256 _nonce, uint256 _powerThreshold, bytes32 _validatorSetHash)
+        private
+        pure
+        returns (bytes32)
+    {
+        bytes32 c =
+            keccak256(abi.encode(VALIDATOR_SET_HASH_DOMAIN_SEPARATOR, _nonce, _powerThreshold, _validatorSetHash));
 
         return c;
     }
 
-    function domainSeparateDataRootTupleRoot(
-        uint256 _nonce,
-        bytes32 _dataRootTupleRoot
-    ) private pure returns (bytes32) {
-        bytes32 c = keccak256(
-            abi.encode(DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _nonce, _dataRootTupleRoot)
-        );
+    function domainSeparateDataRootTupleRoot(uint256 _nonce, bytes32 _dataRootTupleRoot)
+        private
+        pure
+        returns (bytes32)
+    {
+        bytes32 c = keccak256(abi.encode(DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _nonce, _dataRootTupleRoot));
 
         return c;
     }
