@@ -29,7 +29,7 @@ git submodule update
 ```
 
 To regenerate the Go ABI wrappers with `make gen`, you need the `abigen` tool.
-Building requires [Go 1.18+](https://golang.org/dl/).
+Building requires [Go 1.19+](https://golang.org/dl/).
 Install `abigen` with:
 
 ```sh
