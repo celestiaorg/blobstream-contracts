@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "../Constants.sol";
+import "../Types.sol";
 import "../Utils.sol";
 import "./NamespaceMerkleProof.sol";
 import "./NamespaceMerkleMultiproof.sol";
@@ -17,11 +18,12 @@ library NamespaceMerkleTree {
     /// @param data The data of the leaf to verify.
     /// @return `true` if the proof is valid, `false` otherwise.
     /// @dev proof.numLeaves is necessary to determine height of subtree containing the data to prove.
-    function verify(NamespaceNode memory root, NamespaceMerkleProof memory proof, bytes8 minmaxNID, bytes memory data)
-        internal
-        pure
-        returns (bool)
-    {
+    function verify(
+        NamespaceNode memory root,
+        NamespaceMerkleProof memory proof,
+        NamespaceID minmaxNID,
+        bytes memory data
+    ) internal pure returns (bool) {
         // A sibling at height 1 is created by getting the leafDigest of the original data.
         NamespaceNode memory node = leafDigest(minmaxNID, data);
 
@@ -141,7 +143,7 @@ library NamespaceMerkleTree {
     function verifyMulti(
         NamespaceNode memory root,
         NamespaceMerkleMultiproof memory proof,
-        bytes8 minmaxNID,
+        NamespaceID minmaxNID,
         bytes[] memory data
     ) internal pure returns (bool) {
         // Hash all the leaves to get leaf nodes.
