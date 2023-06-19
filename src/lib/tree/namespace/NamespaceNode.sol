@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import "../Types.sol";
+
 /// @notice Namespace Merkle Tree node.
 struct NamespaceNode {
     // Minimum namespace ID.
-    bytes8 min;
+    NamespaceID min;
     // Maximum namespace ID.
-    bytes8 max;
+    NamespaceID max;
     // Node value.
     bytes32 digest;
 }

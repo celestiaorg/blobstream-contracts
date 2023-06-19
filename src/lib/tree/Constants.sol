@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import "./Types.sol";
+
 library Constants {
     ///////////////
     // Constants //
@@ -14,5 +16,5 @@ library Constants {
     bytes1 internal constant NODE_PREFIX = 0x01;
 
     /// @dev Parity share namespace ID
-    bytes8 internal constant PARITY_SHARE_NAMESPACE_ID = 0xFFFFFFFFFFFFFFFF;
+    NamespaceID internal constant PARITY_SHARE_NAMESPACE_ID = NamespaceID.wrap(0xFFFFFFFFFFFFFFFF);
 }

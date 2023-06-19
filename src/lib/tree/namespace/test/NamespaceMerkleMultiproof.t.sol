@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import "ds-test/test.sol";
 
+import "../../Types.sol";
 import "../NamespaceNode.sol";
 import "../NamespaceMerkleMultiproof.sol";
 import "../NamespaceMerkleTree.sol";
@@ -49,23 +50,29 @@ contract NamespaceMerkleMultiproofTest is DSTest {
     function setUp() external {}
 
     function assertEqNamespaceNode(NamespaceNode memory first, NamespaceNode memory second) internal {
-        assertEq(first.min, second.min);
-        assertEq(first.max, second.max);
+        assertEq(NamespaceID.unwrap(first.min), NamespaceID.unwrap(second.min));
+        assertEq(NamespaceID.unwrap(first.max), NamespaceID.unwrap(second.max));
         assertEq(first.digest, second.digest);
     }
 
     /// @notice Verify inclusion of leaves 0 and 1.
     function testVerifyMulti01() external {
-        bytes8 nid = 0x0000000000000010;
+        NamespaceID nid = NamespaceID.wrap(0x0000000000000010);
         NamespaceNode memory root = NamespaceNode(
-            0x0000000000000010, 0x0000000000000010, 0x02f1d195cf45f96f9bf0875cb3a8aedff5df35605fb3f50ce52a272c30822466
+            NamespaceID.wrap(0x0000000000000010),
+            NamespaceID.wrap(0x0000000000000010),
+            0x02f1d195cf45f96f9bf0875cb3a8aedff5df35605fb3f50ce52a272c30822466
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](3);
         sideNodes[0] = NamespaceNode(
-            0x0000000000000010, 0x0000000000000010, 0x531d57c729081d903721f7584b2fa031c8308918779e47d9ef68991b7a30eadf
+            NamespaceID.wrap(0x0000000000000010),
+            NamespaceID.wrap(0x0000000000000010),
+            0x531d57c729081d903721f7584b2fa031c8308918779e47d9ef68991b7a30eadf
         );
         sideNodes[1] = NamespaceNode(
-            0x0000000000000010, 0x0000000000000010, 0x47ea271b50de032f8b021550f19350a09dc8d0e2372d1c2d876794487517f16e
+            NamespaceID.wrap(0x0000000000000010),
+            NamespaceID.wrap(0x0000000000000010),
+            0x47ea271b50de032f8b021550f19350a09dc8d0e2372d1c2d876794487517f16e
         );
         sideNodes[2] = NamespaceNode(
             Constants.PARITY_SHARE_NAMESPACE_ID,
