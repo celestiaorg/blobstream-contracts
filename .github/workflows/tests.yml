@@ -55,7 +55,7 @@ jobs:
       - name: Install Go Ethereum devtools
         working-directory: ./
         run: |
-          git clone https://github.com/ethereum/go-ethereum.git
+          git clone --depth 1 --branch v1.12.0 https://github.com/ethereum/go-ethereum.git
           cd go-ethereum
           make devtools
 
