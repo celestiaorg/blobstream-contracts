@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.19;
 
 import "../Constants.sol";
 import "../Utils.sol";
@@ -14,11 +14,7 @@ library BinaryMerkleTree {
     /// @param data The data of the leaf to verify.
     /// @return `true` is proof is valid, `false` otherwise.
     /// @dev proof.numLeaves is necessary to determine height of subtree containing the data to prove.
-    function verify(
-        bytes32 root,
-        BinaryMerkleProof memory proof,
-        bytes memory data
-    ) internal pure returns (bool) {
+    function verify(bytes32 root, BinaryMerkleProof memory proof, bytes memory data) internal pure returns (bool) {
         // Check proof is correct length for the key it is proving
         if (proof.numLeaves <= 1) {
             if (proof.sideNodes.length != 0) {
