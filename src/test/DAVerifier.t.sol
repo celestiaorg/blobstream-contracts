@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.4;
 
-import "../lib/openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 
 import "../Constants.sol";
 import "../DataRootTuple.sol";
 import "../DAVerifier.sol";
 import "../lib/tree/binary/BinaryMerkleProof.sol";
 import "../lib/tree/namespace/NamespaceMerkleMultiproof.sol";
+import "../lib/tree/Types.sol";
 
 import "ds-test/test.sol";
 
@@ -143,12 +144,12 @@ contract DAVerifierTest is DSTest {
         _shareProofs[0].beginKey = 0;
         _shareProofs[0].endKey = 1;
         NamespaceNode[] memory sideNodes = new NamespaceNode[](1);
-        sideNodes[0].min =0xffffffffffffffff;
-        sideNodes[0].max =0xffffffffffffffff;
+        sideNodes[0].min = NamespaceID.wrap(0xffffffffffffffff);
+        sideNodes[0].max = NamespaceID.wrap(0xffffffffffffffff);
         sideNodes[0].digest = 0x99ff60ce3818df2d1601a5a6a7d7bac82aa79d1726bca4e05b94e4ce38f06ffe;
         _shareProofs[0].sideNodes = sideNodes;
 
-        bytes8 _minimaxNID = 0x0000000000000001;
+        NamespaceID _minimaxNID = NamespaceID.wrap(0x0000000000000001);
 
         BinaryMerkleProof[] memory _rowProofs = new BinaryMerkleProof[](1);
         _rowProofs[0].key = 0;
@@ -159,13 +160,13 @@ contract DAVerifierTest is DSTest {
         _rowProofs[0].sideNodes = _sideNodes;
 
         NamespaceNode[] memory _rowRoots = new NamespaceNode[](1);
-        _rowRoots[0].min=0x0000000000000001;
-        _rowRoots[0].max=0xffffffffffffffff;
+        _rowRoots[0].min= NamespaceID.wrap(0x0000000000000001);
+        _rowRoots[0].max= NamespaceID.wrap(0xffffffffffffffff);
         _rowRoots[0].digest=0x8C8732952E0C3E3F0ADF0A43665E30BC554CFAD53635CACCB52C7D38CC078AF8;
 
         NamespaceNode[] memory _b2RowRoots = new NamespaceNode[](1);
-        _b2RowRoots[0].min = 0x0000000000000001;
-        _b2RowRoots[0].max = 0x0000000000000001;
+        _b2RowRoots[0].min = NamespaceID.wrap(0x0000000000000001);
+        _b2RowRoots[0].max = NamespaceID.wrap(0x0000000000000001);
         _b2RowRoots[0].digest = hex"8C8732952E0C3E3F0ADF0A43665E30BC554CFAD53635CACCB52C7D38CC078AF8";
 
         bytes32 _root = 0x1108C0D8079563116167A66BE596DBE222E438C273ECC3B48E290465FC6093B2;

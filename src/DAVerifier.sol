@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.4;
 
-import "./lib/openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 
 import "./Constants.sol";
 import "./DataRootTuple.sol";
 import "./QuantumGravityBridge.sol";
 import "./lib/tree/binary/BinaryMerkleProof.sol";
 import "./lib/tree/namespace/NamespaceMerkleTree.sol";
+import "./lib/tree/Types.sol";
 
 /// @notice Contains the necessary parameters to prove that some shares, which were posted to
 /// the Celestia network, were committed to by the QGB smart contract.
@@ -17,7 +18,7 @@ struct SharesProof {
     // The shares proof to the row roots. If the shares span multiple rows, we will have multiple nmt proofs.
     NamespaceMerkleMultiproof[] shareProofs;
     // The namespace ID of the shares.
-    bytes8 namespaceID;
+    NamespaceID namespaceID;
     // The rows where the shares belong. If the shares span multiple rows, we will have multiple rows.
     NamespaceNode[] rowsRoots;
     // The proofs of the rowsRoots to the data root.
