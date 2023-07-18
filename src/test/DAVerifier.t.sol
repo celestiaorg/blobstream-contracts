@@ -15,13 +15,7 @@ import "ds-test/test.sol";
 interface CheatCodes {
     function addr(uint256 privateKey) external returns (address);
 
-    function sign(uint256 privateKey, bytes32 digest)
-        external
-        returns (
-            uint8 v,
-            bytes32 r,
-            bytes32 s
-        );
+    function sign(uint256 privateKey, bytes32 digest) external returns (uint8 v, bytes32 r, bytes32 s);
 }
 
 /*
@@ -138,7 +132,8 @@ contract DAVerifierTest is DSTest {
             hex"0000000000000000000000000000000000000000000000000000000000000000",
             hex"0000000000000000000000000000000000000000000000000000000000000000",
             hex"0000000000000000000000000000000000000000000000000000000000000000",
-            hex"0000000000000000000000000000000000000000000000000000000000000000");
+            hex"0000000000000000000000000000000000000000000000000000000000000000"
+        );
 
         NamespaceMerkleMultiproof[] memory _shareProofs = new NamespaceMerkleMultiproof[](1);
         _shareProofs[0].beginKey = 0;
@@ -160,9 +155,9 @@ contract DAVerifierTest is DSTest {
         _rowProofs[0].sideNodes = _sideNodes;
 
         NamespaceNode[] memory _rowRoots = new NamespaceNode[](1);
-        _rowRoots[0].min= NamespaceID.wrap(0x0000000000000001);
-        _rowRoots[0].max= NamespaceID.wrap(0xffffffffffffffff);
-        _rowRoots[0].digest=0x8C8732952E0C3E3F0ADF0A43665E30BC554CFAD53635CACCB52C7D38CC078AF8;
+        _rowRoots[0].min = NamespaceID.wrap(0x0000000000000001);
+        _rowRoots[0].max = NamespaceID.wrap(0xffffffffffffffff);
+        _rowRoots[0].digest = 0x8C8732952E0C3E3F0ADF0A43665E30BC554CFAD53635CACCB52C7D38CC078AF8;
 
         NamespaceNode[] memory _b2RowRoots = new NamespaceNode[](1);
         _b2RowRoots[0].min = NamespaceID.wrap(0x0000000000000001);
@@ -186,7 +181,8 @@ contract DAVerifierTest is DSTest {
         _proof.sideNodes = _sn;
 
         AttestationProof memory attestationProof = AttestationProof(_tupleRootNonce, _tuple, _proof);
-        SharesProof memory sharesProof = SharesProof(_data, _shareProofs, _minimaxNID,_b2RowRoots, _rowProofs, attestationProof);
+        SharesProof memory sharesProof =
+            SharesProof(_data, _shareProofs, _minimaxNID, _b2RowRoots, _rowProofs, attestationProof);
 
         bool valid = verifier.verify(sharesProof, _root);
         assertTrue(valid);
@@ -196,13 +192,12 @@ contract DAVerifierTest is DSTest {
         return keccak256(abi.encode(_validators));
     }
 
-    function domainSeparateDataRootTupleRoot(
-        uint256 _nonce,
-        bytes32 _dataRootTupleRoot
-    ) private pure returns (bytes32) {
-        bytes32 c = keccak256(
-            abi.encode(DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _nonce, _dataRootTupleRoot)
-        );
+    function domainSeparateDataRootTupleRoot(uint256 _nonce, bytes32 _dataRootTupleRoot)
+        private
+        pure
+        returns (bytes32)
+    {
+        bytes32 c = keccak256(abi.encode(DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _nonce, _dataRootTupleRoot));
 
         return c;
     }
