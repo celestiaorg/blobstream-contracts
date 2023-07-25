@@ -1,7 +1,21 @@
-# this Dockerfile will contain the CI environment used to run the tests and generate the wrappers.
-# it would help not having to worry about the versions difference between the local setup and that of the CI
+# This Dockerfile will contain the CI environment used to run the tests and generate the wrappers.
+# It would help not having to worry about the versions difference between the local setup and that of the CI
 # and would avoid the issues related to wrappers generation using different versions.
 # Note: this image is not build to be distributed or pushed to remote registries. Thus, it does not optimise the build layers and build stages.
+#
+# How to use:
+# First, build the docker image using:
+#   $ docker build -t qgb-env -f Dockerfile_Environment .
+# Then, run the docker image:
+#   $ docker run -it qgb-env
+# This should give you a shell inside the image where you have all the dependencies installed.
+#
+# For example, if you want to generate the wrappers for this repo, run the following inside the shell:
+#   $ git clone https://github.com/celestiaorg/quantum-gravity-bridge
+#   $ cd quantum-gravity-bridge
+#   $ make
+# And you will see that the wrappers are being regenerated for this repo.
+# Finally, you can push the changes to your branch using git add/commit/push.
 FROM ubuntu:22.04
 
 # install necessary dependencies
