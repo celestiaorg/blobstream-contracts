@@ -9,7 +9,6 @@ on:
 jobs:
   check-solidity-formatting:
     runs-on: ubuntu-latest
-    needs: forge-test
     steps:
       - uses: actions/checkout@v3
         with:
