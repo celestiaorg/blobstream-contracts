@@ -46,18 +46,18 @@ The first part, proving that the transaction was posted to Celestia, can be done
 
 ### 1. Data root inclusion proof
 
-To prove the data root is committed to by the QGB smart contract, we will need to provide a merkle proof of the data root tuple to a data root tuple root. This can be created using the `[data_root_inclusion_proof](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/rpc/client/http/http.go#L492-L511)` query.
+To prove the data root is committed to by the QGB smart contract, we will need to provide a merkle proof of the data root tuple to a data root tuple root. This can be created using the [`data_root_inclusion_proof`](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/rpc/client/http/http.go#L492-L511) query.
 
 ### 2. Transaction inclusion proof
 
 To prove that a rollup transaction is part of the data root, we will need to provide two proofs: a namespace merkle proof of the transaction to a row root. This could be done via proving the shares that contain the transaction to the row root using a namespace merkle proof. And, a binary merkle proof of the row root to the data root.
 
-These proofs can be generated using the `[ProveShares](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/rpc/client/http/http.go#L526-L543)` query.
+These proofs can be generated using the [`ProveShares`](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/rpc/client/http/http.go#L526-L543) query.
 
 ### 3. Transaction part of the rollup sequence
 
 The Celestia block is a 2d matrix of rows and columns, where the row roots and column roots are committed to in the data root. We can use this property to point which rows and columns does the transaction shares belong to. Then, we will use those coordinates to calculate the row major index of the transaction, and verify if it is part of the sequence span.
 
-The coordinates can be gotten using a namespace merkle proof of the shares to the row root, and also to the column root. Then, we will create merkle proofs of that row root and column root to the data root. These [proofs](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/crypto/merkle/proof.go#L19-L31) will contain the `[Index](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/crypto/merkle/proof.go#L28)` of the row/column, and the `[Total](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/crypto/merkle/proof.go#L27)` number of rows/columns in the proofs which would allow us to calculate the row major index of the transaction.
+The coordinates can be gotten using a namespace merkle proof of the shares to the row root, and also to the column root. Then, we will create merkle proofs of that row root and column root to the data root. These [proofs](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/crypto/merkle/proof.go#L19-L31) will contain the [`Index`](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/crypto/merkle/proof.go#L28) of the row/column, and the [`Total`](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/crypto/merkle/proof.go#L27) number of rows/columns in the proofs which would allow us to calculate the row major index of the transaction.
 
 Note: the `Total` is the total number of rows/columns of the extended data square, and not the original one.
