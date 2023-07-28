@@ -51,7 +51,7 @@ To prove the data root is committed to by the QGB smart contract, we will need t
 
 ### 2. Transaction inclusion proof
 
-To prove that a rollup transaction is part of the data root, we will need to provide two proofs: a namespace merkle proof of the transaction to a row root. This could be done via proving the shares that contain the transaction to the row root using a namespace merkle proof. And, a binary merkle proof of the row root to the data root.
+To prove that a rollup transaction is part of the data root, we will need to provide two proofs: a namespace Merkle proof of the transaction to a row root. This could be done via proving the shares that contain the transaction to the row root using a namespace Merkle proof. And, a binary Merkle proof of the row root to the data root.
 
 These proofs can be generated using the [`ProveShares`](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/rpc/client/http/http.go#L526-L543) query.
 
