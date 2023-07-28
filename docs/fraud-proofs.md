@@ -30,7 +30,7 @@ We could prove that via creating a binary [Merkle proof](https://github.com/cele
 
 Then, we will use that information to check if the provided transaction index, in the header, is out of the square size bounds.
 
-For the data root, we will use a binary merkle proof to prove its inclusion in a data root tuple root that was committed to by the QGB smart contract. More on this in [here](#1-data-root-inclusion-proof).
+For the data root, we will use a binary Merkle proof to prove its inclusion in a data root tuple root that was committed to by the QGB smart contract. More on this in [here](#1-data-root-inclusion-proof).
 
 ## Invalid transaction fraud proof
 
