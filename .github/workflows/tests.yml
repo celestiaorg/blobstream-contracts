@@ -65,7 +65,7 @@ jobs:
 
       - name: Check Go wrapper match
         run: |
-          if [ "$(git diff --ignore-space-at-eol wrappers/QuantumGravityBridge.sol/wrapper.go wrappers/DAVerifier.sol/wrapper.go | wc -l)" -gt "0" ]; then
+          if [ "$(git diff --ignore-space-at-eol wrappers | wc -l)" -gt "0" ]; then
             echo "Detected uncommitted changes after build.  See status below:"
             git diff
             exit 1

@@ -1,0 +1,32 @@
+name: Lint
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - release/**
+
+jobs:
+  check-solidity-formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Format Solidity files
+        working-directory: ./
+        run: make fmt
+
+      - name: Check Solidity formatting
+        run: |
+          if [ "$(git diff --ignore-space-at-eol src | wc -l)" -gt "0" ]; then
+            echo "Detected uncommitted changes after formatting.  See status below:"
+            git diff
+            exit 1
+          fi
