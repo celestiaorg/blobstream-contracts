@@ -47,7 +47,7 @@ The first part, proving that the transaction was posted to Celestia, can be done
 
 ### 1. Data root inclusion proof
 
-To prove the data root is committed to by the QGB smart contract, we will need to provide a merkle proof of the data root tuple to a data root tuple root. This can be created using the [`data_root_inclusion_proof`](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/rpc/client/http/http.go#L492-L511) query.
+To prove the data root is committed to by the QGB smart contract, we will need to provide a Merkle proof of the data root tuple to a data root tuple root. This can be created using the [`data_root_inclusion_proof`](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/rpc/client/http/http.go#L492-L511) query.
 
 ### 2. Transaction inclusion proof
 
