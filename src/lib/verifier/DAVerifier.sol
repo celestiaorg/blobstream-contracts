@@ -3,12 +3,13 @@ pragma solidity ^0.8.19;
 
 import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 
-import "./Constants.sol";
-import "./DataRootTuple.sol";
-import "./QuantumGravityBridge.sol";
-import "./lib/tree/binary/BinaryMerkleProof.sol";
-import "./lib/tree/namespace/NamespaceMerkleTree.sol";
-import "./lib/tree/Types.sol";
+import "../../Constants.sol";
+import "../../DataRootTuple.sol";
+import "../../IDAOracle.sol";
+import "../tree/binary/BinaryMerkleProof.sol";
+import "../tree/binary/BinaryMerkleTree.sol";
+import "../tree/namespace/NamespaceMerkleTree.sol";
+import "../tree/Types.sol";
 
 /// @notice Contains the necessary parameters to prove that some shares, which were posted to
 /// the Celestia network, were committed to by the QGB smart contract.
@@ -41,14 +42,7 @@ struct AttestationProof {
 /// @title DAVerifier: Celestia -> EVM, Data Availability verifier.
 /// @dev The DAVerifier verifies that some shares, which were posted on Celestia, were committed to
 /// by the QGB smart contract.
-contract DAVerifier {
-    /////////////
-    // Storage //
-    /////////////
-
-    /// @notice the QGB bridge contract that the proofs will be verified against.
-    QuantumGravityBridge public bridge;
-
+library DAVerifier {
     ////////////
     // Errors //
     ////////////
@@ -77,16 +71,11 @@ contract DAVerifier {
     // Functions //
     ///////////////
 
-    /// @param _bridge The QGB smart contract address that the proofs will be verified against.
-    constructor(address _bridge) {
-        bridge = QuantumGravityBridge(_bridge);
-    }
-
     /// @notice Verifies that the shares, which were posted to Celestia, were committed to by the QGB smart contract.
     /// @param _sharesProof The proof of the shares to the data root tuple root.
     /// @param _root The data root of the block that contains the shares.
     /// @return `true` if the proof is valid, `false` otherwise.
-    function verify(SharesProof memory _sharesProof, bytes32 _root) external view returns (bool) {
+    function verify(IDAOracle bridge, SharesProof memory _sharesProof, bytes32 _root) external view returns (bool) {
         // checking that the data root was committed to by the QGB smart contract
         if (
             !bridge.verifyAttestation(

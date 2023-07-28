@@ -3,12 +3,13 @@ pragma solidity ^0.8.19;
 
 import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 
-import "../Constants.sol";
-import "../DataRootTuple.sol";
+import "../../../Constants.sol";
+import "../../../DataRootTuple.sol";
 import "../DAVerifier.sol";
-import "../lib/tree/binary/BinaryMerkleProof.sol";
-import "../lib/tree/namespace/NamespaceMerkleMultiproof.sol";
-import "../lib/tree/Types.sol";
+import "../../../QuantumGravityBridge.sol";
+import "../../tree/binary/BinaryMerkleProof.sol";
+import "../../tree/namespace/NamespaceMerkleMultiproof.sol";
+import "../../tree/Types.sol";
 
 import "ds-test/test.sol";
 
@@ -57,7 +58,6 @@ contract DAVerifierTest is DSTest {
     uint256 constant testPriv1 = 0x64a1d6f0e760a8d62b4afdde4096f16f51b401eaaecc915740f71770ea76a8ad;
 
     QuantumGravityBridge bridge;
-    DAVerifier verifier;
 
     Validator[] private validators;
     uint256 private votingPower = 5000;
@@ -110,8 +110,6 @@ contract DAVerifierTest is DSTest {
         _proof.sideNodes = _sn;
 
         assertTrue(bridge.verifyAttestation(_tupleRootNonce, _tuple, _proof));
-
-        verifier = new DAVerifier(address(bridge));
     }
 
     function testVerifyDA() public {
@@ -184,7 +182,7 @@ contract DAVerifierTest is DSTest {
         SharesProof memory sharesProof =
             SharesProof(_data, _shareProofs, _minimaxNID, _b2RowRoots, _rowProofs, attestationProof);
 
-        bool valid = verifier.verify(sharesProof, _root);
+        bool valid = DAVerifier.verify(bridge, sharesProof, _root);
         assertTrue(valid);
     }
 
