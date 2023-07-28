@@ -17,7 +17,8 @@ Rollups can adopt many approaches to prove that fraud happened. One of which cou
 - Rollup block state root
 - A sequence of spans in Celestia: which references where the rollup data was published in the Celestia chain.
 
-Note: The sequence of spans can be defined using the following: `Height`, `start index`, and `length` in the Celestia block, in the case of a single Celestia block. However, it could be generalized to span over multiple blocks.
+> [!NOTE]  
+> The sequence of spans can be defined using the following: `Height`, `start index`, and `length` in the Celestia block, in the case of a single Celestia block. However, it could be generalized to span over multiple blocks.
 
 For the rest of the document, we will suppose that the sequence of spans only references one Celestia block.
 
