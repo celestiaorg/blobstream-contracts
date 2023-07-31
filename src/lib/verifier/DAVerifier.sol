@@ -164,7 +164,7 @@ library DAVerifier {
     function computeSquareSizeFromShareProof(NamespaceMerkleMultiproof memory _proof) external pure returns (uint256) {
         uint256 extendedSquareRowSize = 2 ** _proof.sideNodes.length;
         // we divide the extended square row size by 2 because the square size is the
-        // the size of the row of original square size.
+        // the size of the row of the original square size.
         return extendedSquareRowSize / 2;
     }
 
