@@ -157,7 +157,8 @@ library DAVerifier {
 
     /// @notice computes the Celestia block square size from a shares to row/column root proof.
     /// Note: the provided proof is not authenticated to the QGB smart contract. It is the user's responsibility
-    /// to verify that the proof is valid and was successfully committed.
+    /// to verify that the proof is valid and that the shares were successfully committed to using
+    /// the `DAVerifier.verify()` method.
     /// Note: the minimum square size is 1. Thus, we don't expect the proof not to contain any side node.
     /// @param _proof The proof of the shares to the row/column root.
     /// @return The square size of the corresponding block.
