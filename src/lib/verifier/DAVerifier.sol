@@ -55,6 +55,9 @@ library DAVerifier {
     /// @param i The index of the invalid proof.
     error InvalidRowsToDataRootProof(uint256 i);
 
+    /// @notice The row to the data root proof is invalid.
+    error InvalidRowToDataRootProof();
+
     /// @notice The data root tuple to the data root tuple roof proof is invalid.
     error InvalidDataRootTupleToDataRootTupleRootProof();
 
@@ -72,34 +75,18 @@ library DAVerifier {
     ///////////////
 
     /// @notice Verifies that the shares, which were posted to Celestia, were committed to by the QGB smart contract.
+    /// @param _bridge The QGB smart contract instance.
     /// @param _sharesProof The proof of the shares to the data root tuple root.
     /// @param _root The data root of the block that contains the shares.
     /// @return `true` if the proof is valid, `false` otherwise.
-    function verify(IDAOracle bridge, SharesProof memory _sharesProof, bytes32 _root) external view returns (bool) {
+    function verifySharesToDataRootTupleRoot(IDAOracle _bridge, SharesProof memory _sharesProof, bytes32 _root)
+        external
+        view
+        returns (bool)
+    {
         // checking that the data root was committed to by the QGB smart contract
-        if (
-            !bridge.verifyAttestation(
-                _sharesProof.attestationProof.tupleRootNonce,
-                _sharesProof.attestationProof.tuple,
-                _sharesProof.attestationProof.proof
-            )
-        ) {
-            revert InvalidDataRootTupleToDataRootTupleRootProof();
-        }
-
-        // checking that the rows roots commit to the data root.
-        if (_sharesProof.rowsProofs.length != _sharesProof.rowsRoots.length) {
-            revert UnequalRowsProofsAndRowsRootsNumber();
-        }
-
-        for (uint256 i = 0; i < _sharesProof.rowsProofs.length; i++) {
-            bytes memory rowRoot = abi.encodePacked(
-                _sharesProof.rowsRoots[i].min, _sharesProof.rowsRoots[i].max, _sharesProof.rowsRoots[i].digest
-            );
-            if (!BinaryMerkleTree.verify(_root, _sharesProof.rowsProofs[i], rowRoot)) {
-                revert InvalidRowsToDataRootProof(i);
-            }
-        }
+        // this will revert if the proof is not valid
+        verifyMultiRowRootsToDataRootTupleRoot(_bridge, _sharesProof.rowsRoots, _sharesProof.rowsProofs, _sharesProof.attestationProof, _root);
 
         // checking that the shares were committed to by the rows roots.
         if (_sharesProof.shareProofs.length != _sharesProof.rowsRoots.length) {
@@ -131,6 +118,69 @@ library DAVerifier {
                 revert InvalidSharesToRowsProof(i);
             }
             cursor += sharesUsed;
+        }
+
+        return true;
+    }
+
+    /// @notice Verifies that a row/column root, from a Celestia block, was committed to by the QGB smart contract.
+    /// @param _bridge The QGB smart contract instance.
+    /// @param _rowRoot The row/column root to be proven.
+    /// @param _rowProof The proof of the row/column root to the data root.
+    /// @param _root The data root of the block that contains the row.
+    /// @return `true` if the proof is valid, `false` otherwise.
+    function verifyRowRootToDataRootTupleRoot(
+        IDAOracle _bridge,
+        NamespaceNode memory _rowRoot,
+        BinaryMerkleProof memory _rowProof,
+        AttestationProof memory _attestationProof,
+        bytes32 _root
+    ) public view returns (bool) {
+        // checking that the data root was committed to by the QGB smart contract
+        if (
+            !_bridge.verifyAttestation(_attestationProof.tupleRootNonce, _attestationProof.tuple, _attestationProof.proof)
+        ) {
+            revert InvalidDataRootTupleToDataRootTupleRootProof();
+        }
+
+        bytes memory rowRoot = abi.encodePacked(_rowRoot.min, _rowRoot.max, _rowRoot.digest);
+        if (!BinaryMerkleTree.verify(_root, _rowProof, rowRoot)) {
+            revert InvalidRowToDataRootProof();
+        }
+
+        return true;
+    }
+
+    /// @notice Verifies that a set of rows/columns, from a Celestia block, were committed to by the QGB smart contract.
+    /// @param _bridge The QGB smart contract instance.
+    /// @param _rowsRoots The set of row/column roots to be proved.
+    /// @param _rowsProofs The set of proofs of the _rowsRoots in the same order.
+    /// @param _root The data root of the block that contains the rows.
+    /// @return `true` if the proof is valid, `false` otherwise.
+    function verifyMultiRowRootsToDataRootTupleRoot(
+        IDAOracle _bridge,
+        NamespaceNode[] memory _rowsRoots,
+        BinaryMerkleProof[] memory _rowsProofs,
+        AttestationProof memory _attestationProof,
+        bytes32 _root
+    ) public view returns (bool) {
+        // checking that the data root was committed to by the QGB smart contract
+        if (
+            !_bridge.verifyAttestation(_attestationProof.tupleRootNonce, _attestationProof.tuple, _attestationProof.proof)
+        ) {
+            revert InvalidDataRootTupleToDataRootTupleRootProof();
+        }
+
+        // checking that the rows roots commit to the data root.
+        if (_rowsProofs.length != _rowsRoots.length) {
+            revert UnequalRowsProofsAndRowsRootsNumber();
+        }
+
+        for (uint256 i = 0; i < _rowsProofs.length; i++) {
+            bytes memory rowRoot = abi.encodePacked(_rowsRoots[i].min, _rowsRoots[i].max, _rowsRoots[i].digest);
+            if (!BinaryMerkleTree.verify(_root, _rowsProofs[i], rowRoot)) {
+                revert InvalidRowsToDataRootProof(i);
+            }
         }
 
         return true;

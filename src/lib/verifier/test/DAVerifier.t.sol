@@ -182,7 +182,7 @@ contract DAVerifierTest is DSTest {
         SharesProof memory sharesProof =
             SharesProof(_data, _shareProofs, _minimaxNID, _b2RowRoots, _rowProofs, attestationProof);
 
-        bool valid = DAVerifier.verify(bridge, sharesProof, _root);
+        bool valid = DAVerifier.verifySharesToDataRootTupleRoot(bridge, sharesProof, _root);
         assertTrue(valid);
     }
 
