@@ -90,7 +90,9 @@ library DAVerifier {
     {
         // checking that the data root was committed to by the QGB smart contract
         // this will revert if the proof is not valid
-        verifyMultiRowRootsToDataRootTupleRoot(_bridge, _sharesProof.rowsRoots, _sharesProof.rowsProofs, _sharesProof.attestationProof, _root);
+        verifyMultiRowRootsToDataRootTupleRoot(
+            _bridge, _sharesProof.rowsRoots, _sharesProof.rowsProofs, _sharesProof.attestationProof, _root
+        );
 
         // checking that the shares were committed to by the rows roots.
         if (_sharesProof.shareProofs.length != _sharesProof.rowsRoots.length) {
@@ -142,7 +144,9 @@ library DAVerifier {
     ) public view returns (bool) {
         // checking that the data root was committed to by the QGB smart contract
         if (
-            !_bridge.verifyAttestation(_attestationProof.tupleRootNonce, _attestationProof.tuple, _attestationProof.proof)
+            !_bridge.verifyAttestation(
+                _attestationProof.tupleRootNonce, _attestationProof.tuple, _attestationProof.proof
+            )
         ) {
             revert InvalidDataRootTupleToDataRootTupleRootProof();
         }
@@ -170,7 +174,9 @@ library DAVerifier {
     ) public view returns (bool) {
         // checking that the data root was committed to by the QGB smart contract
         if (
-            !_bridge.verifyAttestation(_attestationProof.tupleRootNonce, _attestationProof.tuple, _attestationProof.proof)
+            !_bridge.verifyAttestation(
+                _attestationProof.tupleRootNonce, _attestationProof.tuple, _attestationProof.proof
+            )
         ) {
             revert InvalidDataRootTupleToDataRootTupleRootProof();
         }
