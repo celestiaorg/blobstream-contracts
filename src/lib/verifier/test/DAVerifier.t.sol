@@ -104,7 +104,7 @@ contract DAVerifierTest is DSTest {
         );
     }
 
-    function testVerifyDA() public {
+    function testVerifySharesToDataRootTupleRoot() public {
         bytes[] memory _data = new bytes[](1);
         _data[0] = fixture.shareData();
 
@@ -124,6 +124,38 @@ contract DAVerifierTest is DSTest {
             SharesProof(_data, _shareProofs, fixture.minimaxNID(), _rowsRoots, _rowsProofs, attestationProof);
 
         bool valid = DAVerifier.verifySharesToDataRootTupleRoot(bridge, sharesProof, fixture.dataRoot());
+        assertTrue(valid);
+    }
+
+    function testVerifyRowRootToDataRootTupleRoot() public {
+        AttestationProof memory attestationProof = AttestationProof(
+            fixture.dataRootTupleRootNonce(), fixture.getDataRootTuple(), fixture.getDataRootTupleProof()
+        );
+
+        bool valid = DAVerifier.verifyRowRootToDataRootTupleRoot(
+            bridge,
+            fixture.getFirstRowRootNode(),
+            fixture.getRowRootToDataRootProof(),
+            attestationProof,
+            fixture.dataRoot()
+        );
+        assertTrue(valid);
+    }
+
+    function testVerifyMultiRowRootsToDataRootTupleRoot() public {
+        NamespaceNode[] memory _rowsRoots = new NamespaceNode[](1);
+        _rowsRoots[0] = fixture.getFirstRowRootNode();
+
+        BinaryMerkleProof[] memory _rowsProofs = new BinaryMerkleProof[](1);
+        _rowsProofs[0] = fixture.getRowRootToDataRootProof();
+
+        AttestationProof memory attestationProof = AttestationProof(
+            fixture.dataRootTupleRootNonce(), fixture.getDataRootTuple(), fixture.getDataRootTupleProof()
+        );
+
+        bool valid = DAVerifier.verifyMultiRowRootsToDataRootTupleRoot(
+            bridge, _rowsRoots, _rowsProofs, attestationProof, fixture.dataRoot()
+        );
         assertTrue(valid);
     }
 
