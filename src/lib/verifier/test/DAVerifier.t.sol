@@ -50,7 +50,7 @@ The blocks data roots used to create the commitment:
 
 The nonce: 2
 
-The data root tuple root: 0x1108C0D8079563116167A66BE596DBE222E438C273ECC3B48E290465FC6093B2
+The data root tuple root: 0x81A5323C06C5CF0EE22752CC01597F16E93A1C6CCA71625AAEE9D918D09345ED
 */
 
 contract DAVerifierTest is DSTest {
@@ -58,6 +58,7 @@ contract DAVerifierTest is DSTest {
     uint256 constant testPriv1 = 0x64a1d6f0e760a8d62b4afdde4096f16f51b401eaaecc915740f71770ea76a8ad;
 
     QuantumGravityBridge bridge;
+    TestFixture fixture;
 
     Validator[] private validators;
     uint256 private votingPower = 5000;
@@ -69,6 +70,8 @@ contract DAVerifierTest is DSTest {
     // - initial valset.
     // - data root tuple root that commits to the proofs tested below.
     function setUp() public {
+        fixture = new TestFixture();
+
         uint256 initialVelsetNonce = 1;
 
         validators.push(Validator(cheats.addr(testPriv1), votingPower));
@@ -270,4 +273,117 @@ contract DAVerifierTest is DSTest {
 
         return c;
     }
+}
+
+/// @title TestFixture contains the necessary information to create proofs for the blob
+/// that was posted to Celestia. It represents the data mentioned in the comment at
+/// the beginning of this file.
+contract TestFixture {
+    /// @notice the share containing the blob that was published to Celestia.
+    bytes shareData = abi.encodePacked(
+        hex"0000000000000001010000014300000011c1020a95010a92010a1c2f636f736d",
+        hex"6f732e62616e6b2e763162657461312e4d736753656e6412720a2f63656c6573",
+        hex"7469613165383064747a75387a38786739676d7333716d346c34336639757a6c",
+        hex"306174767473766a3564122f63656c65737469613167616b61646d63386a7366",
+        hex"7873646c676e6d64643867773736346739796165776e32726d386d1a0e0a0475",
+        hex"746961120631303030303012650a500a460a1f2f636f736d6f732e6372797074",
+        hex"6f2e736563703235366b312e5075624b657912230a2102207a8037a3a1dac112",
+        hex"f77d982feaca3d8930e468b835a11ff176a159588334f312040a020801180112",
+        hex"110a0b0a0475746961120335303010d0e80c1a40c19753445b3de4d70d6c2570",
+        hex"7d082968e8fd8c8b8fb4e135a570c8d291e90a7b30219bf5ab4840081c1479d8",
+        hex"295a5d73ef1d635faf40467bbe7658398d24f1d6000000000000000000000000",
+        hex"0000000000000000000000000000000000000000000000000000000000000000",
+        hex"0000000000000000000000000000000000000000000000000000000000000000",
+        hex"0000000000000000000000000000000000000000000000000000000000000000",
+        hex"0000000000000000000000000000000000000000000000000000000000000000",
+        hex"0000000000000000000000000000000000000000000000000000000000000000"
+    );
+
+    /// @notice the share's namespace ID.
+    NamespaceID _minimaxNID = NamespaceID.wrap(0x0000000000000001);
+
+    /// @notice the first EDS row root.
+    bytes firstRowRoot = abi.encodePacked(
+        hex"000000000000000100000000000000018c8732952e0c3e3f0adf0a43665e30bc554cfad53635caccb52c7d38cc078af8"
+    );
+    NamespaceNode firstRowRootNode = NamespaceNode(
+        NamespaceID.wrap(0x0000000000000001),
+        NamespaceID.wrap(0xffffffffffffffff),
+        0x8C8732952E0C3E3F0ADF0A43665E30BC554CFAD53635CACCB52C7D38CC078AF8
+    );
+
+    /// @notice the second EDS row root.
+    bytes secondRowRoot = abi.encodePacked(
+        hex"ffffffffffffffffffffffffffffffff8a27b3798dc3f14c183597cdfa738c94758cbf0665fa96242672d65cf72881a9"
+    );
+    NamespaceNode secondRowRootNode = NamespaceNode(
+        NamespaceID.wrap(0x0000000000000001),
+        NamespaceID.wrap(0xffffffffffffffff),
+        0x8C8732952E0C3E3F0ADF0A43665E30BC554CFAD53635CACCB52C7D38CC078AF8
+    );
+
+    /// @notice the first EDS column root.
+    bytes firstColumnRoot = abi.encodePacked(
+        hex"000000000000000100000000000000018c8732952e0c3e3f0adf0a43665e30bc554cfad53635caccb52c7d38cc078af8"
+    );
+    NamespaceNode firstColumnRootNode = NamespaceNode(
+        NamespaceID.wrap(0x0000000000000001),
+        NamespaceID.wrap(0xffffffffffffffff),
+        0x8C8732952E0C3E3F0ADF0A43665E30BC554CFAD53635CACCB52C7D38CC078AF8
+    );
+
+    /// @notice the second EDS column root.
+    bytes secondColumnRoot = abi.encodePacked(
+        hex"ffffffffffffffffffffffffffffffff8a27b3798dc3f14c183597cdfa738c94758cbf0665fa96242672d65cf72881a9"
+    );
+    NamespaceNode secondColumnRootNode = NamespaceNode(
+        NamespaceID.wrap(0x0000000000000001),
+        NamespaceID.wrap(0xffffffffffffffff),
+        0x8C8732952E0C3E3F0ADF0A43665E30BC554CFAD53635CACCB52C7D38CC078AF8
+    );
+
+    /// @notice the data root of the block containing the submitted blob.
+    bytes32 dataRoot = 0x1108C0D8079563116167A66BE596DBE222E438C273ECC3B48E290465FC6093B2;
+
+    /// @notice the height of the block containing the submitted blob.
+    uint256 height = 2;
+
+    /// @notice the data root tuple of the block containing the submitted blob.
+    DataRootTuple dataRootTuple = DataRootTuple(height, dataRoot);
+
+    /// @notice the data root tuple root committing to the Celestia block.
+    bytes32 dataRootTupleRoot = 0x81A5323C06C5CF0EE22752CC01597F16E93A1C6CCA71625AAEE9D918D09345ED;
+
+    /// @notice the data root tuple root nonce in the QGB contract.
+    uint256 nonce = 2;
+
+    /// @notice the data root tuple to data root tuple root proof side nodes.
+    bytes32[] dataRootProofSideNodes = [
+        bytes32(0xD380873912E163B240C72D2AED926CCED511A34467BE9E697F49465A7DF8F3BE),
+        bytes32(0x055B7998D838C5846E1751A6C8BA8822459C492549AC7EA33ADDA48E4861C78F)
+    ];
+
+    /// @notice the data root tuple to data root tuple root proof.
+    BinaryMerkleProof dataRootTupleProof = BinaryMerkleProof(dataRootProofSideNodes, 1, 4);
+
+    /// @notice shares to data root proof side nodes.
+    NamespaceNode[] shareToDataRootProofSideNodes = [
+        NamespaceNode(
+            NamespaceID.wrap(0xffffffffffffffff),
+            NamespaceID.wrap(0xffffffffffffffff),
+            0x99ff60ce3818df2d1601a5a6a7d7bac82aa79d1726bca4e05b94e4ce38f06ffe
+        )
+    ];
+
+    /// @notice shares to row root proof.
+    NamespaceMerkleMultiproof shareToRowRootProof = NamespaceMerkleMultiproof(0, 1, shareToDataRootProofSideNodes);
+
+    /// @notice row root to data root proof side nodes.
+    bytes32[] rowRootToDataRootProofSideNodes = [
+        bytes32(0x3d9568eda3d860f78af0b605066eb6f90495b87d2081bf875e6a88ede0a1f6bc),
+        bytes32(0xbf6d9e948bc2e4bc32a791135385bbc2a3b8f426d33d212c9f755e8f2dd964ad)
+    ];
+
+    /// @notice row root to data root proof.
+    BinaryMerkleProof rowRootToDataRootProof = BinaryMerkleProof(rowRootToDataRootProofSideNodes, 0, 4);
 }
