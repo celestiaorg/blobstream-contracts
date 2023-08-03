@@ -70,6 +70,10 @@ library DAVerifier {
     /// @notice The verifier data length isn't equal to the number of shares in the shares proofs.
     error UnequalDataLengthAndNumberOfSharesProofs();
 
+    /// @notice The number of leaves in the binary merkle proof is not divisible by 4.
+    /// @param i The provided proof number of leaves.
+    error InvalidNumberOfLeavesInProof(uint256 i);
+
     ///////////////
     // Functions //
     ///////////////
@@ -184,6 +188,35 @@ library DAVerifier {
         }
 
         return true;
+    }
+
+    /// @notice computes the Celestia block square size from a row/column root to data root binary merkle proof.
+    /// Note: the provided proof is not authenticated to the QGB smart contract. It is the user's responsibility
+    /// to verify that the proof is valid and was successfully committed.
+    /// Note: the minimum square size is 1. Thus, we don't expect the proof to have number of leaves equal to 0.
+    /// @param _proof The proof of the row/column root to the data root.
+    /// @return The square size of the corresponding block.
+    function computeSquareSizeFromRowProof(BinaryMerkleProof memory _proof) external pure returns (uint256) {
+        if (_proof.numLeaves % 4 != 0) {
+            revert InvalidNumberOfLeavesInProof(_proof.numLeaves);
+        }
+        // we divide the number of leaves of the proof by 4 because the rows/columns tree is constructed
+        // from the extended block row roots and column roots.
+        return _proof.numLeaves / 4;
+    }
+
+    /// @notice computes the Celestia block square size from a shares to row/column root proof.
+    /// Note: the provided proof is not authenticated to the QGB smart contract. It is the user's responsibility
+    /// to verify that the proof is valid and that the shares were successfully committed to using
+    /// the `DAVerifier.verify()` method.
+    /// Note: the minimum square size is 1. Thus, we don't expect the proof not to contain any side node.
+    /// @param _proof The proof of the shares to the row/column root.
+    /// @return The square size of the corresponding block.
+    function computeSquareSizeFromShareProof(NamespaceMerkleMultiproof memory _proof) external pure returns (uint256) {
+        uint256 extendedSquareRowSize = 2 ** _proof.sideNodes.length;
+        // we divide the extended square row size by 2 because the square size is the
+        // the size of the row of the original square size.
+        return extendedSquareRowSize / 2;
     }
 
     /// @notice creates a slice of bytes from the data slice of bytes containing the elements
