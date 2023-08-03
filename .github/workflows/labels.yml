@@ -16,4 +16,4 @@ jobs:
         with:
           mode: minimum
           count: 1
-          labels: "kind:bug, kind:contracts, kind:documentation, kind:enhancement, kind:github_actions, kind:optimization, kind:testing, kind:T:Dependencies" # yamllint disable-line rule:line-length
+          labels: "bug, contracts, documentation, enhancement, github_actions, optimization, testing, T:Dependencies" # yamllint disable-line rule:line-length
