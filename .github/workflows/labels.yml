@@ -1,0 +1,19 @@
+name: Required Labels
+
+on:
+  pull_request:
+    types: [opened, labeled, unlabeled, synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: mheap/github-action-required-labels@v5
+        with:
+          mode: minimum
+          count: 1
+          labels: "kind:bug, kind:contracts, kind:documentation, kind:enhancement, kind:github_actions, kind:optimization, kind:testing, kind:T:Dependencies" # yamllint disable-line rule:line-length
