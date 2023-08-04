@@ -21,9 +21,9 @@ struct SharesProof {
     // The namespace ID of the shares.
     NamespaceID namespaceID;
     // The rows where the shares belong. If the shares span multiple rows, we will have multiple rows.
-    NamespaceNode[] rowsRoots;
-    // The proofs of the rowsRoots to the data root.
-    BinaryMerkleProof[] rowsProofs;
+    NamespaceNode[] rowRoots;
+    // The proofs of the rowRoots to the data root.
+    BinaryMerkleProof[] rowProofs;
     // The proof of the data root tuple to the data root tuple root that was posted to the QGB contract.
     AttestationProof attestationProof;
 }
@@ -62,10 +62,10 @@ library DAVerifier {
     error InvalidDataRootTupleToDataRootTupleRootProof();
 
     /// @notice The number of share proofs isn't equal to the number of rows roots.
-    error UnequalShareProofsAndRowsRootsNumber();
+    error UnequalShareProofsAndRowRootsNumber();
 
     /// @notice The number of rows proofs isn't equal to the number of rows roots.
-    error UnequalRowsProofsAndRowsRootsNumber();
+    error UnequalRowProofsAndRowRootsNumber();
 
     /// @notice The verifier data length isn't equal to the number of shares in the shares proofs.
     error UnequalDataLengthAndNumberOfSharesProofs();
@@ -91,12 +91,12 @@ library DAVerifier {
         // checking that the data root was committed to by the QGB smart contract
         // this will revert if the proof is not valid
         verifyMultiRowRootsToDataRootTupleRoot(
-            _bridge, _sharesProof.rowsRoots, _sharesProof.rowsProofs, _sharesProof.attestationProof, _root
+            _bridge, _sharesProof.rowRoots, _sharesProof.rowProofs, _sharesProof.attestationProof, _root
         );
 
         // checking that the shares were committed to by the rows roots.
-        if (_sharesProof.shareProofs.length != _sharesProof.rowsRoots.length) {
-            revert UnequalShareProofsAndRowsRootsNumber();
+        if (_sharesProof.shareProofs.length != _sharesProof.rowRoots.length) {
+            revert UnequalShareProofsAndRowRootsNumber();
         }
 
         uint256 numberOfSharesInProofs = 0;
@@ -112,7 +112,7 @@ library DAVerifier {
         for (uint256 i = 0; i < _sharesProof.shareProofs.length; i++) {
             uint256 sharesUsed = _sharesProof.shareProofs[i].endKey - _sharesProof.shareProofs[i].beginKey;
             NamespaceNode memory rowRoot =
-                NamespaceNode(_sharesProof.namespaceID, _sharesProof.namespaceID, _sharesProof.rowsRoots[i].digest);
+                NamespaceNode(_sharesProof.namespaceID, _sharesProof.namespaceID, _sharesProof.rowRoots[i].digest);
             if (
                 !NamespaceMerkleTree.verifyMulti(
                     rowRoot,
@@ -161,14 +161,14 @@ library DAVerifier {
 
     /// @notice Verifies that a set of rows/columns, from a Celestia block, were committed to by the QGB smart contract.
     /// @param _bridge The QGB smart contract instance.
-    /// @param _rowsRoots The set of row/column roots to be proved.
-    /// @param _rowsProofs The set of proofs of the _rowsRoots in the same order.
+    /// @param _rowRoots The set of row/column roots to be proved.
+    /// @param _rowProofs The set of proofs of the _rowRoots in the same order.
     /// @param _root The data root of the block that contains the rows.
     /// @return `true` if the proof is valid, `false` otherwise.
     function verifyMultiRowRootsToDataRootTupleRoot(
         IDAOracle _bridge,
-        NamespaceNode[] memory _rowsRoots,
-        BinaryMerkleProof[] memory _rowsProofs,
+        NamespaceNode[] memory _rowRoots,
+        BinaryMerkleProof[] memory _rowProofs,
         AttestationProof memory _attestationProof,
         bytes32 _root
     ) public view returns (bool) {
@@ -182,13 +182,13 @@ library DAVerifier {
         }
 
         // checking that the rows roots commit to the data root.
-        if (_rowsProofs.length != _rowsRoots.length) {
-            revert UnequalRowsProofsAndRowsRootsNumber();
+        if (_rowProofs.length != _rowRoots.length) {
+            revert UnequalRowProofsAndRowRootsNumber();
         }
 
-        for (uint256 i = 0; i < _rowsProofs.length; i++) {
-            bytes memory rowRoot = abi.encodePacked(_rowsRoots[i].min, _rowsRoots[i].max, _rowsRoots[i].digest);
-            if (!BinaryMerkleTree.verify(_root, _rowsProofs[i], rowRoot)) {
+        for (uint256 i = 0; i < _rowProofs.length; i++) {
+            bytes memory rowRoot = abi.encodePacked(_rowRoots[i].min, _rowRoots[i].max, _rowRoots[i].digest);
+            if (!BinaryMerkleTree.verify(_root, _rowProofs[i], rowRoot)) {
                 revert InvalidRowsToDataRootProof(i);
             }
         }
