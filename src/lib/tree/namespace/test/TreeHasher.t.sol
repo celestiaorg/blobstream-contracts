@@ -18,28 +18,28 @@ contract TreeHasherTest is DSTest {
     }
 
     function testLeafDigestEmpty() external {
-        NamespaceID nid = NamespaceID.wrap(0x0000000000000000);
+        NamespaceID nid = NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000000);
         NamespaceNode memory expected =
-            NamespaceNode(nid, nid, 0x3e7077fd2f66d689e0cee6a7cf5b37bf2dca7c979af356d0a31cbc5c85605c7d);
+            NamespaceNode(nid, nid, 0x0679246d6c4216de0daa08e5523fb2674db2b6599c3b72ff946b488a15290b62);
         bytes memory data;
         NamespaceNode memory node = leafDigest(nid, data);
         assertEqNamespaceNode(node, expected);
     }
 
     function testLeafDigestSome() external {
-        NamespaceID nid = NamespaceID.wrap(0xdeadbeefdeadbeef);
+        NamespaceID nid = NamespaceID.wrap(0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefde);
         NamespaceNode memory expected =
-            NamespaceNode(nid, nid, 0x7c5146e5a2fe11d16375bfebe907722d77fad468411a2704f3863e41993186bb);
+            NamespaceNode(nid, nid, 0x3624c7f7169cb5bbd0d010b851ebd0edca10b2a1b126f5fb1a6d5e0d98356e63);
         bytes memory data = hex"69";
         NamespaceNode memory node = leafDigest(nid, data);
         assertEqNamespaceNode(node, expected);
     }
 
     function testNodeDigest() external {
-        NamespaceID nidLeft = NamespaceID.wrap(0x0000000000000000);
-        NamespaceID nidRight = NamespaceID.wrap(0xdeadbeefdeadbeef);
+        NamespaceID nidLeft = NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000000);
+        NamespaceID nidRight = NamespaceID.wrap(0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefde);
         NamespaceNode memory expected =
-            NamespaceNode(nidLeft, nidRight, 0xc09cccb48cbc3a3ce4b19b9f25da11325d4fdf823ba56e990006fbc1eb8ddaf2);
+            NamespaceNode(nidLeft, nidRight, 0x95cad48bc181484c851004cf772abe767391e19549d3b8192b55b1d654a71bcd);
         NamespaceNode memory left =
             NamespaceNode(nidLeft, nidLeft, 0xdb55da3fc3098e9c42311c6013304ff36b19ef73d12ea932054b5ad51df4f49d);
         NamespaceNode memory right =
@@ -49,10 +49,10 @@ contract TreeHasherTest is DSTest {
     }
 
     function testNodeParity() external {
-        NamespaceID nidMin = NamespaceID.wrap(0x0000000000000000);
-        NamespaceID nidMax = NamespaceID.wrap(0xdeadbeefdeadbeef);
+        NamespaceID nidMin = NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000000);
+        NamespaceID nidMax = NamespaceID.wrap(0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefde);
         NamespaceNode memory expected =
-            NamespaceNode(nidMin, nidMax, 0xb16c8e95fa3655fa06d2ccf09f8351443c5a838a1f1b8d5cf2cb1ec00adf2662);
+            NamespaceNode(nidMin, nidMax, 0xc6960f535d4ab0aed075aed34a116725e8035012ceffe5405ae72abe3bcaa28f);
         NamespaceNode memory left =
             NamespaceNode(nidMin, nidMax, 0xdb55da3fc3098e9c42311c6013304ff36b19ef73d12ea932054b5ad51df4f49d);
         NamespaceNode memory right = NamespaceNode(

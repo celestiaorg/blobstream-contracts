@@ -16,5 +16,6 @@ library Constants {
     bytes1 internal constant NODE_PREFIX = 0x01;
 
     /// @dev Parity share namespace ID
-    NamespaceID internal constant PARITY_SHARE_NAMESPACE_ID = NamespaceID.wrap(0xFFFFFFFFFFFFFFFF);
+    NamespaceID internal constant PARITY_SHARE_NAMESPACE_ID =
+        NamespaceID.wrap(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
 }
