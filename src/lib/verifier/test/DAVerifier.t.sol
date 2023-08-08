@@ -112,17 +112,17 @@ contract DAVerifierTest is DSTest {
         NamespaceMerkleMultiproof[] memory _shareProofs = new NamespaceMerkleMultiproof[](1);
         _shareProofs[0] = fixture.getShareToRowRootProof();
 
-        NamespaceNode[] memory _rowsRoots = new NamespaceNode[](1);
-        _rowsRoots[0] = fixture.getFirstRowRootNode();
+        NamespaceNode[] memory _rowRoots = new NamespaceNode[](1);
+        _rowRoots[0] = fixture.getFirstRowRootNode();
 
-        BinaryMerkleProof[] memory _rowsProofs = new BinaryMerkleProof[](1);
-        _rowsProofs[0] = fixture.getRowRootToDataRootProof();
+        BinaryMerkleProof[] memory _rowProofs = new BinaryMerkleProof[](1);
+        _rowProofs[0] = fixture.getRowRootToDataRootProof();
 
         AttestationProof memory attestationProof = AttestationProof(
             fixture.dataRootTupleRootNonce(), fixture.getDataRootTuple(), fixture.getDataRootTupleProof()
         );
         SharesProof memory sharesProof =
-            SharesProof(_data, _shareProofs, fixture.minimaxNID(), _rowsRoots, _rowsProofs, attestationProof);
+            SharesProof(_data, _shareProofs, fixture.minimaxNID(), _rowRoots, _rowProofs, attestationProof);
 
         bool valid = DAVerifier.verifySharesToDataRootTupleRoot(bridge, sharesProof, fixture.dataRoot());
         assertTrue(valid);
@@ -144,18 +144,18 @@ contract DAVerifierTest is DSTest {
     }
 
     function testVerifyMultiRowRootsToDataRootTupleRoot() public {
-        NamespaceNode[] memory _rowsRoots = new NamespaceNode[](1);
-        _rowsRoots[0] = fixture.getFirstRowRootNode();
+        NamespaceNode[] memory _rowRoots = new NamespaceNode[](1);
+        _rowRoots[0] = fixture.getFirstRowRootNode();
 
-        BinaryMerkleProof[] memory _rowsProofs = new BinaryMerkleProof[](1);
-        _rowsProofs[0] = fixture.getRowRootToDataRootProof();
+        BinaryMerkleProof[] memory _rowProofs = new BinaryMerkleProof[](1);
+        _rowProofs[0] = fixture.getRowRootToDataRootProof();
 
         AttestationProof memory attestationProof = AttestationProof(
             fixture.dataRootTupleRootNonce(), fixture.getDataRootTuple(), fixture.getDataRootTupleProof()
         );
 
         bool valid = DAVerifier.verifyMultiRowRootsToDataRootTupleRoot(
-            bridge, _rowsRoots, _rowsProofs, attestationProof, fixture.dataRoot()
+            bridge, _rowRoots, _rowProofs, attestationProof, fixture.dataRoot()
         );
         assertTrue(valid);
     }
