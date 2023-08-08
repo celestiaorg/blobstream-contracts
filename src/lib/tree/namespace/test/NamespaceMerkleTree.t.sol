@@ -31,17 +31,17 @@ import "../NamespaceMerkleTree.sol";
  * 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffff 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffff 0x655790e24d376e9556a3cba9908a5d97f27faa050806ecfcb481861a83240bd5
  *
  * Inner nodes(depth = 2): min namespace, max namespace, data
- * 0x0000000000000000000000000000000000000000000000000000000010 0x0000000000000000000000000000000000000000000000000000000020 0xd9654a9a8a4196b92358b3d94f1b7a21b5d8bddf57ab974ca9b869196c7c3cf1
+ * 0x0000000000000000000000000000000000000000000000000000000010 0x0000000000000000000000000000000000000000000000000000000020 0x1dae5c3d39a8bf31ea33ba368238a52f816cd50485c580565609554cf360c91f
  * 0x0000000000000000000000000000000000000000000000000000000030 0x0000000000000000000000000000000000000000000000000000000040 0x2aa20c7587b009772a9a88402b7cc8fcb82edc9e31754e95544a670a696f55a7
  * 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffff 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffff 0x055a3ea75c438d752aeabbba94ed8fac93e0b32321256a65fde176dba14f5186
  * 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffff 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffff 0x1b79ffd74644e8c287fe5f1dd70bc8ea02738697cebf2810ffb2dc5157485c40
  *
  * Inner nodes(depth = 1): min namespace, max namespace, data
- * 0x0000000000000000000000000000000000000000000000000000000010 0x0000000000000000000000000000000000000000000000000000000040 0x203de1ab3986ac9302811f46d6e528fd66b4fb1b484a0de898a9af0f18e4403f
+ * 0x0000000000000000000000000000000000000000000000000000000010 0x0000000000000000000000000000000000000000000000000000000040 0xa8dcd9f365fb64aa6d72b5027fe74db0fc7d009c2d75c7b9b9656927281cb35e
  * 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffff 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffff 0x5aa3e7ea31995fdd38f41015275229b290a8ee4810521db766ad457b9a8373d6
  *
  * Root node: min namespace, max namespace, data
- * 0x0000000000000000000000000000000000000000000000000000000010 0x0000000000000000000000000000000000000000000000000000000040 0xe6a9119463f4809bd9cd0e5df15fa4699d04dbf3f69d858f43a51014777d907b
+ * 0x0000000000000000000000000000000000000000000000000000000010 0x0000000000000000000000000000000000000000000000000000000040 0x34e6541306dc4e57a5a2a9ef57a46d5705ed09efb8c6a02580d3a972922b6862
  *
  */
 
@@ -109,7 +109,7 @@ contract NamespaceMerkleTreeTest is DSTest {
         NamespaceNode memory root = NamespaceNode(
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000020),
-            0xd9654a9a8a4196b92358b3d94f1b7a21b5d8bddf57ab974ca9b869196c7c3cf1
+            0x1dae5c3d39a8bf31ea33ba368238a52f816cd50485c580565609554cf360c91f
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](1);
         sideNodes[0] = NamespaceNode(
@@ -132,7 +132,7 @@ contract NamespaceMerkleTreeTest is DSTest {
         NamespaceNode memory root = NamespaceNode(
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
-            0x203de1ab3986ac9302811f46d6e528fd66b4fb1b484a0de898a9af0f18e4403f
+            0xa8dcd9f365fb64aa6d72b5027fe74db0fc7d009c2d75c7b9b9656927281cb35e
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](2);
         sideNodes[0] = NamespaceNode(
@@ -160,7 +160,7 @@ contract NamespaceMerkleTreeTest is DSTest {
         NamespaceNode memory root = NamespaceNode(
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
-            0xe6a9119463f4809bd9cd0e5df15fa4699d04dbf3f69d858f43a51014777d907b
+            0x34e6541306dc4e57a5a2a9ef57a46d5705ed09efb8c6a02580d3a972922b6862
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](3);
         sideNodes[0] = NamespaceNode(
@@ -193,7 +193,7 @@ contract NamespaceMerkleTreeTest is DSTest {
         NamespaceNode memory root = NamespaceNode(
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
-            0xe6a9119463f4809bd9cd0e5df15fa4699d04dbf3f69d858f43a51014777d907b
+            0x34e6541306dc4e57a5a2a9ef57a46d5705ed09efb8c6a02580d3a972922b6862
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](3);
         sideNodes[0] = NamespaceNode(
@@ -209,7 +209,7 @@ contract NamespaceMerkleTreeTest is DSTest {
         sideNodes[2] = NamespaceNode(
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
-            0x203de1ab3986ac9302811f46d6e528fd66b4fb1b484a0de898a9af0f18e4403f
+            0xa8dcd9f365fb64aa6d72b5027fe74db0fc7d009c2d75c7b9b9656927281cb35e
         );
 
         uint256 key = 6;
@@ -224,7 +224,7 @@ contract NamespaceMerkleTreeTest is DSTest {
         NamespaceNode memory root = NamespaceNode(
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
-            0xe6a9119463f4809bd9cd0e5df15fa4699d04dbf3f69d858f43a51014777d907b
+            0x34e6541306dc4e57a5a2a9ef57a46d5705ed09efb8c6a02580d3a972922b6862
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](3);
         sideNodes[0] = NamespaceNode(
@@ -240,7 +240,7 @@ contract NamespaceMerkleTreeTest is DSTest {
         sideNodes[2] = NamespaceNode(
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
-            0x203de1ab3986ac9302811f46d6e528fd66b4fb1b484a0de898a9af0f18e4403f
+            0xa8dcd9f365fb64aa6d72b5027fe74db0fc7d009c2d75c7b9b9656927281cb35e
         );
 
         uint256 key = 7;
@@ -320,7 +320,7 @@ contract NamespaceMerkleTreeTest is DSTest {
         NamespaceNode memory root = NamespaceNode(
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
-            0xe6a9119463f4809bd9cd0e5df15fa4699d04dbf3f69d858f43a51014777d907b
+            0x34e6541306dc4e57a5a2a9ef57a46d5705ed09efb8c6a02580d3a972922b6862
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](2);
         sideNodes[0] = NamespaceNode(
@@ -336,7 +336,7 @@ contract NamespaceMerkleTreeTest is DSTest {
         NamespaceNode memory node = NamespaceNode(
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000020),
-            0xd9654a9a8a4196b92358b3d94f1b7a21b5d8bddf57ab974ca9b869196c7c3cf1
+            0x1dae5c3d39a8bf31ea33ba368238a52f816cd50485c580565609554cf360c91f
         );
 
         uint256 key = 0;
@@ -350,7 +350,7 @@ contract NamespaceMerkleTreeTest is DSTest {
         NamespaceNode memory root = NamespaceNode(
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
-            0xe6a9119463f4809bd9cd0e5df15fa4699d04dbf3f69d858f43a51014777d907b
+            0x34e6541306dc4e57a5a2a9ef57a46d5705ed09efb8c6a02580d3a972922b6862
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](2);
         sideNodes[0] = NamespaceNode(
@@ -361,7 +361,7 @@ contract NamespaceMerkleTreeTest is DSTest {
         sideNodes[1] = NamespaceNode(
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
             NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
-            0x203de1ab3986ac9302811f46d6e528fd66b4fb1b484a0de898a9af0f18e4403f
+            0xa8dcd9f365fb64aa6d72b5027fe74db0fc7d009c2d75c7b9b9656927281cb35e
         );
         NamespaceNode memory node = NamespaceNode(
             Constants.PARITY_SHARE_NAMESPACE_ID,
