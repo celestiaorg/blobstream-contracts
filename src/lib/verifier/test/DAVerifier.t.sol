@@ -201,11 +201,11 @@ contract DAVerifierTest is DSTest {
     }
 }
 
-/// @title TestFixture contains the necessary information to create proofs for the blob
-/// that was posted to Celestia. It represents the data mentioned in the comment at
-/// the beginning of this file.
+/// @title TestFixture contains the necessary information to create proofs for the token
+/// transfer transaction that happened on Celestia. It represents the data mentioned in
+/// the comment at the beginning of this file.
 contract TestFixture {
-    /// @notice the share containing the blob that was published to Celestia.
+    /// @notice the share containing the token transfer transaction on Celestia.
     bytes public shareData = abi.encodePacked(
         hex"0000000000000001010000014300000011c1020a95010a92010a1c2f636f736d",
         hex"6f732e62616e6b2e763162657461312e4d736753656e6412720a2f63656c6573",
@@ -248,10 +248,10 @@ contract TestFixture {
         hex"ffffffffffffffffffffffffffffffff8a27b3798dc3f14c183597cdfa738c94758cbf0665fa96242672d65cf72881a9"
     );
 
-    /// @notice the data root of the block containing the submitted blob.
+    /// @notice the data root of the block containing the token transfer transaction.
     bytes32 public dataRoot = 0x1108C0D8079563116167A66BE596DBE222E438C273ECC3B48E290465FC6093B2;
 
-    /// @notice the height of the block containing the submitted blob.
+    /// @notice the height of the block containing the submitted token transfer transaction.
     uint256 public height = 2;
 
     /// @notice the data root tuple root committing to the Celestia block.
@@ -281,7 +281,7 @@ contract TestFixture {
         bytes32(0xbf6d9e948bc2e4bc32a791135385bbc2a3b8f426d33d212c9f755e8f2dd964ad)
     ];
 
-    /// @notice the data root tuple of the block containing the submitted blob.
+    /// @notice the data root tuple of the block containing the token transfer transaction.
     function getDataRootTuple() public view returns (DataRootTuple memory) {
         return DataRootTuple(height, dataRoot);
     }
