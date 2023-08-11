@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-type NamespaceID is bytes8;
+type NamespaceID is bytes29;
 
 using {equality as ==} for NamespaceID global;
 using {lessthan as <} for NamespaceID global;
