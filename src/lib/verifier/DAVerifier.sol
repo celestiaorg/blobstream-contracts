@@ -18,8 +18,8 @@ struct SharesProof {
     bytes[] data;
     // The shares proof to the row roots. If the shares span multiple rows, we will have multiple nmt proofs.
     NamespaceMerkleMultiproof[] shareProofs;
-    // The namespace ID of the shares.
-    NamespaceID namespaceID;
+    // The namespace of the shares.
+    Namespace namespace;
     // The rows where the shares belong. If the shares span multiple rows, we will have multiple rows.
     NamespaceNode[] rowRoots;
     // The proofs of the rowRoots to the data root.
@@ -112,12 +112,12 @@ library DAVerifier {
         for (uint256 i = 0; i < _sharesProof.shareProofs.length; i++) {
             uint256 sharesUsed = _sharesProof.shareProofs[i].endKey - _sharesProof.shareProofs[i].beginKey;
             NamespaceNode memory rowRoot =
-                NamespaceNode(_sharesProof.namespaceID, _sharesProof.namespaceID, _sharesProof.rowRoots[i].digest);
+                NamespaceNode(_sharesProof.namespace, _sharesProof.namespace, _sharesProof.rowRoots[i].digest);
             if (
                 !NamespaceMerkleTree.verifyMulti(
                     rowRoot,
                     _sharesProof.shareProofs[i],
-                    _sharesProof.namespaceID,
+                    _sharesProof.namespace,
                     slice(_sharesProof.data, cursor, cursor + sharesUsed)
                 )
             ) {
@@ -151,7 +151,7 @@ library DAVerifier {
             revert InvalidDataRootTupleToDataRootTupleRootProof();
         }
 
-        bytes memory rowRoot = abi.encodePacked(_rowRoot.min, _rowRoot.max, _rowRoot.digest);
+        bytes memory rowRoot = abi.encodePacked(_rowRoot.min.toBytes(), _rowRoot.max.toBytes(), _rowRoot.digest);
         if (!BinaryMerkleTree.verify(_root, _rowProof, rowRoot)) {
             revert InvalidRowToDataRootProof();
         }
@@ -187,7 +187,8 @@ library DAVerifier {
         }
 
         for (uint256 i = 0; i < _rowProofs.length; i++) {
-            bytes memory rowRoot = abi.encodePacked(_rowRoots[i].min, _rowRoots[i].max, _rowRoots[i].digest);
+            bytes memory rowRoot =
+                abi.encodePacked(_rowRoots[i].min.toBytes(), _rowRoots[i].max.toBytes(), _rowRoots[i].digest);
             if (!BinaryMerkleTree.verify(_root, _rowProofs[i], rowRoot)) {
                 revert InvalidRowsToDataRootProof(i);
             }

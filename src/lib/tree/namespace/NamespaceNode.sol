@@ -5,10 +5,10 @@ import "../Types.sol";
 
 /// @notice Namespace Merkle Tree node.
 struct NamespaceNode {
-    // Minimum namespace ID.
-    NamespaceID min;
-    // Maximum namespace ID.
-    NamespaceID max;
+    // Minimum namespace.
+    Namespace min;
+    // Maximum namespace.
+    Namespace max;
     // Node value.
     bytes32 digest;
 }
@@ -19,5 +19,5 @@ struct NamespaceNode {
 /// @return `true` is equal, `false otherwise.
 // solhint-disable-next-line func-visibility
 function namespaceNodeEquals(NamespaceNode memory first, NamespaceNode memory second) pure returns (bool) {
-    return (first.min == second.min) && (first.max == second.max) && (first.digest == second.digest);
+    return first.min.equalTo(second.min) && first.max.equalTo(second.max) && (first.digest == second.digest);
 }

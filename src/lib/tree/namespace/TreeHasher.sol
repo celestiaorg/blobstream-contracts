@@ -7,8 +7,8 @@ import "./NamespaceNode.sol";
 
 /// @notice Get the minimum namespace.
 // solhint-disable-next-line func-visibility
-function namespaceMin(NamespaceID l, NamespaceID r) pure returns (NamespaceID) {
-    if (l < r) {
+function namespaceMin(Namespace memory l, Namespace memory r) pure returns (Namespace memory) {
+    if (l.lessThan(r)) {
         return l;
     } else {
         return r;
@@ -17,8 +17,8 @@ function namespaceMin(NamespaceID l, NamespaceID r) pure returns (NamespaceID) {
 
 /// @notice Get the maximum namespace.
 // solhint-disable-next-line func-visibility
-function namespaceMax(NamespaceID l, NamespaceID r) pure returns (NamespaceID) {
-    if (l > r) {
+function namespaceMax(Namespace memory l, Namespace memory r) pure returns (Namespace memory) {
+    if (l.greaterThan(r)) {
         return l;
     } else {
         return r;
@@ -26,13 +26,13 @@ function namespaceMax(NamespaceID l, NamespaceID r) pure returns (NamespaceID) {
 }
 
 /// @notice Hash a leaf node.
-/// @param minmaxNID Namespace ID.
+/// @param namespace Namespace of the leaf.
 /// @param data Raw data of the leaf.
 /// @dev More details in https://github.com/celestiaorg/celestia-specs/blob/master/src/specs/data_structures.md#namespace-merkle-tree
 // solhint-disable-next-line func-visibility
-function leafDigest(NamespaceID minmaxNID, bytes memory data) pure returns (NamespaceNode memory) {
-    bytes32 digest = sha256(abi.encodePacked(Constants.LEAF_PREFIX, minmaxNID, data));
-    NamespaceNode memory node = NamespaceNode(minmaxNID, minmaxNID, digest);
+function leafDigest(Namespace memory namespace, bytes memory data) pure returns (NamespaceNode memory) {
+    bytes32 digest = sha256(abi.encodePacked(Constants.LEAF_PREFIX, namespace.toBytes(), data));
+    NamespaceNode memory node = NamespaceNode(namespace, namespace, digest);
     return node;
 }
 
@@ -42,17 +42,27 @@ function leafDigest(NamespaceID minmaxNID, bytes memory data) pure returns (Name
 /// @dev More details in https://github.com/celestiaorg/celestia-specs/blob/master/src/specs/data_structures.md#namespace-merkle-tree
 // solhint-disable-next-line func-visibility
 function nodeDigest(NamespaceNode memory l, NamespaceNode memory r) pure returns (NamespaceNode memory) {
-    NamespaceID min = namespaceMin(l.min, r.min);
-    NamespaceID max;
-    if (l.min == Constants.PARITY_SHARE_NAMESPACE_ID) {
-        max = Constants.PARITY_SHARE_NAMESPACE_ID;
-    } else if (r.min == Constants.PARITY_SHARE_NAMESPACE_ID) {
+    Namespace memory min = namespaceMin(l.min, r.min);
+    Namespace memory max;
+    if (l.min.equalTo(PARITY_SHARE_NAMESPACE())) {
+        max = PARITY_SHARE_NAMESPACE();
+    } else if (r.min.equalTo(PARITY_SHARE_NAMESPACE())) {
         max = l.max;
     } else {
         max = namespaceMax(l.max, r.max);
     }
 
-    bytes32 digest = sha256(abi.encodePacked(Constants.NODE_PREFIX, l.min, l.max, l.digest, r.min, r.max, r.digest));
+    bytes32 digest = sha256(
+        abi.encodePacked(
+            Constants.NODE_PREFIX,
+            l.min.toBytes(),
+            l.max.toBytes(),
+            l.digest,
+            r.min.toBytes(),
+            r.max.toBytes(),
+            r.digest
+        )
+    );
 
     NamespaceNode memory node = NamespaceNode(min, max, digest);
     return node;

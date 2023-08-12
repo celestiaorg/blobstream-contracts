@@ -6,11 +6,13 @@ import "ds-test/test.sol";
 import "../NamespaceNode.sol";
 import "../NamespaceMerkleProof.sol";
 import "../NamespaceMerkleTree.sol";
+import "../../Constants.sol";
 
 /**
  * TEST VECTORS
  *
- * Data blocks: namespace id, data
+ * Data blocks: Namespace, data
+ * Data blocks: Namespace, data
  * 0x0000000000000000000000000000000000000000000000000000000010 0x01
  * 0x0000000000000000000000000000000000000000000000000000000020 0x02
  * 0x0000000000000000000000000000000000000000000000000000000030 0x03
@@ -49,13 +51,13 @@ contract NamespaceMerkleTreeTest is DSTest {
     function setUp() external {}
 
     function assertEqNamespaceNode(NamespaceNode memory first, NamespaceNode memory second) internal {
-        assertEq(NamespaceID.unwrap(first.min), NamespaceID.unwrap(second.min));
-        assertEq(NamespaceID.unwrap(first.max), NamespaceID.unwrap(second.max));
+        assertTrue(first.min.equalTo(second.min));
+        assertTrue(first.max.equalTo(second.max));
         assertEq(first.digest, second.digest);
     }
 
     function testVerifyNone() external {
-        NamespaceID nid = NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000000);
+        Namespace memory nid = Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000000);
         NamespaceNode memory root = NamespaceNode(nid, nid, sha256(""));
         NamespaceNode[] memory sideNodes;
         uint256 key = 0;
@@ -67,7 +69,7 @@ contract NamespaceMerkleTreeTest is DSTest {
     }
 
     function testVerifyOneLeafEmpty() external {
-        NamespaceID nid = NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000000);
+        Namespace memory nid = Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000000);
         NamespaceNode memory root =
             NamespaceNode(nid, nid, 0x0679246d6c4216de0daa08e5523fb2674db2b6599c3b72ff946b488a15290b62);
         NamespaceNode[] memory sideNodes;
@@ -80,7 +82,7 @@ contract NamespaceMerkleTreeTest is DSTest {
     }
 
     function testVerifyOneLeafSome() external {
-        NamespaceID nid = NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000000);
+        Namespace memory nid = Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000000);
         NamespaceNode memory root =
             NamespaceNode(nid, nid, 0x56d8381cfe28e8eb21da620145b7b977a74837720da5147b00bfab6f1b4af24d);
         NamespaceNode[] memory sideNodes;
@@ -93,7 +95,7 @@ contract NamespaceMerkleTreeTest is DSTest {
     }
 
     function testVerifyOneLeaf01() external {
-        NamespaceID nid = NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000000);
+        Namespace memory nid = Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000000);
         NamespaceNode memory root =
             NamespaceNode(nid, nid, 0x353857cdb4c745eb9fdebbd8ec44093fabb9f08d437e2298d9e6afa1a409b30c);
         NamespaceNode[] memory sideNodes;
@@ -107,14 +109,14 @@ contract NamespaceMerkleTreeTest is DSTest {
 
     function testVerifyLeafOneOfTwo() external {
         NamespaceNode memory root = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000020),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000020),
             0x1dae5c3d39a8bf31ea33ba368238a52f816cd50485c580565609554cf360c91f
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](1);
         sideNodes[0] = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000020),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000020),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000020),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000020),
             0xc5fd5617b70207108c8d9bcf624b1eedf39b763af86f660255947674e043cd2c
         );
 
@@ -123,26 +125,26 @@ contract NamespaceMerkleTreeTest is DSTest {
         NamespaceMerkleProof memory proof = NamespaceMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = hex"01";
         bool isValid = NamespaceMerkleTree.verify(
-            root, proof, NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010), data
+            root, proof, Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010), data
         );
         assertTrue(isValid);
     }
 
     function testVerifyLeafOneOfFour() external {
         NamespaceNode memory root = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000040),
             0xa8dcd9f365fb64aa6d72b5027fe74db0fc7d009c2d75c7b9b9656927281cb35e
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](2);
         sideNodes[0] = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000020),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000020),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000020),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000020),
             0xc5fd5617b70207108c8d9bcf624b1eedf39b763af86f660255947674e043cd2c
         );
         sideNodes[1] = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000030),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000030),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000040),
             0x2aa20c7587b009772a9a88402b7cc8fcb82edc9e31754e95544a670a696f55a7
         );
 
@@ -151,31 +153,31 @@ contract NamespaceMerkleTreeTest is DSTest {
         NamespaceMerkleProof memory proof = NamespaceMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = hex"01";
         bool isValid = NamespaceMerkleTree.verify(
-            root, proof, NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010), data
+            root, proof, Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010), data
         );
         assertTrue(isValid);
     }
 
     function testVerifyLeafOneOfEight() external {
         NamespaceNode memory root = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000040),
             0x34e6541306dc4e57a5a2a9ef57a46d5705ed09efb8c6a02580d3a972922b6862
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](3);
         sideNodes[0] = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000020),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000020),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000020),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000020),
             0xc5fd5617b70207108c8d9bcf624b1eedf39b763af86f660255947674e043cd2c
         );
         sideNodes[1] = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000030),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000030),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000040),
             0x2aa20c7587b009772a9a88402b7cc8fcb82edc9e31754e95544a670a696f55a7
         );
         sideNodes[2] = NamespaceNode(
-            Constants.PARITY_SHARE_NAMESPACE_ID,
-            Constants.PARITY_SHARE_NAMESPACE_ID,
+            PARITY_SHARE_NAMESPACE(),
+            PARITY_SHARE_NAMESPACE(),
             0x5aa3e7ea31995fdd38f41015275229b290a8ee4810521db766ad457b9a8373d6
         );
 
@@ -184,31 +186,31 @@ contract NamespaceMerkleTreeTest is DSTest {
         NamespaceMerkleProof memory proof = NamespaceMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = hex"01";
         bool isValid = NamespaceMerkleTree.verify(
-            root, proof, NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010), data
+            root, proof, Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010), data
         );
         assertTrue(isValid);
     }
 
     function testVerifyLeafSevenOfEight() external {
         NamespaceNode memory root = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000040),
             0x34e6541306dc4e57a5a2a9ef57a46d5705ed09efb8c6a02580d3a972922b6862
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](3);
         sideNodes[0] = NamespaceNode(
-            Constants.PARITY_SHARE_NAMESPACE_ID,
-            Constants.PARITY_SHARE_NAMESPACE_ID,
+            PARITY_SHARE_NAMESPACE(),
+            PARITY_SHARE_NAMESPACE(),
             0x655790e24d376e9556a3cba9908a5d97f27faa050806ecfcb481861a83240bd5
         );
         sideNodes[1] = NamespaceNode(
-            Constants.PARITY_SHARE_NAMESPACE_ID,
-            Constants.PARITY_SHARE_NAMESPACE_ID,
+            PARITY_SHARE_NAMESPACE(),
+            PARITY_SHARE_NAMESPACE(),
             0x055a3ea75c438d752aeabbba94ed8fac93e0b32321256a65fde176dba14f5186
         );
         sideNodes[2] = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000040),
             0xa8dcd9f365fb64aa6d72b5027fe74db0fc7d009c2d75c7b9b9656927281cb35e
         );
 
@@ -216,30 +218,30 @@ contract NamespaceMerkleTreeTest is DSTest {
         uint256 numLeaves = 8;
         NamespaceMerkleProof memory proof = NamespaceMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = hex"07";
-        bool isValid = NamespaceMerkleTree.verify(root, proof, Constants.PARITY_SHARE_NAMESPACE_ID, data);
+        bool isValid = NamespaceMerkleTree.verify(root, proof, PARITY_SHARE_NAMESPACE(), data);
         assertTrue(isValid);
     }
 
     function testVerifyLeafEightOfEight() external {
         NamespaceNode memory root = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000040),
             0x34e6541306dc4e57a5a2a9ef57a46d5705ed09efb8c6a02580d3a972922b6862
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](3);
         sideNodes[0] = NamespaceNode(
-            Constants.PARITY_SHARE_NAMESPACE_ID,
-            Constants.PARITY_SHARE_NAMESPACE_ID,
+            PARITY_SHARE_NAMESPACE(),
+            PARITY_SHARE_NAMESPACE(),
             0x2669e36b48e95bd9903300e50c27c53984fc439f6235fade08e3f14e78a42aac
         );
         sideNodes[1] = NamespaceNode(
-            Constants.PARITY_SHARE_NAMESPACE_ID,
-            Constants.PARITY_SHARE_NAMESPACE_ID,
+            PARITY_SHARE_NAMESPACE(),
+            PARITY_SHARE_NAMESPACE(),
             0x055a3ea75c438d752aeabbba94ed8fac93e0b32321256a65fde176dba14f5186
         );
         sideNodes[2] = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000040),
             0xa8dcd9f365fb64aa6d72b5027fe74db0fc7d009c2d75c7b9b9656927281cb35e
         );
 
@@ -247,12 +249,12 @@ contract NamespaceMerkleTreeTest is DSTest {
         uint256 numLeaves = 8;
         NamespaceMerkleProof memory proof = NamespaceMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = hex"08";
-        bool isValid = NamespaceMerkleTree.verify(root, proof, Constants.PARITY_SHARE_NAMESPACE_ID, data);
+        bool isValid = NamespaceMerkleTree.verify(root, proof, PARITY_SHARE_NAMESPACE(), data);
         assertTrue(isValid);
     }
 
     function testVerifyInnerLeafIsRoot() external {
-        NamespaceID nid = NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000000);
+        Namespace memory nid = Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000000);
         NamespaceNode memory root =
             NamespaceNode(nid, nid, 0xc59fa9c4ec515726c2b342544433f844c7b930cf7a5e7abab593332453ceaf70);
         NamespaceNode[] memory sideNodes;
@@ -267,7 +269,7 @@ contract NamespaceMerkleTreeTest is DSTest {
     }
 
     function testVerifyInnerFalseForStartingHeightZero() external {
-        NamespaceID nid = NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000020);
+        Namespace memory nid = Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000020);
         NamespaceNode memory root =
             NamespaceNode(nid, nid, 0xc59fa9c4ec515726c2b342544433f844c7b930cf7a5e7abab593332453ceaf70);
         NamespaceNode[] memory sideNodes;
@@ -282,7 +284,7 @@ contract NamespaceMerkleTreeTest is DSTest {
     }
 
     function testVerifyInnerFalseForTooLargeKey() external {
-        NamespaceID nid = NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000020);
+        Namespace memory nid = Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000020);
         NamespaceNode memory root =
             NamespaceNode(nid, nid, 0xc59fa9c4ec515726c2b342544433f844c7b930cf7a5e7abab593332453ceaf70);
         NamespaceNode[] memory sideNodes;
@@ -297,13 +299,13 @@ contract NamespaceMerkleTreeTest is DSTest {
     }
 
     function testVerifyInnerFalseForIncorrectProofLength() external {
-        NamespaceID nid = NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000020);
+        Namespace memory nid = Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000020);
         NamespaceNode memory root =
             NamespaceNode(nid, nid, 0xc59fa9c4ec515726c2b342544433f844c7b930cf7a5e7abab593332453ceaf70);
         NamespaceNode[] memory sideNodes = new NamespaceNode[](1);
         sideNodes[0] = NamespaceNode(
-            Constants.PARITY_SHARE_NAMESPACE_ID,
-            Constants.PARITY_SHARE_NAMESPACE_ID,
+            PARITY_SHARE_NAMESPACE(),
+            PARITY_SHARE_NAMESPACE(),
             0x24ddc56b10cebbf760b3a744ad3a0e91093db34b4d22995f6de6dac918e38ae5
         );
         uint256 key = 0;
@@ -318,24 +320,24 @@ contract NamespaceMerkleTreeTest is DSTest {
 
     function testVerifyInnerOneOfEight() external {
         NamespaceNode memory root = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000040),
             0x34e6541306dc4e57a5a2a9ef57a46d5705ed09efb8c6a02580d3a972922b6862
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](2);
         sideNodes[0] = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000030),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000030),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000040),
             0x2aa20c7587b009772a9a88402b7cc8fcb82edc9e31754e95544a670a696f55a7
         );
         sideNodes[1] = NamespaceNode(
-            Constants.PARITY_SHARE_NAMESPACE_ID,
-            Constants.PARITY_SHARE_NAMESPACE_ID,
+            PARITY_SHARE_NAMESPACE(),
+            PARITY_SHARE_NAMESPACE(),
             0x5aa3e7ea31995fdd38f41015275229b290a8ee4810521db766ad457b9a8373d6
         );
         NamespaceNode memory node = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000020),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000020),
             0x1dae5c3d39a8bf31ea33ba368238a52f816cd50485c580565609554cf360c91f
         );
 
@@ -348,24 +350,24 @@ contract NamespaceMerkleTreeTest is DSTest {
 
     function testVerifyInnerSevenOfEight() external {
         NamespaceNode memory root = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000040),
             0x34e6541306dc4e57a5a2a9ef57a46d5705ed09efb8c6a02580d3a972922b6862
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](2);
         sideNodes[0] = NamespaceNode(
-            Constants.PARITY_SHARE_NAMESPACE_ID,
-            Constants.PARITY_SHARE_NAMESPACE_ID,
+            PARITY_SHARE_NAMESPACE(),
+            PARITY_SHARE_NAMESPACE(),
             0x055a3ea75c438d752aeabbba94ed8fac93e0b32321256a65fde176dba14f5186
         );
         sideNodes[1] = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000040),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000040),
             0xa8dcd9f365fb64aa6d72b5027fe74db0fc7d009c2d75c7b9b9656927281cb35e
         );
         NamespaceNode memory node = NamespaceNode(
-            Constants.PARITY_SHARE_NAMESPACE_ID,
-            Constants.PARITY_SHARE_NAMESPACE_ID,
+            PARITY_SHARE_NAMESPACE(),
+            PARITY_SHARE_NAMESPACE(),
             0x1b79ffd74644e8c287fe5f1dd70bc8ea02738697cebf2810ffb2dc5157485c40
         );
 

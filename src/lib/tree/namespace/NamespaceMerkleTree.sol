@@ -14,18 +14,18 @@ library NamespaceMerkleTree {
     /// @notice Verify if element exists in Merkle tree, given data, proof, and root.
     /// @param root The root of the tree in which the given leaf is verified.
     /// @param proof Namespace Merkle proof for the leaf.
-    /// @param minmaxNID Namespace ID of the leaf.
+    /// @param namespace Namespace of the leaf.
     /// @param data The data of the leaf to verify.
     /// @return `true` if the proof is valid, `false` otherwise.
     /// @dev proof.numLeaves is necessary to determine height of subtree containing the data to prove.
     function verify(
         NamespaceNode memory root,
         NamespaceMerkleProof memory proof,
-        NamespaceID minmaxNID,
+        Namespace memory namespace,
         bytes memory data
     ) internal pure returns (bool) {
         // A sibling at height 1 is created by getting the leafDigest of the original data.
-        NamespaceNode memory node = leafDigest(minmaxNID, data);
+        NamespaceNode memory node = leafDigest(namespace, data);
 
         // Since we're verifying a leaf, height parameter is 1.
         return verifyInner(root, proof, node, 1);
@@ -137,19 +137,19 @@ library NamespaceMerkleTree {
     /// @notice Verify if contiguous elements exists in Merkle tree, given leaves, mutliproof, and root.
     /// @param root The root of the tree in which the given leaves are verified.
     /// @param proof Namespace Merkle multiproof for the leaves.
-    /// @param minmaxNID Namespace ID of the leaves. All leaves must have the same namespace ID.
-    /// @param data The leaves to verify. Note: leaf data must be the _entire_ share (including namespace ID prefixing).
+    /// @param namespace Namespace of the leaves. All leaves must have the same namespace.
+    /// @param data The leaves to verify. Note: leaf data must be the _entire_ share (including namespace prefixing).
     /// @return `true` if the proof is valid, `false` otherwise.
     function verifyMulti(
         NamespaceNode memory root,
         NamespaceMerkleMultiproof memory proof,
-        NamespaceID minmaxNID,
+        Namespace memory namespace,
         bytes[] memory data
     ) internal pure returns (bool) {
         // Hash all the leaves to get leaf nodes.
         NamespaceNode[] memory nodes = new NamespaceNode[](data.length);
         for (uint256 i = 0; i < data.length; ++i) {
-            nodes[i] = leafDigest(minmaxNID, data[i]);
+            nodes[i] = leafDigest(namespace, data[i]);
         }
 
         // Verify inclusion of leaf nodes.
