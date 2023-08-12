@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 /// @notice A representation of the Celestia-app namespace ID and its version.
-/// More in here: https://github.com/celestiaorg/celestia-app/blob/main/docs/architecture/adr-014-versioned-namespaces.md
+/// See: https://celestiaorg.github.io/celestia-app/specs/namespace.html
 struct Namespace {
     // The namespace version.
     bytes1 version;
