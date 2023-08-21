@@ -2,6 +2,9 @@
 pragma solidity ^0.8.19;
 
 import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
+import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
+import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
+import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 import "./Constants.sol";
 import "./DataRootTuple.sol";
@@ -31,7 +34,8 @@ struct Signature {
 /// (see ./DataRootTuple.sol), with each tuple representing a single data root
 /// in a Celestia block header. Relayed tuples are in the same order as the
 /// block headers.
-contract QuantumGravityBridge is IDAOracle {
+/// @dev DO NOT REMOVE ANY INHERITED CONTRACT! They're essential for upgradability.
+contract QuantumGravityBridge is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgradeable {
     // Don't change the order of state for working upgrades AND BE AWARE OF
     // INHERITANCE VARIABLES! Inherited contracts contain storage slots and must
     // be accounted for in any upgrades. Always test an exact upgrade on testnet
@@ -99,7 +103,8 @@ contract QuantumGravityBridge is IDAOracle {
     /// @param _validatorSetHash Initial validator set hash. This does not need
     /// to be the genesis validator set of the bridged chain, only the initial
     /// validator set of the bridge.
-    constructor(uint256 _nonce, uint256 _powerThreshold, bytes32 _validatorSetHash) {
+    /// @dev DO NOT REMOVE THE INITIALIZER! It is mandatory for upgradability.
+    function initialize(uint256 _nonce, uint256 _powerThreshold, bytes32 _validatorSetHash) public initializer {
         // CHECKS
 
         bytes32 newCheckpoint = domainSeparateValidatorSetHash(_nonce, _powerThreshold, _validatorSetHash);
@@ -110,10 +115,19 @@ contract QuantumGravityBridge is IDAOracle {
         state_lastValidatorSetCheckpoint = newCheckpoint;
         state_powerThreshold = _powerThreshold;
 
+        /// @dev Initialize the OwnableUpgradeable explicitly.
+        /// DO NOT REMOVE! It is mandatory for allowing the owner to upgrade.
+        __Ownable_init(_msgSender());
+
         // LOGS
 
         emit ValidatorSetUpdatedEvent(_nonce, _powerThreshold, _validatorSetHash);
     }
+
+    /// @dev only authorize the upgrade for the owner of the contract.
+    /// Additional access control logic can be added to allow multiple actors to upgrade.
+    /// @dev DO NOT REMOVE! It is mandatory for upgradability.
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 
     /// @notice Utility function to check if a signature is nil.
     /// If all bytes of the 65-byte signature are zero, then it's a nil signature.
