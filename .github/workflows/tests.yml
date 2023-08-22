@@ -61,7 +61,7 @@ jobs:
 
       - name: Make Go wrapper
         working-directory: ./
-        run: forge --version
+        run: make
 
       - name: Check Go wrapper match
         run: |
