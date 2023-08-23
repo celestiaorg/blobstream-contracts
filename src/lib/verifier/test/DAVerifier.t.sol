@@ -202,11 +202,11 @@ contract DAVerifierTest is DSTest {
     }
 }
 
-/// @title TestFixture contains the necessary information to create proofs for the blob
-/// that was posted to Celestia. It represents the data mentioned in the comment at
-/// the beginning of this file.
+/// @title TestFixture contains the necessary information to create proofs for the token
+/// transfer transaction that happened on Celestia. It represents the data mentioned in
+/// the comment at the beginning of this file.
 contract TestFixture {
-    /// @notice the share containing the blob that was published to Celestia.
+    /// @notice the share containing the token transfer transaction on Celestia.
     bytes public shareData = abi.encodePacked(
         hex"0000000000000000000000000000000000000000000000000000000001010000",
         hex"014500000026c3020a95010a92010a1c2f636f736d6f732e62616e6b2e763162",
@@ -246,10 +246,10 @@ contract TestFixture {
         hex"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7329c7d336d0140840837fc0d8eafa2403f4f6b019b602581cd9f04e28026eae"
     );
 
-    /// @notice the data root of the block containing the submitted blob.
+    /// @notice the data root of the block containing the token transfer transaction.
     bytes32 public dataRoot = 0x55cfc29fc0cd263906122d5cb859091224495b141fc0c51529612d7ab8962950;
 
-    /// @notice the height of the block containing the submitted blob.
+    /// @notice the height of the block containing the submitted token transfer transaction.
     uint256 public height = 3;
 
     /// @notice the data root tuple root committing to the Celestia block.
@@ -284,7 +284,8 @@ contract TestFixture {
         return Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000001);
     }
 
-    /// @notice the data root tuple of the block containing the submitted blob.
+
+    /// @notice the data root tuple of the block containing the token transfer transaction.
     function getDataRootTuple() public view returns (DataRootTuple memory) {
         return DataRootTuple(height, dataRoot);
     }
