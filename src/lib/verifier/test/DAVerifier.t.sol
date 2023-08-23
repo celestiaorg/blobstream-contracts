@@ -284,7 +284,6 @@ contract TestFixture {
         return Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000001);
     }
 
-
     /// @notice the data root tuple of the block containing the token transfer transaction.
     function getDataRootTuple() public view returns (DataRootTuple memory) {
         return DataRootTuple(height, dataRoot);
