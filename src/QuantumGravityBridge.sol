@@ -34,7 +34,8 @@ struct Signature {
 /// (see ./DataRootTuple.sol), with each tuple representing a single data root
 /// in a Celestia block header. Relayed tuples are in the same order as the
 /// block headers.
-/// @dev DO NOT REMOVE ANY INHERITED CONTRACT! They're essential for upgradability.
+/// @dev DO NOT REMOVE INHERITENCE OF THE FOLLOWING CONTRACTS: Initializable, UUPSUpgradeable and
+/// OwnableUpgradeable! They're essential for upgradability.
 contract QuantumGravityBridge is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgradeable {
     // Don't change the order of state for working upgrades AND BE AWARE OF
     // INHERITANCE VARIABLES! Inherited contracts contain storage slots and must
