@@ -3,7 +3,7 @@ name: Check Contract Inheritance
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   check_inheritance:
