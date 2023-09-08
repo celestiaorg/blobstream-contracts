@@ -123,7 +123,7 @@ contract DAVerifierTest is DSTest {
             fixture.dataRootTupleRootNonce(), fixture.getDataRootTuple(), fixture.getDataRootTupleProof()
         );
         SharesProof memory sharesProof =
-            SharesProof(_data, _shareProofs, fixture.minimaxNID(), _rowRoots, _rowProofs, attestationProof);
+            SharesProof(_data, _shareProofs, fixture.getNamespace(), _rowRoots, _rowProofs, attestationProof);
 
         bool valid = DAVerifier.verifySharesToDataRootTupleRoot(bridge, sharesProof, fixture.dataRoot());
         assertTrue(valid);
@@ -178,7 +178,7 @@ contract DAVerifierTest is DSTest {
 
         // check that the merkle proof is valid
         bool validMerkleProof = NamespaceMerkleTree.verifyMulti(
-            fixture.getFirstRowRootNode(), fixture.getShareToRowRootProof(), fixture.minimaxNID(), _data
+            fixture.getFirstRowRootNode(), fixture.getShareToRowRootProof(), fixture.getNamespace(), _data
         );
         assertTrue(validMerkleProof);
 
@@ -227,9 +227,6 @@ contract TestFixture {
         hex"0000000000000000000000000000000000000000000000000000000000000000"
     );
 
-    /// @notice the share's namespace ID.
-    NamespaceID public minimaxNID = NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000001);
-
     /// @notice the first EDS row root.
     bytes public firstRowRoot = abi.encodePacked(
         hex"00000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000001787bf77b567506b6e1d0048bfd89edd352a4fbc102e62f07cc9fe6b4cbe5ee69"
@@ -271,8 +268,8 @@ contract TestFixture {
     /// @notice shares to data root proof side nodes.
     NamespaceNode[] public shareToDataRootProofSideNodes = [
         NamespaceNode(
-            NamespaceID.wrap(0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
-            NamespaceID.wrap(0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
+            Namespace(0xff, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
+            Namespace(0xff, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
             0x0ec8148c743a4a4db384f40f487cae2fd1ca0d18442d1f162916bdf1cc61b679
         )
     ];
@@ -282,6 +279,11 @@ contract TestFixture {
         bytes32(0x5bc0cf3322dd5c9141a2dcd76947882351690c9aec61015802efc6742992643f),
         bytes32(0xff576381b02abadc50e414f6b4efcae31091cd40a5aba75f56be52d1bb2efcae)
     ];
+
+    /// @notice the share's namespace.
+    function getNamespace() public pure returns (Namespace memory) {
+        return Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000001);
+    }
 
     /// @notice the data root tuple of the block containing the token transfer transaction.
     function getDataRootTuple() public view returns (DataRootTuple memory) {
@@ -296,8 +298,8 @@ contract TestFixture {
     /// @notice the first EDS row root.
     function getFirstRowRootNode() public pure returns (NamespaceNode memory) {
         return NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000001),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000001),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000001),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000001),
             0x787bf77b567506b6e1d0048bfd89edd352a4fbc102e62f07cc9fe6b4cbe5ee69
         );
     }
@@ -305,8 +307,8 @@ contract TestFixture {
     /// @notice the second EDS row root.
     function getSecondRowRootNode() public pure returns (NamespaceNode memory) {
         return NamespaceNode(
-            NamespaceID.wrap(0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
-            NamespaceID.wrap(0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
+            Namespace(0xff, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
+            Namespace(0xff, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
             0x7329c7d336d0140840837fc0d8eafa2403f4f6b019b602581cd9f04e28026eae
         );
     }
@@ -314,8 +316,8 @@ contract TestFixture {
     /// @notice the first EDS column root.
     function getFirstColumnRootNode() public pure returns (NamespaceNode memory) {
         return NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000001),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000001),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000001),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000001),
             0x787bf77b567506b6e1d0048bfd89edd352a4fbc102e62f07cc9fe6b4cbe5ee69
         );
     }
@@ -323,8 +325,8 @@ contract TestFixture {
     /// @notice the second EDS column root.
     function getSecondColumnRootNode() public pure returns (NamespaceNode memory) {
         return NamespaceNode(
-            NamespaceID.wrap(0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
-            NamespaceID.wrap(0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
+            Namespace(0xff, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
+            Namespace(0xff, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
             0x7329c7d336d0140840837fc0d8eafa2403f4f6b019b602581cd9f04e28026eae
         );
     }

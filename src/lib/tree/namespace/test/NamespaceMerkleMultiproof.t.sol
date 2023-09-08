@@ -11,7 +11,7 @@ import "../NamespaceMerkleTree.sol";
 /**
  * TEST VECTORS
  *
- * Data blocks: namespace id, data
+ * Data blocks: namespace, data
  * 0x0000000000000000000000000000000000000000000000000000000010 0x01
  * 0x0000000000000000000000000000000000000000000000000000000010 0x02
  * 0x0000000000000000000000000000000000000000000000000000000010 0x03
@@ -50,33 +50,33 @@ contract NamespaceMerkleMultiproofTest is DSTest {
     function setUp() external {}
 
     function assertEqNamespaceNode(NamespaceNode memory first, NamespaceNode memory second) internal {
-        assertEq(NamespaceID.unwrap(first.min), NamespaceID.unwrap(second.min));
-        assertEq(NamespaceID.unwrap(first.max), NamespaceID.unwrap(second.max));
+        assertTrue(first.min.equalTo(second.min));
+        assertTrue(first.max.equalTo(second.max));
         assertEq(first.digest, second.digest);
     }
 
     /// @notice Verify inclusion of leaves 0 and 1.
     function testVerifyMulti01() external {
-        NamespaceID nid = NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010);
+        Namespace memory nid = Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010);
         NamespaceNode memory root = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
             0x5b3328b03a538d627db78668034089cb395f63d05b24fdf99558d36fe991d268
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](3);
         sideNodes[0] = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
             0xfdb4e3c872666aa9869a1d46c8a5a0e735becdf17c62b9c3ccf4258449475bda
         );
         sideNodes[1] = NamespaceNode(
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
-            NamespaceID.wrap(0x0000000000000000000000000000000000000000000000000000000010),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
+            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
             0xc350aeddd5ada629057034f15d4545065213a7a28f9f9b77bdc71c4225145920
         );
         sideNodes[2] = NamespaceNode(
-            Constants.PARITY_SHARE_NAMESPACE_ID,
-            Constants.PARITY_SHARE_NAMESPACE_ID,
+            PARITY_SHARE_NAMESPACE(),
+            PARITY_SHARE_NAMESPACE(),
             0x5aa3e7ea31995fdd38f41015275229b290a8ee4810521db766ad457b9a8373d6
         );
 
