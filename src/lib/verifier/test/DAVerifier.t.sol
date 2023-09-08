@@ -125,10 +125,10 @@ contract DAVerifierTest is DSTest {
         SharesProof memory sharesProof =
             SharesProof(_data, _shareProofs, fixture.getNamespace(), _rowRoots, _rowProofs, attestationProof);
 
-        (bool valid, uint8 errorCode) =
+        (bool valid, DAVerifier.ErrorCodes errorCode) =
             DAVerifier.verifySharesToDataRootTupleRoot(bridge, sharesProof, fixture.dataRoot());
         assertTrue(valid);
-        assertEq(errorCode, 0);
+        assertEq(uint8(errorCode), uint8(DAVerifier.ErrorCodes.NoError));
     }
 
     function testVerifyRowRootToDataRootTupleRoot() public {
@@ -136,7 +136,7 @@ contract DAVerifierTest is DSTest {
             fixture.dataRootTupleRootNonce(), fixture.getDataRootTuple(), fixture.getDataRootTupleProof()
         );
 
-        (bool valid, uint8 errorCode) = DAVerifier.verifyRowRootToDataRootTupleRoot(
+        (bool valid, DAVerifier.ErrorCodes errorCode) = DAVerifier.verifyRowRootToDataRootTupleRoot(
             bridge,
             fixture.getFirstRowRootNode(),
             fixture.getRowRootToDataRootProof(),
@@ -144,7 +144,7 @@ contract DAVerifierTest is DSTest {
             fixture.dataRoot()
         );
         assertTrue(valid);
-        assertEq(errorCode, 0);
+        assertEq(uint8(errorCode), uint8(DAVerifier.ErrorCodes.NoError));
     }
 
     function testVerifyMultiRowRootsToDataRootTupleRoot() public {
@@ -158,11 +158,11 @@ contract DAVerifierTest is DSTest {
             fixture.dataRootTupleRootNonce(), fixture.getDataRootTuple(), fixture.getDataRootTupleProof()
         );
 
-        (bool valid, uint8 errorCode) = DAVerifier.verifyMultiRowRootsToDataRootTupleRoot(
+        (bool valid, DAVerifier.ErrorCodes errorCode) = DAVerifier.verifyMultiRowRootsToDataRootTupleRoot(
             bridge, _rowRoots, _rowProofs, attestationProof, fixture.dataRoot()
         );
         assertTrue(valid);
-        assertEq(errorCode, 0);
+        assertEq(uint8(errorCode), uint8(DAVerifier.ErrorCodes.NoError));
     }
 
     function testComputeSquareSizeFromRowProof() public {
@@ -172,10 +172,10 @@ contract DAVerifierTest is DSTest {
 
         // check that the computed square size is correct
         uint256 expectedSquareSize = 1;
-        (uint256 actualSquareSize, uint8 errorCode) =
+        (uint256 actualSquareSize, DAVerifier.ErrorCodes errorCode) =
             DAVerifier.computeSquareSizeFromRowProof(fixture.getRowRootToDataRootProof());
         assertEq(actualSquareSize, expectedSquareSize);
-        assertEq(errorCode, 0);
+        assertEq(uint8(errorCode), uint8(DAVerifier.ErrorCodes.NoError));
     }
 
     function testComputeSquareSizeFromShareProof() public {
