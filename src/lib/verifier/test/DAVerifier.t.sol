@@ -77,7 +77,8 @@ contract DAVerifierTest is DSTest {
 
         validators.push(Validator(cheats.addr(testPriv1), votingPower));
         bytes32 hash = computeValidatorSetHash(validators);
-        bridge = new QuantumGravityBridge(initialVelsetNonce, (2 * votingPower) / 3, hash);
+        bridge = new QuantumGravityBridge();
+        bridge.initialize(initialVelsetNonce, (2 * votingPower) / 3, hash);
 
         bytes32 newDataRootTupleRoot =
             domainSeparateDataRootTupleRoot(fixture.dataRootTupleRootNonce(), fixture.dataRootTupleRoot());
