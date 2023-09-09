@@ -43,36 +43,29 @@ struct AttestationProof {
 /// @dev The DAVerifier verifies that some shares, which were posted on Celestia, were committed to
 /// by the QGB smart contract.
 library DAVerifier {
-    ////////////
-    // Errors //
-    ////////////
+    /////////////////
+    // Error codes //
+    /////////////////
 
-    /// @notice The shares to the rows proof is invalid.
-    /// @param i The index of the invalid proof.
-    error InvalidSharesToRowsProof(uint256 i);
-
-    /// @notice The rows to the data root proof is invalid.
-    /// @param i The index of the invalid proof.
-    error InvalidRowsToDataRootProof(uint256 i);
-
-    /// @notice The row to the data root proof is invalid.
-    error InvalidRowToDataRootProof();
-
-    /// @notice The data root tuple to the data root tuple roof proof is invalid.
-    error InvalidDataRootTupleToDataRootTupleRootProof();
-
-    /// @notice The number of share proofs isn't equal to the number of rows roots.
-    error UnequalShareProofsAndRowRootsNumber();
-
-    /// @notice The number of rows proofs isn't equal to the number of rows roots.
-    error UnequalRowProofsAndRowRootsNumber();
-
-    /// @notice The verifier data length isn't equal to the number of shares in the shares proofs.
-    error UnequalDataLengthAndNumberOfSharesProofs();
-
-    /// @notice The number of leaves in the binary merkle proof is not divisible by 4.
-    /// @param i The provided proof number of leaves.
-    error InvalidNumberOfLeavesInProof(uint256 i);
+    enum ErrorCodes {
+        NoError,
+        /// @notice The shares to the rows proof is invalid.
+        InvalidSharesToRowsProof,
+        /// @notice The rows to the data root proof is invalid.
+        InvalidRowsToDataRootProof,
+        /// @notice The row to the data root proof is invalid.
+        InvalidRowToDataRootProof,
+        /// @notice The data root tuple to the data root tuple roof proof is invalid.
+        InvalidDataRootTupleToDataRootTupleRootProof,
+        /// @notice The number of share proofs isn't equal to the number of rows roots.
+        UnequalShareProofsAndRowRootsNumber,
+        /// @notice The number of rows proofs isn't equal to the number of rows roots.
+        UnequalRowProofsAndRowRootsNumber,
+        /// @notice The verifier data length isn't equal to the number of shares in the shares proofs.
+        UnequalDataLengthAndNumberOfSharesProofs,
+        /// @notice The number of leaves in the binary merkle proof is not divisible by 4.
+        InvalidNumberOfLeavesInProof
+    }
 
     ///////////////
     // Functions //
@@ -83,20 +76,23 @@ library DAVerifier {
     /// @param _sharesProof The proof of the shares to the data root tuple root.
     /// @param _root The data root of the block that contains the shares.
     /// @return `true` if the proof is valid, `false` otherwise.
+    /// @return an error code if the proof is invalid, ErrorCodes.NoError otherwise.
     function verifySharesToDataRootTupleRoot(IDAOracle _bridge, SharesProof memory _sharesProof, bytes32 _root)
         external
         view
-        returns (bool)
+        returns (bool, ErrorCodes)
     {
-        // checking that the data root was committed to by the QGB smart contract
-        // this will revert if the proof is not valid
-        verifyMultiRowRootsToDataRootTupleRoot(
+        // checking that the data root was committed to by the QGB smart contract.
+        (bool success, ErrorCodes errorCode) = verifyMultiRowRootsToDataRootTupleRoot(
             _bridge, _sharesProof.rowRoots, _sharesProof.rowProofs, _sharesProof.attestationProof, _root
         );
+        if (!success) {
+            return (false, errorCode);
+        }
 
         // checking that the shares were committed to by the rows roots.
         if (_sharesProof.shareProofs.length != _sharesProof.rowRoots.length) {
-            revert UnequalShareProofsAndRowRootsNumber();
+            return (false, ErrorCodes.UnequalShareProofsAndRowRootsNumber);
         }
 
         uint256 numberOfSharesInProofs = 0;
@@ -105,7 +101,7 @@ library DAVerifier {
         }
 
         if (_sharesProof.data.length != numberOfSharesInProofs) {
-            revert UnequalDataLengthAndNumberOfSharesProofs();
+            return (false, ErrorCodes.UnequalDataLengthAndNumberOfSharesProofs);
         }
 
         uint256 cursor = 0;
@@ -121,12 +117,12 @@ library DAVerifier {
                     slice(_sharesProof.data, cursor, cursor + sharesUsed)
                 )
             ) {
-                revert InvalidSharesToRowsProof(i);
+                return (false, ErrorCodes.InvalidSharesToRowsProof);
             }
             cursor += sharesUsed;
         }
 
-        return true;
+        return (true, ErrorCodes.NoError);
     }
 
     /// @notice Verifies that a row/column root, from a Celestia block, was committed to by the QGB smart contract.
@@ -135,28 +131,29 @@ library DAVerifier {
     /// @param _rowProof The proof of the row/column root to the data root.
     /// @param _root The data root of the block that contains the row.
     /// @return `true` if the proof is valid, `false` otherwise.
+    /// @return an error code if the proof is invalid, ErrorCodes.NoError otherwise.
     function verifyRowRootToDataRootTupleRoot(
         IDAOracle _bridge,
         NamespaceNode memory _rowRoot,
         BinaryMerkleProof memory _rowProof,
         AttestationProof memory _attestationProof,
         bytes32 _root
-    ) public view returns (bool) {
+    ) public view returns (bool, ErrorCodes) {
         // checking that the data root was committed to by the QGB smart contract
         if (
             !_bridge.verifyAttestation(
                 _attestationProof.tupleRootNonce, _attestationProof.tuple, _attestationProof.proof
             )
         ) {
-            revert InvalidDataRootTupleToDataRootTupleRootProof();
+            return (false, ErrorCodes.InvalidDataRootTupleToDataRootTupleRootProof);
         }
 
         bytes memory rowRoot = abi.encodePacked(_rowRoot.min.toBytes(), _rowRoot.max.toBytes(), _rowRoot.digest);
         if (!BinaryMerkleTree.verify(_root, _rowProof, rowRoot)) {
-            revert InvalidRowToDataRootProof();
+            return (false, ErrorCodes.InvalidRowToDataRootProof);
         }
 
-        return true;
+        return (true, ErrorCodes.NoError);
     }
 
     /// @notice Verifies that a set of rows/columns, from a Celestia block, were committed to by the QGB smart contract.
@@ -165,36 +162,37 @@ library DAVerifier {
     /// @param _rowProofs The set of proofs of the _rowRoots in the same order.
     /// @param _root The data root of the block that contains the rows.
     /// @return `true` if the proof is valid, `false` otherwise.
+    /// @return an error code if the proof is invalid, ErrorCodes.NoError otherwise.
     function verifyMultiRowRootsToDataRootTupleRoot(
         IDAOracle _bridge,
         NamespaceNode[] memory _rowRoots,
         BinaryMerkleProof[] memory _rowProofs,
         AttestationProof memory _attestationProof,
         bytes32 _root
-    ) public view returns (bool) {
+    ) public view returns (bool, ErrorCodes) {
         // checking that the data root was committed to by the QGB smart contract
         if (
             !_bridge.verifyAttestation(
                 _attestationProof.tupleRootNonce, _attestationProof.tuple, _attestationProof.proof
             )
         ) {
-            revert InvalidDataRootTupleToDataRootTupleRootProof();
+            return (false, ErrorCodes.InvalidDataRootTupleToDataRootTupleRootProof);
         }
 
         // checking that the rows roots commit to the data root.
         if (_rowProofs.length != _rowRoots.length) {
-            revert UnequalRowProofsAndRowRootsNumber();
+            return (false, ErrorCodes.UnequalRowProofsAndRowRootsNumber);
         }
 
         for (uint256 i = 0; i < _rowProofs.length; i++) {
             bytes memory rowRoot =
                 abi.encodePacked(_rowRoots[i].min.toBytes(), _rowRoots[i].max.toBytes(), _rowRoots[i].digest);
             if (!BinaryMerkleTree.verify(_root, _rowProofs[i], rowRoot)) {
-                revert InvalidRowsToDataRootProof(i);
+                return (false, ErrorCodes.InvalidRowsToDataRootProof);
             }
         }
 
-        return true;
+        return (true, ErrorCodes.NoError);
     }
 
     /// @notice computes the Celestia block square size from a row/column root to data root binary merkle proof.
@@ -204,13 +202,18 @@ library DAVerifier {
     /// Note: the minimum square size is 1. Thus, we don't expect the proof to have number of leaves equal to 0.
     /// @param _proof The proof of the row/column root to the data root.
     /// @return The square size of the corresponding block.
-    function computeSquareSizeFromRowProof(BinaryMerkleProof memory _proof) external pure returns (uint256) {
+    /// @return an error code if the _proof is invalid, Errors.NoError otherwise.
+    function computeSquareSizeFromRowProof(BinaryMerkleProof memory _proof)
+        external
+        pure
+        returns (uint256, ErrorCodes)
+    {
         if (_proof.numLeaves % 4 != 0) {
-            revert InvalidNumberOfLeavesInProof(_proof.numLeaves);
+            return (0, ErrorCodes.InvalidNumberOfLeavesInProof);
         }
         // we divide the number of leaves of the proof by 4 because the rows/columns tree is constructed
         // from the extended block row roots and column roots.
-        return _proof.numLeaves / 4;
+        return (_proof.numLeaves / 4, ErrorCodes.NoError);
     }
 
     /// @notice computes the Celestia block square size from a shares to row/column root proof.
