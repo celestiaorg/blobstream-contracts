@@ -25,13 +25,13 @@ RUN apt update && apt install -y git build-essential software-properties-common 
 RUN curl -L https://foundry.paradigm.xyz | bash && . /root/.bashrc && foundryup
 
 # install solc
-RUN wget https://github.com/ethereum/solidity/releases/download/v0.8.20/solc-static-linux -O /usr/bin/solc && chmod +x /usr/bin/solc
+RUN wget https://github.com/ethereum/solidity/releases/download/v0.8.19/solc-static-linux -O /usr/bin/solc && chmod +x /usr/bin/solc
 
 # install go
-RUN wget https://go.dev/dl/go1.20.6.linux-amd64.tar.gz && rm -rf /usr/local/go && tar -C /usr/local -xzf go1.20.6.linux-amd64.tar.gz && echo 'PATH=$PATH:/usr/local/go/bin:/root/go/bin' >> ~/.bashrc
+RUN wget https://go.dev/dl/go1.19.linux-amd64.tar.gz && rm -rf /usr/local/go && tar -C /usr/local -xzf go1.19.linux-amd64.tar.gz && echo 'PATH=$PATH:/usr/local/go/bin:/root/go/bin' >> ~/.bashrc
 
 # install abigen
-RUN git clone https://github.com/ethereum/go-ethereum.git && cd go-ethereum && PATH=$PATH:/usr/local/go/bin make devtools
+RUN git clone --depth 1 --branch v1.12.0 https://github.com/ethereum/go-ethereum.git && cd go-ethereum && PATH=$PATH:/usr/local/go/bin make devtools
 
 WORKDIR /root
 ENTRYPOINT bash
