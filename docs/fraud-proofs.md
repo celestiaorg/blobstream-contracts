@@ -12,7 +12,7 @@ If the Celestium is settlement smart contract based, then the contract would onl
 
 ## Rollup header
 
-Rollups can adopt many approaches to prove that fraud happened. One of which could be having the following fields in the rollup header:
+Rollups can adopt many approaches to prove that fraud occurred. One of which could be having the following fields in the rollup header:
 
 - Rollup block state root
 - A sequence of spans in Celestia: which references where the rollup data was published in the Celestia chain.
