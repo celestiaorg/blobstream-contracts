@@ -4,7 +4,7 @@
 
 A Celestium is a rollup that uses Celestia for data availability but settles on any EVM chain. This works by the Celestia validator set periodically signing over batched data commitments and validator set updates, which are relayed to the QGB smart contract. The data commitments are stored in the EVM chain's state, and can be used to prove inclusion of any data posted to Celestia.
 
-# Fraud proofs
+# Fraud Proofs
 
 Fraud proofs is the mechanism used to inform light clients in the case of an invalid rollup state transition or unavailable rollup block data. They rely on rollup full nodes getting the data that was published to Celestia, and executing all the state transitions to verify the rollup state. If they discover an invalid state transition or unavailable rollup data, they emit a fraud proof with the necessary information to convince light clients that fraud happened. This allows for trust-minimized light clients, as the network only needs one honest full node to create the fraud proof and propagate it.
 
