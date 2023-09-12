@@ -1,8 +1,8 @@
 # QGB Fraud Proofs
 
-A Celestium is a rollup that uses Celestia for data availability but settles on Ethereum or any other EVM chain. In simpler terms, it's a layer 2 solution that leverages the Celestia blockchain security to ensure that data is available, while the actual transactions and smart contract interactions are settled on the Ethereum blockchain or any other EVM-compatible blockchain.
+## Celestiums Intro
 
-Celestiums use the Quantum Gravity Bridge (QGB) contract, deployed on an EVM chain, to verify that their transaction data has been published to Celestia correctly. Alternatively, they can use an optimistic scheme, only verifying transaction data inclusion during fraud proof execution.
+A Celestium is a rollup that uses Celestia for data availability but settles on any EVM chain. This works by the Celestia validator set periodically signing over batched data commitments and validator set updates, which are relayed to the QGB smart contract. The data commitments are stored in the EVM chain's state, and can be used to prove inclusion of any data posted to Celestia.
 
 # Fraud proofs
 
