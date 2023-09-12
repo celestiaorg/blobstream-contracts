@@ -1,4 +1,4 @@
-# QGB fraud proofs
+# QGB Fraud Proofs
 
 A Celestium is a rollup that uses Celestia for data availability but settles on Ethereum or any other EVM chain. In simpler terms, it's a layer 2 solution that leverages the Celestia blockchain security to ensure that data is available, while the actual transactions and smart contract interactions are settled on the Ethereum blockchain or any other EVM-compatible blockchain.
 
