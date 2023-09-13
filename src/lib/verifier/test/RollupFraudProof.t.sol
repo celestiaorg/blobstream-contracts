@@ -289,7 +289,7 @@ contract RollupFraudProofTest is DSTest {
     function testInvalidData() public {
         // let's create the sequence span of the rollup data in the Celestia block.
         uint256 height = 21;
-        uint256 startIndex = 0;
+        uint256 startIndex = 1;
         uint256 length = 1;
         SpanSequence memory sequence = SpanSequence(height, startIndex, length);
         // a header that points to the rollup data posted in Celestia.
@@ -334,6 +334,22 @@ contract RollupFraudProofTest is DSTest {
         // This checks that indeed the data referenced in the header is part of the Celestia
         // block, i.e. the sequence of spans in not out of the block's bounds.
         assertTrue(squareSize >= endIndex);
+
+        // The last step is to prove that the share is part of the rollup data
+        // referenced in the rollup header.
+        // To do so, we will use the proof, already authenticated above, to get the index,
+        // Then, we will compare it against the spans sequence.
+
+        // since we're using nmt multiproofs, we have a begin key and an end key of the shares
+        // proven. However, in our case, we're only proving a single share.
+        // Thus, we can take the begin key as the index.
+        // Note: In the case of multiple shares in the proof, we will need to check all the shares
+        // if they're part of the sequence of spans. Then, only use the ones that are part of it.
+        uint256 shareIndex = shareProof.shareProofs[0].beginKey;
+
+        // check if the share is part of the sequence of spans
+        assertTrue(header.sequence.index <= shareIndex);
+        assertTrue(shareIndex <= endIndex);
 
         // At this level we can parse the share to get the transactions, and compare them to
         // the rollup state. Then, we would be able to know if there is an invalid transaction
