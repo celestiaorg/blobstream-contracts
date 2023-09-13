@@ -22,9 +22,9 @@ Rollups can adopt many approaches to prove that fraud occurred. One of which cou
 
 For the rest of the document, we will suppose that the sequence of spans only references one Celestia block.
 
-## Unavailable data fraud proof
+## Proving unavailable data
 
-By construction, the rollup block data is the sequence of spans defined in the header. Thus, proving that the data is unavailable goes back to proving that the sequence of spans doesn't belong to the Celestia block, i.e. the span is out of bounds.
+By construction, the rollup block data **is the sequence of spans defined in the header**. Thus, proving that the data is unavailable goes back to proving that the sequence of spans doesn't belong to the Celestia block, i.e. the span is out of bounds.
 
 We could prove that via creating a binary [Merkle proof](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/crypto/merkle/proof.go#L19-L31) of any row/column to the Celestia data root. This proof will provide the `Total` which is the number of rows/columns in the extended data square. And, we can use that to calculate the square size.
 
@@ -32,7 +32,7 @@ Then, we will use that information to check if the provided transaction index, i
 
 For the data root, we will use a binary Merkle proof to prove its inclusion in a data root tuple root that was committed to by the QGB smart contract. More on this in [here](#1-data-root-inclusion-proof).
 
-## Invalid transaction fraud proof
+## Proving an invalid state transition
 
 In order to prove an invalid transaction in the rollup, we need to prove the following:
 
@@ -57,8 +57,15 @@ These proofs can be generated using the [`ProveShares`](https://github.com/celes
 
 ### 3. Transaction part of the rollup sequence
 
-The Celestia block is a 2d matrix of rows and columns, where the row roots and column roots are committed to in the data root. We can use this property to point which rows and columns does the transaction shares belong to. Then, we will use those coordinates to calculate the row major index of the transaction, and verify if it is part of the sequence span.
+To prove that a transaction is part of the rollup sequence of spans, we take the authenticated share proof and use the shares begin/end key to define the share position in the row.
 
-The coordinates can be gotten using a namespace Merkle proof of the shares to the row root, and also to the column root. Then, we will create Merkle proofs of that row root and column root to the data root. These [proofs](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/crypto/merkle/proof.go#L19-L31) will contain the [`Index`](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/crypto/merkle/proof.go#L28) of the row/column, and the [`Total`](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/crypto/merkle/proof.go#L27) number of rows/columns in the proofs which would allow us to calculate the row major index of the transaction.
+Then, we use the row proof to get the row index in the extended Celestia square and get the index of the share in row major order:
 
-Note: the `Total` is the total number of rows/columns of the extended data square, and not the original one.
+```solidity
+uint256 shareIndexInRow = shareProof.shareProofs[0].beginKey;
+uint256 shareIndexInRowMajorOrder = shareIndexInRow + shareProof.rowProofs[0].numLeaves * shareProof.rowProofs[0].key;
+```
+
+Finally, we can compare the computed index with the rollup header sequence of spans, and be sure that the share/transaction is part of the rollup data.
+
+Check the `RollupInclusionProofs.t.sol` for an example.

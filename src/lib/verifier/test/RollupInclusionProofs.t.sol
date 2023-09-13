@@ -176,7 +176,7 @@ that that transaction data is missing.
 2. We will create another invalid header, which points to the correct location of the transaction data in the
 Celestia block, and prove that the third transaction, as defined above, is invalid.
 
-For the other cases, where the fraud proof is invalid:
+For the other cases, where the inclusion proof is invalid:
 
 - The data is available and was committed to in the Celestia block. That is intrinsically verified in the second test.
 Since checking the state comes after verifying that the data is available.
@@ -190,7 +190,7 @@ Note: We will not be generating the rollup state root for this test to test agai
 to be defined by rollups depending on how they handle their state.
 */
 
-contract RollupFraudProofTest is DSTest {
+contract RollupInclusionProofTest is DSTest {
     // Private keys used for test signatures.
     uint256 constant testPriv1 = 0x64a1d6f0e760a8d62b4afdde4096f16f51b401eaaecc915740f71770ea76a8ad;
 
@@ -345,11 +345,12 @@ contract RollupFraudProofTest is DSTest {
         // Thus, we can take the begin key as the index.
         // Note: In the case of multiple shares in the proof, we will need to check all the shares
         // if they're part of the sequence of spans. Then, only use the ones that are part of it.
-        uint256 shareIndex = shareProof.shareProofs[0].beginKey;
+        uint256 shareIndexInRow = shareProof.shareProofs[0].beginKey;
+        uint256 shareIndexInRowMajorOrder = shareIndexInRow + shareProof.rowProofs[0].numLeaves * shareProof.rowProofs[0].key;
 
         // check if the share is part of the sequence of spans
-        assertTrue(header.sequence.index <= shareIndex);
-        assertTrue(shareIndex <= endIndex);
+        assertTrue(header.sequence.index <= shareIndexInRowMajorOrder);
+        assertTrue(shareIndexInRowMajorOrder <= endIndex);
 
         // At this level we can parse the share to get the transactions, and compare them to
         // the rollup state. Then, we would be able to know if there is an invalid transaction
