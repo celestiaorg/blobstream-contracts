@@ -346,7 +346,8 @@ contract RollupInclusionProofTest is DSTest {
         // Note: In the case of multiple shares in the proof, we will need to check all the shares
         // if they're part of the sequence of spans. Then, only use the ones that are part of it.
         uint256 shareIndexInRow = shareProof.shareProofs[0].beginKey;
-        uint256 shareIndexInRowMajorOrder = shareIndexInRow + shareProof.rowProofs[0].numLeaves * shareProof.rowProofs[0].key;
+        uint256 shareIndexInRowMajorOrder =
+            shareIndexInRow + shareProof.rowProofs[0].numLeaves * shareProof.rowProofs[0].key;
 
         // check if the share is part of the sequence of spans
         assertTrue(header.sequence.index <= shareIndexInRowMajorOrder);
