@@ -34,8 +34,8 @@ For the data root, we will use a binary Merkle proof to prove its inclusion in a
 
 In order to prove an invalid transaction in the rollup, we need to prove the following:
 
-- Prove that that transaction was posted to Celestia
-- Prove that the transaction is invalid: left to the rollup to define.
+- Prove that the transaction was posted to Celestia, and
+- Prove that the transaction is invalid. This is left to the rollup to define.
 
 The first part, proving that the transaction was posted to Celestia, can be done in three steps:
 
