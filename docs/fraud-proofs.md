@@ -30,7 +30,7 @@ Then, we will use that information to check if the provided transaction index, i
 
 For the data root, we will use a binary Merkle proof to prove its inclusion in a data root tuple root that was committed to by the QGB smart contract. More on this in [here](#1-data-root-inclusion-proof).
 
-## Proving an invalid state transition
+## Proving an Invalid State Transition
 
 In order to prove an invalid transaction in the rollup, we need to prove the following:
 
