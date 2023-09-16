@@ -40,7 +40,7 @@ In order to prove an invalid transaction in the rollup, we need to prove the fol
 The first part, proving that the transaction was posted to Celestia, can be done in three steps:
 
 1. Prove that the data root is committed to by the QGB smart contract
-2. Inclusion proof of the transaction to Celestia data root
+2. Verify inclusion proof of the transaction to Celestia data root
 3. Prove that that transaction is in the rollup sequence spans
 
 ### 1. Data root inclusion proof
