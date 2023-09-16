@@ -20,7 +20,7 @@ Rollups can adopt many approaches to prove that fraud occurred. One of which cou
 
 For the rest of the document, we will suppose that the sequence of spans only references one Celestia block.
 
-## Proving unavailable data
+## Proving Unavailable Data
 
 By construction, the rollup block data **is the sequence of spans defined in the header**. Thus, proving that the data is unavailable goes back to proving that the sequence of spans doesn't belong to the Celestia block, i.e. the span is out of bounds.
 
