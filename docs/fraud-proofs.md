@@ -22,7 +22,7 @@ For the rest of the document, we will suppose that the sequence of spans only re
 
 ## Proving Unavailable Data
 
-By construction, the rollup block data **is the sequence of spans defined in the header**. Thus, proving that the data is unavailable goes back to proving that the sequence of spans doesn't belong to the Celestia block, i.e. the span is out of bounds.
+By construction, the rollup block data **is the sequence of spans defined in the header**. Thus to prove that the rollup data is unavailable, it is necessary and sufficient to show that the sequence of spans doesn't belong to the Celestia block, i.e. the span is out of bounds.
 
 We could prove that via creating a binary [Merkle proof](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/crypto/merkle/proof.go#L19-L31) of any row/column to the Celestia data root. This proof will provide the `Total` which is the number of rows/columns in the extended data square. And, we can use that to calculate the square size.
 
