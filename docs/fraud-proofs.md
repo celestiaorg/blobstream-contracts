@@ -2,7 +2,7 @@
 
 ## Celestiums Intro
 
-A Celestium is a rollup that uses Celestia for data availability but settles on any EVM chain. This works by the Celestia validator set periodically signing over batched data commitments and validator set updates, which are relayed to the QGB smart contract. The data commitments are stored in the EVM chain's state, and can be used to prove inclusion of any data posted to Celestia.
+A Celestium is a blockchain that uses Celestia for data availability but settles on any EVM chain. The QGB operates by having the Celestia validator set periodically sign over batched data commitments and validator set updates, which are relayed an EVM smart contract. The data commitments are stored in the EVM chain's state, and can be used to prove inclusion of any data historically posted to Celestia.
 
 # Fraud Proofs
 
