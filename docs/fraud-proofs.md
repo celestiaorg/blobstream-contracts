@@ -8,8 +8,6 @@ A Celestium is a blockchain that uses Celestia for data availability but settles
 
 Fraud proofs can be used to inform light clients (including on-chain smart contract light clients) in the case of an invalid rollup state transition or unavailable rollup block data—specifically rollup block data that is claimed to be on Celestia but is not. They rely on rollup full nodes getting the data that was published to Celestia, and executing all the state transitions to verify the rollup state. If they discover an invalid state transition or unavailable rollup block, they emit a fraud proof with the necessary information to convince light clients that fraud happened. This allows for trust-minimized light clients, as the network only needs one honest full node to create the fraud proof and propagate it.
 
-If the Celestium is settlement smart contract based, then the contract would only need to receive a fraud proof to decide whether data was published correctly or not.
-
 ## Rollup header
 
 Rollups can adopt many approaches to prove that fraud occurred. One of which could be having the following fields in the rollup header:
