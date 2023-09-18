@@ -107,9 +107,11 @@ library DAVerifier {
         uint256 cursor = 0;
         for (uint256 i = 0; i < _sharesProof.shareProofs.length; i++) {
             uint256 sharesUsed = _sharesProof.shareProofs[i].endKey - _sharesProof.shareProofs[i].beginKey;
+            NamespaceNode memory rowRoot =
+                NamespaceNode(_sharesProof.namespace, _sharesProof.namespace, _sharesProof.rowRoots[i].digest);
             if (
                 !NamespaceMerkleTree.verifyMulti(
-                    _sharesProof.rowRoots[i],
+                    rowRoot,
                     _sharesProof.shareProofs[i],
                     _sharesProof.namespace,
                     slice(_sharesProof.data, cursor, cursor + sharesUsed)
