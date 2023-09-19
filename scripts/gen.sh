@@ -10,7 +10,11 @@ if (( $# < 2 )); then
     exit 1
 fi
 
+# compile the QGB contracts
 forge build > /dev/null
+
+# compile the proxy contracts
+forge build -C lib/openzeppelin-contracts/contracts/proxy > /dev/null
 
 cd "$1"
 
