@@ -252,6 +252,7 @@ contract QuantumGravityBridge is IDAOracle, Initializable, UUPSUpgradeable, Owna
 
         uint256 currentNonce = state_eventNonce;
         uint256 currentPowerThreshold = state_powerThreshold;
+        bytes32 lastValidatorSetCheckpoint = state_lastValidatorSetCheckpoint;
 
         // Check that the new nonce is one more than the current one.
         if (_newNonce != currentNonce + 1) {
@@ -267,7 +268,7 @@ contract QuantumGravityBridge is IDAOracle, Initializable, UUPSUpgradeable, Owna
         bytes32 currentValidatorSetHash = computeValidatorSetHash(_currentValidatorSet);
         if (
             domainSeparateValidatorSetHash(_oldNonce, currentPowerThreshold, currentValidatorSetHash)
-                != state_lastValidatorSetCheckpoint
+                != lastValidatorSetCheckpoint
         ) {
             revert SuppliedValidatorSetInvalid();
         }
@@ -316,6 +317,7 @@ contract QuantumGravityBridge is IDAOracle, Initializable, UUPSUpgradeable, Owna
 
         uint256 currentNonce = state_eventNonce;
         uint256 currentPowerThreshold = state_powerThreshold;
+        bytes32 lastValidatorSetCheckpoint = state_lastValidatorSetCheckpoint;
 
         // Check that the new nonce is one more than the current one.
         if (_newNonce != currentNonce + 1) {
@@ -331,7 +333,7 @@ contract QuantumGravityBridge is IDAOracle, Initializable, UUPSUpgradeable, Owna
         bytes32 currentValidatorSetHash = computeValidatorSetHash(_currentValidatorSet);
         if (
             domainSeparateValidatorSetHash(_validatorSetNonce, currentPowerThreshold, currentValidatorSetHash)
-                != state_lastValidatorSetCheckpoint
+                != lastValidatorSetCheckpoint
         ) {
             revert SuppliedValidatorSetInvalid();
         }
