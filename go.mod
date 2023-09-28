@@ -2,7 +2,7 @@ module github.com/celestiaorg/quantum-gravity-bridge/v2
 
 go 1.21.1
 
-require github.com/ethereum/go-ethereum v1.13.1
+require github.com/ethereum/go-ethereum v1.13.2
 
 require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
