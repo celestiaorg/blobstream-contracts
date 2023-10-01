@@ -198,27 +198,29 @@ contract QuantumGravityBridge is IDAOracle, Initializable, UUPSUpgradeable, Owna
         uint256 _powerThreshold
     ) private pure {
         uint256 cumulativePower = 0;
+        // Note: be cautious when updating the code inside the unchecked block.
+        // Make sure to verify if all the bypassed security checks are respected.
+        unchecked {
+            for (uint256 i = 0; i < _currentValidators.length; i++) {
+                // If the signature is nil, then it's not present so continue.
+                if (isSigNil(_sigs[i])) {
+                    continue;
+                }
 
-        for (uint256 i = 0; i < _currentValidators.length; i++) {
-            // If the signature is nil, then it's not present so continue.
-            if (isSigNil(_sigs[i])) {
-                continue;
-            }
+                // Check that the current validator has signed off on the hash.
+                if (!verifySig(_currentValidators[i].addr, _digest, _sigs[i])) {
+                    revert InvalidSignature();
+                }
 
-            // Check that the current validator has signed off on the hash.
-            if (!verifySig(_currentValidators[i].addr, _digest, _sigs[i])) {
-                revert InvalidSignature();
-            }
+                // Sum up cumulative power.
+                cumulativePower += _currentValidators[i].power;
 
-            // Sum up cumulative power.
-            cumulativePower += _currentValidators[i].power;
-
-            // Break early to avoid wasting gas.
-            if (cumulativePower >= _powerThreshold) {
-                break;
+                // Break early to avoid wasting gas.
+                if (cumulativePower >= _powerThreshold) {
+                    break;
+                }
             }
         }
-
         // Check that there was enough power.
         if (cumulativePower < _powerThreshold) {
             revert InsufficientVotingPower();
