@@ -56,3 +56,8 @@ coverage
 **/typechain/**/*
 node_modules
 out/
+
+# hardhat
+
+typechain-types/
+cache_hardhat/
