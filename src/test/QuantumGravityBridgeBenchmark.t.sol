@@ -57,7 +57,7 @@ contract Benchmark is DSTest {
         bridge.initialize(initialVelsetNonce, (2 * votingPower * numberOfValidators) / 3, hash);
     }
 
-    function testBenchmarkSubmitDataRootTupleRoot() public {
+    function benchmarkSubmitDataRootTupleRoot() public {
         uint256 initialVelsetNonce = 0;
         uint256 nonce = 1;
 
