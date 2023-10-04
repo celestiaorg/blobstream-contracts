@@ -16,11 +16,7 @@ interface CheatCodes {
     function deriveKey(string calldata, string calldata, uint32) external returns (uint256);
 }
 
-/// @notice In order for the benchmark to work, the methods inside the bridge
-/// contract should be public. Also, the benchmark test should be prefixed
-/// with "test". Finally, the following `gas_reports = ["*"]` should be added
-/// to "foundry.toml".
-/// Example command to run the benchmark:
+/// @notice Example command to run the benchmark:
 /// `forge test --match-test testBenchmarkSubmitDataRootTupleRoot -vvvvvv --gas-report`.
 /// To change the validator set size, change the `numberOfValidators` constant.
 /// To make custom calculations of the gas, you can use the `gasleft()` solidity
@@ -33,7 +29,7 @@ interface CheatCodes {
 /// To have accurate results, make sure to add the following costs:
 /// A byte of calldata costs either 4 gas (if it is zero) or 16 gas (if it is any other value).
 contract Benchmark is DSTest {
-    uint256 private constant numberOfValidators = 70;
+    uint256 private constant numberOfValidators = 1;
 
     // Private keys used for test signatures.
     uint256[] private privateKeys;
@@ -57,13 +53,13 @@ contract Benchmark is DSTest {
         bridge.initialize(initialVelsetNonce, (2 * votingPower * numberOfValidators) / 3, hash);
     }
 
-    function benchmarkSubmitDataRootTupleRoot() public {
+    function testBenchmarkSubmitDataRootTupleRoot() public {
         uint256 initialVelsetNonce = 0;
         uint256 nonce = 1;
 
         // 32 bytes, chosen at random.
         bytes32 newTupleRoot = 0x0de92bac0b356560d821f8e7b6f5c9fe4f3f88f6c822283efd7ab51ad56a640e;
-        bytes32 newDataRootTupleRoot = bridge.domainSeparateDataRootTupleRoot(nonce, newTupleRoot);
+        bytes32 newDataRootTupleRoot = domainSeparateDataRootTupleRoot(nonce, newTupleRoot);
 
         // Signature for the update.
         Signature[] memory sigs = new Signature[](numberOfValidators);
@@ -74,16 +70,26 @@ contract Benchmark is DSTest {
         }
 
         // these are called here so that they're part of the gas report.
-        uint256 currentPowerThreshold = (2 * votingPower * numberOfValidators) / 3;
-        bytes32 currentValidatorSetHash = bridge.computeValidatorSetHash(validators);
-        bridge.domainSeparateValidatorSetHash(nonce, currentPowerThreshold, currentValidatorSetHash);
-        bridge.checkValidatorSignatures(validators, sigs, newDataRootTupleRoot, currentPowerThreshold);
+//        uint256 currentPowerThreshold = (2 * votingPower * numberOfValidators) / 3;
+//        bytes32 currentValidatorSetHash = bridge.computeValidatorSetHash(validators);
+//        bridge.domainSeparateValidatorSetHash(nonce, currentPowerThreshold, currentValidatorSetHash);
+//        bridge.checkValidatorSignatures(validators, sigs, newDataRootTupleRoot, currentPowerThreshold);
 
         bridge.submitDataRootTupleRoot(nonce, initialVelsetNonce, newTupleRoot, validators, sigs);
     }
 
     function computeValidatorSetHash(Validator[] memory _validators) private pure returns (bytes32) {
         return keccak256(abi.encode(_validators));
+    }
+
+    function domainSeparateDataRootTupleRoot(uint256 _nonce, bytes32 _dataRootTupleRoot)
+    private
+    pure
+    returns (bytes32)
+    {
+        bytes32 c = keccak256(abi.encode(DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _nonce, _dataRootTupleRoot));
+
+        return c;
     }
 
     function derivePrivateKeys(uint256 count) private returns (uint256[] memory) {
