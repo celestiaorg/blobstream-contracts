@@ -70,10 +70,10 @@ contract Benchmark is DSTest {
         }
 
         // these are called here so that they're part of the gas report.
-//        uint256 currentPowerThreshold = (2 * votingPower * numberOfValidators) / 3;
-//        bytes32 currentValidatorSetHash = bridge.computeValidatorSetHash(validators);
-//        bridge.domainSeparateValidatorSetHash(nonce, currentPowerThreshold, currentValidatorSetHash);
-//        bridge.checkValidatorSignatures(validators, sigs, newDataRootTupleRoot, currentPowerThreshold);
+        //        uint256 currentPowerThreshold = (2 * votingPower * numberOfValidators) / 3;
+        //        bytes32 currentValidatorSetHash = bridge.computeValidatorSetHash(validators);
+        //        bridge.domainSeparateValidatorSetHash(nonce, currentPowerThreshold, currentValidatorSetHash);
+        //        bridge.checkValidatorSignatures(validators, sigs, newDataRootTupleRoot, currentPowerThreshold);
 
         bridge.submitDataRootTupleRoot(nonce, initialVelsetNonce, newTupleRoot, validators, sigs);
     }
@@ -83,9 +83,9 @@ contract Benchmark is DSTest {
     }
 
     function domainSeparateDataRootTupleRoot(uint256 _nonce, bytes32 _dataRootTupleRoot)
-    private
-    pure
-    returns (bytes32)
+        private
+        pure
+        returns (bytes32)
     {
         bytes32 c = keccak256(abi.encode(DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _nonce, _dataRootTupleRoot));
 
