@@ -1,0 +1,105 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.19;
+
+import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
+
+import "../Constants.sol";
+import "../DataRootTuple.sol";
+import "../QuantumGravityBridge.sol";
+import "../lib/tree/binary/BinaryMerkleProof.sol";
+
+import "ds-test/test.sol";
+
+interface CheatCodes {
+    function addr(uint256 privateKey) external returns (address);
+    function sign(uint256 privateKey, bytes32 digest) external returns (uint8 v, bytes32 r, bytes32 s);
+    function deriveKey(string calldata, string calldata, uint32) external returns (uint256);
+}
+
+/// @notice In order for the benchmark to work, the methods inside the bridge
+/// contract should be public. Also, the benchmark test should be prefixed
+/// with "test". Finally, the following `gas_reports = ["*"]` should be added
+/// to "foundry.toml".
+/// Example command to run the benchmark:
+/// `forge test --match-test testBenchmarkSubmitDataRootTupleRoot -vvvvvv --gas-report`.
+/// To change the validator set size, change the `numberOfValidators` constant.
+/// To make custom calculations of the gas, you can use the `gasleft()` solidity
+/// built-in function.
+/// The following answer has some insights on using that:
+/// https://ethereum.stackexchange.com/a/132325/65649
+/// The gas estimations might not be accurate to the real cost in a real network,
+/// and that's because foundry doesn't track calldata cost. source:
+/// https://github.com/foundry-rs/foundry/issues/3475#issuecomment-1469940917
+/// To have accurate results, make sure to add the following costs:
+/// A byte of calldata costs either 4 gas (if it is zero) or 16 gas (if it is any other value).
+contract Benchmark is DSTest {
+    uint256 private constant numberOfValidators = 70;
+
+    // Private keys used for test signatures.
+    uint256[] private privateKeys;
+
+    QuantumGravityBridge private bridge;
+
+    Validator[] private validators;
+    uint256 private votingPower = 5000;
+    uint256 private dataTupleRootNonce = 0;
+
+    // Set up Foundry cheatcodes.
+    CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
+
+    function setUp() public {
+        uint256 initialVelsetNonce = 0;
+        privateKeys = derivePrivateKeys(numberOfValidators);
+        validators = initializeValidators(privateKeys);
+
+        bytes32 hash = computeValidatorSetHash(validators);
+        bridge = new QuantumGravityBridge();
+        bridge.initialize(initialVelsetNonce, (2 * votingPower * numberOfValidators) / 3, hash);
+    }
+
+    function testBenchmarkSubmitDataRootTupleRoot() public {
+        uint256 initialVelsetNonce = 0;
+        uint256 nonce = 1;
+
+        // 32 bytes, chosen at random.
+        bytes32 newTupleRoot = 0x0de92bac0b356560d821f8e7b6f5c9fe4f3f88f6c822283efd7ab51ad56a640e;
+        bytes32 newDataRootTupleRoot = bridge.domainSeparateDataRootTupleRoot(nonce, newTupleRoot);
+
+        // Signature for the update.
+        Signature[] memory sigs = new Signature[](numberOfValidators);
+        bytes32 digest_eip191 = ECDSA.toEthSignedMessageHash(newDataRootTupleRoot);
+        for (uint256 i = 0; i < numberOfValidators; i++) {
+            (uint8 v, bytes32 r, bytes32 s) = cheats.sign(privateKeys[i], digest_eip191);
+            sigs[i] = Signature(v, r, s);
+        }
+
+        // these are called here so that they're part of the gas report.
+        uint256 currentPowerThreshold = (2 * votingPower * numberOfValidators) / 3;
+        bytes32 currentValidatorSetHash = bridge.computeValidatorSetHash(validators);
+        bridge.domainSeparateValidatorSetHash(nonce, currentPowerThreshold, currentValidatorSetHash);
+        bridge.checkValidatorSignatures(validators, sigs, newDataRootTupleRoot, currentPowerThreshold);
+
+        bridge.submitDataRootTupleRoot(nonce, initialVelsetNonce, newTupleRoot, validators, sigs);
+    }
+
+    function computeValidatorSetHash(Validator[] memory _validators) private pure returns (bytes32) {
+        return keccak256(abi.encode(_validators));
+    }
+
+    function derivePrivateKeys(uint256 count) private returns (uint256[] memory) {
+        string memory mnemonic = "test test test test test test test test test test test junk";
+        uint256[] memory keys = new uint256[](count);
+        for (uint32 i = 0; i < count; i++) {
+            keys[i] = cheats.deriveKey(mnemonic, "m/44'/60'/0'/0", i);
+        }
+        return keys;
+    }
+
+    function initializeValidators(uint256[] memory keys) private returns (Validator[] memory) {
+        Validator[] memory vs = new Validator[](keys.length);
+        for (uint256 i = 0; i < keys.length; i++) {
+            vs[i] = Validator(cheats.addr(keys[i]), votingPower);
+        }
+        return vs;
+    }
+}
