@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.21;
 
 /// @dev bytes32 encoding of the string "checkpoint"
 bytes32 constant VALIDATOR_SET_HASH_DOMAIN_SEPARATOR =
