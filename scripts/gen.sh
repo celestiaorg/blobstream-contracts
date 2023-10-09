@@ -10,7 +10,7 @@ if (( $# < 2 )); then
     exit 1
 fi
 
-# compile the QGB contracts
+# compile the BlobStream contracts
 forge build > /dev/null
 
 # compile the proxy contracts

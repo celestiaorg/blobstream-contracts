@@ -23,7 +23,7 @@ struct Signature {
     bytes32 s;
 }
 
-/// @title Quantum Gravity Bridge: Celestia -> EVM, Data Availability relay.
+/// @title BlobStream: Celestia -> EVM, Data Availability relay.
 /// @dev The relay relies on a set of signers to attest to some event on
 /// Celestia. These signers are the Celestia validator set, who sign over every
 /// Celestia block. Keeping track of the Celestia validator set is accomplished
@@ -36,7 +36,7 @@ struct Signature {
 /// block headers.
 /// @dev DO NOT REMOVE INHERITENCE OF THE FOLLOWING CONTRACTS: Initializable, UUPSUpgradeable and
 /// OwnableUpgradeable! They're essential for upgradability.
-contract QuantumGravityBridge is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgradeable {
+contract BlobStream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgradeable {
     // Don't change the order of state for working upgrades AND BE AWARE OF
     // INHERITANCE VARIABLES! Inherited contracts contain storage slots and must
     // be accounted for in any upgrades. Always test an exact upgrade on testnet

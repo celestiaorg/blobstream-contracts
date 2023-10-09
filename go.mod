@@ -1,4 +1,4 @@
-module github.com/celestiaorg/quantum-gravity-bridge/v2
+module github.com/celestiaorg/blobstream-contracts/v3
 
 go 1.21.1
 

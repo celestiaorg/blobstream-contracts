@@ -1,8 +1,8 @@
-# QGB Fraud Proofs
+# BlobStream Fraud Proofs
 
-## Celestiums Intro
+## BlobStream Intro
 
-A Celestium is a blockchain that uses Celestia for data availability but settles on any EVM chain. The QGB operates by having the Celestia validator set periodically sign over batched data commitments and validator set updates, which are relayed an EVM smart contract. The data commitments are stored in the EVM chain's state, and can be used to prove inclusion of any data historically posted to Celestia.
+A BlobStream rollup is a blockchain that uses Celestia for data availability but settles on any EVM chain. The BlobStream operates by having the Celestia validator set periodically sign over batched data commitments and validator set updates, which are relayed an EVM smart contract. The data commitments are stored in the EVM chain's state, and can be used to prove inclusion of any data historically posted to Celestia.
 
 ## Fraud Proofs
 
@@ -28,7 +28,7 @@ We could prove that via creating a binary [Merkle proof](https://github.com/cele
 
 Then, we will use that information to check if the provided transaction index, in the header, is out of the square size bounds.
 
-For the data root, we will use a binary Merkle proof to prove its inclusion in a data root tuple root that was committed to by the QGB smart contract. More on this in [here](#1-data-root-inclusion-proof).
+For the data root, we will use a binary Merkle proof to prove its inclusion in a data root tuple root that was committed to by the BlobStream smart contract. More on this in [here](#1-data-root-inclusion-proof).
 
 ## Proving an Invalid State Transition
 
@@ -39,13 +39,13 @@ In order to prove an invalid transaction in the rollup, we need to prove the fol
 
 The first part, proving that the transaction was posted to Celestia, can be done in three steps:
 
-1. Prove that the data root tuple is committed to by the QGB smart contract
+1. Prove that the data root tuple is committed to by the BlobStream smart contract
 2. Verify inclusion proof of the transaction to Celestia data root
 3. Prove that the transaction is in the rollup sequence spans
 
 ### 1. Data root inclusion proof
 
-To prove the data root is committed to by the QGB smart contract, we will need to provide a Merkle proof of the data root tuple to a data root tuple root. This can be created using the [`data_root_inclusion_proof`](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/rpc/client/http/http.go#L492-L511) query.
+To prove the data root is committed to by the BlobStream smart contract, we will need to provide a Merkle proof of the data root tuple to a data root tuple root. This can be created using the [`data_root_inclusion_proof`](https://github.com/celestiaorg/celestia-core/blob/c3ab251659f6fe0f36d10e0dbd14c29a78a85352/rpc/client/http/http.go#L492-L511) query.
 
 ### 2. Transaction inclusion proof
 
