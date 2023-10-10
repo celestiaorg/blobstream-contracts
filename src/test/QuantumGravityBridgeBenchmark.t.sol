@@ -29,7 +29,8 @@ interface CheatCodes {
 /// To have accurate results, make sure to add the following costs:
 /// A byte of calldata costs either 4 gas (if it is zero) or 16 gas (if it is any other value).
 contract Benchmark is DSTest {
-    uint256 private constant numberOfValidators = 1;
+    uint256 private constant numberOfValidators = 100;
+    uint256 private constant numberOfSigners = 30;
 
     // Private keys used for test signatures.
     uint256[] private privateKeys;
@@ -37,7 +38,7 @@ contract Benchmark is DSTest {
     QuantumGravityBridge private bridge;
 
     Validator[] private validators;
-    uint256 private votingPower = 5000;
+    uint256 private totalValidatorPower = 1000000;
     uint256 private dataTupleRootNonce = 0;
 
     // Set up Foundry cheatcodes.
@@ -50,7 +51,7 @@ contract Benchmark is DSTest {
 
         bytes32 hash = computeValidatorSetHash(validators);
         bridge = new QuantumGravityBridge();
-        bridge.initialize(initialVelsetNonce, (2 * votingPower * numberOfValidators) / 3, hash);
+        bridge.initialize(initialVelsetNonce, (2 * totalValidatorPower) / 3, hash);
     }
 
     function testBenchmarkSubmitDataRootTupleRoot() public {
@@ -64,9 +65,15 @@ contract Benchmark is DSTest {
         // Signature for the update.
         Signature[] memory sigs = new Signature[](numberOfValidators);
         bytes32 digest_eip191 = ECDSA.toEthSignedMessageHash(newDataRootTupleRoot);
+        uint256 threshold = 2 * totalValidatorPower / 3;
+        uint256 cumulatedPower = 0;
         for (uint256 i = 0; i < numberOfValidators; i++) {
+            if (cumulatedPower > threshold) {
+                break;
+            }
             (uint8 v, bytes32 r, bytes32 s) = cheats.sign(privateKeys[i], digest_eip191);
             sigs[i] = Signature(v, r, s);
+            cumulatedPower += validators[i].power;
         }
 
         // these are called here so that they're part of the gas report.
@@ -103,8 +110,15 @@ contract Benchmark is DSTest {
 
     function initializeValidators(uint256[] memory keys) private returns (Validator[] memory) {
         Validator[] memory vs = new Validator[](keys.length);
+        uint256 threshold = 2 * totalValidatorPower / 3;
+        uint256 primaryPower = threshold / (numberOfSigners - 1);
+        uint256 secondaryPower = (totalValidatorPower - threshold) / (numberOfValidators - numberOfSigners + 1);
         for (uint256 i = 0; i < keys.length; i++) {
-            vs[i] = Validator(cheats.addr(keys[i]), votingPower);
+            if (i < numberOfSigners) {
+                vs[i] = Validator(cheats.addr(keys[i]), primaryPower);
+            } else {
+                vs[i] = Validator(cheats.addr(keys[i]), secondaryPower);
+            }
         }
         return vs;
     }
