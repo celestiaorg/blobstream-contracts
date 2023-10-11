@@ -5,14 +5,14 @@
 #
 # How to use:
 # First, build the docker image using:
-#   $ docker build -t qgb-env -f Dockerfile_Environment .
+#   $ docker build -t blobstream-env -f Dockerfile_Environment .
 # Then, run the docker image:
-#   $ docker run -it qgb-env
+#   $ docker run -it blobstream-env
 # This should give you a shell inside the image where you have all the dependencies installed.
 #
 # For example, if you want to generate the wrappers for this repo, run the following inside the shell:
-#   $ git clone https://github.com/celestiaorg/quantum-gravity-bridge
-#   $ cd quantum-gravity-bridge
+#   $ git clone https://github.com/celestiaorg/blobstream-contracts
+#   $ cd blobstream-contracts
 #   $ make
 # And you will see that the wrappers are being regenerated for this repo.
 # Finally, you can push the changes to your branch using git add/commit/push.
@@ -36,4 +36,4 @@ RUN git clone --depth 1 --branch v1.12.0 https://github.com/ethereum/go-ethereum
 WORKDIR /root
 ENTRYPOINT bash
 
-# at this level, you can clone the qgb repo and build the wrappers, run the tests etc.
+# at this level, you can clone the blobstream-contracts repo and build the wrappers, run the tests etc.
