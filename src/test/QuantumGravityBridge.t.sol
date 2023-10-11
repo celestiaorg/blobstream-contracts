@@ -5,7 +5,7 @@ import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 
 import "../Constants.sol";
 import "../DataRootTuple.sol";
-import "../BlobStream.sol";
+import "../Blobstream.sol";
 import "../lib/tree/binary/BinaryMerkleProof.sol";
 
 import "ds-test/test.sol";
@@ -21,7 +21,7 @@ contract RelayerTest is DSTest {
     uint256 constant testPriv1 = 0x64a1d6f0e760a8d62b4afdde4096f16f51b401eaaecc915740f71770ea76a8ad;
     uint256 constant testPriv2 = 0x6e8bdfa979ab645b41c4d17cb1329b2a44684c82b61b1b060ea9b6e1c927a4f4;
 
-    BlobStream bridge;
+    Blobstream bridge;
 
     Validator[] private validators;
     uint256 private votingPower = 5000;
@@ -35,7 +35,7 @@ contract RelayerTest is DSTest {
 
         validators.push(Validator(cheats.addr(testPriv1), votingPower));
         bytes32 hash = computeValidatorSetHash(validators);
-        bridge = new BlobStream();
+        bridge = new Blobstream();
         bridge.initialize(initialVelsetNonce, (2 * votingPower) / 3, hash);
     }
 

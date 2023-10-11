@@ -8,7 +8,7 @@ gen: solidity-wrappers
 
 SOLIDITY_DIR = .
 SOLIDITY_SRC_DIR = $(SOLIDITY_DIR)/src
-CONTRACTS = BlobStream.sol ERC1967Proxy.sol
+CONTRACTS = Blobstream.sol ERC1967Proxy.sol
 
 fmt:
 	@echo "--> Running forge fmt"

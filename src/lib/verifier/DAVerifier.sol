@@ -12,7 +12,7 @@ import "../tree/namespace/NamespaceMerkleTree.sol";
 import "../tree/Types.sol";
 
 /// @notice Contains the necessary parameters to prove that some shares, which were posted to
-/// the Celestia network, were committed to by the BlobStream smart contract.
+/// the Celestia network, were committed to by the Blobstream smart contract.
 struct SharesProof {
     // The shares that were committed to.
     bytes[] data;
@@ -24,12 +24,12 @@ struct SharesProof {
     NamespaceNode[] rowRoots;
     // The proofs of the rowRoots to the data root.
     BinaryMerkleProof[] rowProofs;
-    // The proof of the data root tuple to the data root tuple root that was posted to the BlobStream contract.
+    // The proof of the data root tuple to the data root tuple root that was posted to the Blobstream contract.
     AttestationProof attestationProof;
 }
 
 /// @notice Contains the necessary parameters needed to verify that a data root tuple
-/// was committed to, by the BlobStream smart contract, at some specif nonce.
+/// was committed to, by the Blobstream smart contract, at some specif nonce.
 struct AttestationProof {
     // the attestation nonce that commits to the data root tuple.
     uint256 tupleRootNonce;
@@ -41,7 +41,7 @@ struct AttestationProof {
 
 /// @title DAVerifier: Celestia -> EVM, Data Availability verifier.
 /// @dev The DAVerifier verifies that some shares, which were posted on Celestia, were committed to
-/// by the BlobStream smart contract.
+/// by the Blobstream smart contract.
 library DAVerifier {
     /////////////////
     // Error codes //
@@ -71,8 +71,8 @@ library DAVerifier {
     // Functions //
     ///////////////
 
-    /// @notice Verifies that the shares, which were posted to Celestia, were committed to by the BlobStream smart contract.
-    /// @param _bridge The BlobStream smart contract instance.
+    /// @notice Verifies that the shares, which were posted to Celestia, were committed to by the Blobstream smart contract.
+    /// @param _bridge The Blobstream smart contract instance.
     /// @param _sharesProof The proof of the shares to the data root tuple root.
     /// @param _root The data root of the block that contains the shares.
     /// @return `true` if the proof is valid, `false` otherwise.
@@ -82,7 +82,7 @@ library DAVerifier {
         view
         returns (bool, ErrorCodes)
     {
-        // checking that the data root was committed to by the BlobStream smart contract.
+        // checking that the data root was committed to by the Blobstream smart contract.
         (bool success, ErrorCodes errorCode) = verifyMultiRowRootsToDataRootTupleRoot(
             _bridge, _sharesProof.rowRoots, _sharesProof.rowProofs, _sharesProof.attestationProof, _root
         );
@@ -123,8 +123,8 @@ library DAVerifier {
         return (true, ErrorCodes.NoError);
     }
 
-    /// @notice Verifies that a row/column root, from a Celestia block, was committed to by the BlobStream smart contract.
-    /// @param _bridge The BlobStream smart contract instance.
+    /// @notice Verifies that a row/column root, from a Celestia block, was committed to by the Blobstream smart contract.
+    /// @param _bridge The Blobstream smart contract instance.
     /// @param _rowRoot The row/column root to be proven.
     /// @param _rowProof The proof of the row/column root to the data root.
     /// @param _root The data root of the block that contains the row.
@@ -137,7 +137,7 @@ library DAVerifier {
         AttestationProof memory _attestationProof,
         bytes32 _root
     ) public view returns (bool, ErrorCodes) {
-        // checking that the data root was committed to by the BlobStream smart contract
+        // checking that the data root was committed to by the Blobstream smart contract
         if (
             !_bridge.verifyAttestation(
                 _attestationProof.tupleRootNonce, _attestationProof.tuple, _attestationProof.proof
@@ -154,8 +154,8 @@ library DAVerifier {
         return (true, ErrorCodes.NoError);
     }
 
-    /// @notice Verifies that a set of rows/columns, from a Celestia block, were committed to by the BlobStream smart contract.
-    /// @param _bridge The BlobStream smart contract instance.
+    /// @notice Verifies that a set of rows/columns, from a Celestia block, were committed to by the Blobstream smart contract.
+    /// @param _bridge The Blobstream smart contract instance.
     /// @param _rowRoots The set of row/column roots to be proved.
     /// @param _rowProofs The set of proofs of the _rowRoots in the same order.
     /// @param _root The data root of the block that contains the rows.
@@ -168,7 +168,7 @@ library DAVerifier {
         AttestationProof memory _attestationProof,
         bytes32 _root
     ) public view returns (bool, ErrorCodes) {
-        // checking that the data root was committed to by the BlobStream smart contract
+        // checking that the data root was committed to by the Blobstream smart contract
         if (
             !_bridge.verifyAttestation(
                 _attestationProof.tupleRootNonce, _attestationProof.tuple, _attestationProof.proof
@@ -194,7 +194,7 @@ library DAVerifier {
     }
 
     /// @notice computes the Celestia block square size from a row/column root to data root binary merkle proof.
-    /// Note: the provided proof is not authenticated to the BlobStream smart contract. It is the user's responsibility
+    /// Note: the provided proof is not authenticated to the Blobstream smart contract. It is the user's responsibility
     /// to verify that the proof is valid and was successfully committed to using
     //  the `DAVerifier.verifyRowRootToDataRootTupleRoot()` method
     /// Note: the minimum square size is 1. Thus, we don't expect the proof to have number of leaves equal to 0.
@@ -215,7 +215,7 @@ library DAVerifier {
     }
 
     /// @notice computes the Celestia block square size from a shares to row/column root proof.
-    /// Note: the provided proof is not authenticated to the BlobStream smart contract. It is the user's responsibility
+    /// Note: the provided proof is not authenticated to the Blobstream smart contract. It is the user's responsibility
     /// to verify that the proof is valid and that the shares were successfully committed to using
     /// the `DAVerifier.verifySharesToDataRootTupleRoot()` method.
     /// Note: the minimum square size is 1. Thus, we don't expect the proof not to contain any side node.

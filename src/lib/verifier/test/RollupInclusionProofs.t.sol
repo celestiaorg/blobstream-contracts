@@ -6,7 +6,7 @@ import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 import "../../../Constants.sol";
 import "../../../DataRootTuple.sol";
 import "../DAVerifier.sol";
-import "../../../BlobStream.sol";
+import "../../../Blobstream.sol";
 import "../../tree/binary/BinaryMerkleProof.sol";
 import "../../tree/namespace/NamespaceMerkleMultiproof.sol";
 import "../../tree/Types.sol";
@@ -194,7 +194,7 @@ contract RollupInclusionProofTest is DSTest {
     // Private keys used for test signatures.
     uint256 constant testPriv1 = 0x64a1d6f0e760a8d62b4afdde4096f16f51b401eaaecc915740f71770ea76a8ad;
 
-    BlobStream bridge;
+    Blobstream bridge;
     TestFixture fixture;
 
     Validator[] private validators;
@@ -203,7 +203,7 @@ contract RollupInclusionProofTest is DSTest {
     // Set up Foundry cheatcodes.
     CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
 
-    // deploy a BlobStream contract and submit the following:
+    // deploy a Blobstream contract and submit the following:
     // - initial valset.
     // - data root tuple root that commits to the proofs tested below.
     function setUp() public {
@@ -211,7 +211,7 @@ contract RollupInclusionProofTest is DSTest {
 
         validators.push(Validator(cheats.addr(testPriv1), votingPower));
         bytes32 hash = computeValidatorSetHash(validators);
-        bridge = new BlobStream();
+        bridge = new Blobstream();
         bridge.initialize(initialVelsetNonce, (2 * votingPower) / 3, hash);
 
         fixture = new TestFixture();
@@ -453,7 +453,7 @@ contract TestFixture {
     /// @notice the data root tuple root committing to the Celestia block.
     bytes32 public dataRootTupleRoot = 0xd149f160dec348d8582b8c2629c91fab8189b8dca205c4c01bb378f2f5450c3b;
 
-    /// @notice the data root tuple root nonce in the BlobStream contract.
+    /// @notice the data root tuple root nonce in the Blobstream contract.
     uint256 public dataRootTupleRootNonce = 2;
 
     /// @notice the data root tuple to data root tuple root proof side nodes.
