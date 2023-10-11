@@ -7,7 +7,7 @@
 [![Version](https://img.shields.io/github/tag/celestiaorg/blobstream-contracts.svg?style=flat-square)](https://github.com/celestiaorg/blobstream-contracts/releases/latest)
 [![License: Apache-2.0](https://img.shields.io/github/license/celestiaorg/blobstream-contracts.svg?style=flat-square)](https://github.com/celestiaorg/blobstream-contracts/blob/master/LICENSE)
 
-The Blobstream is a Celestia -> EVM message relay.
+Blobstream is a Celestia -> EVM message relay.
 It is based on Umee's Gravity Bridge implementation, [Peggo](https://github.com/umee-network/peggo).
 **This project is under active development and should not be used in production**.
 
@@ -75,11 +75,11 @@ Instructions [here](https://github.com/celestiaorg/celestia-app).
 
 ## How it works
 
-The Blobstream allows Celestia block header data roots to be relayed in one direction, from Celestia to an EVM chain.
+Blobstream allows Celestia block header data roots to be relayed in one direction, from Celestia to an EVM chain.
 It does not support bridging assets such as fungible or non-fungible tokens directly, and cannot send messages from the EVM chain back to Celestia.
 
 It works by relying on a set of signers to attest to some event on Celestia: the Celestia validator set.
-The Blobstream contract keeps track of the Celestia validator set by updating its view of the validator set with `updateValidatorSet()`.
+Blobstream contract keeps track of the Celestia validator set by updating its view of the validator set with `updateValidatorSet()`.
 More than 2/3 of the voting power of the current view of the validator set must sign off on new relayed events, submitted with `submitDataRootTupleRoot()`.
 Each event is a batch of `DataRootTuple`s, with each tuple representing a single [data root (i.e. block header)](https://celestiaorg.github.io/celestia-app/specs/data_structures.html#header).
 Relayed tuples are in the same order as Celestia block headers.

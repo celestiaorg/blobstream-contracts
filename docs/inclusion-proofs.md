@@ -2,7 +2,7 @@
 
 ## Blobstream Intro
 
-A Blobstream rollup is a blockchain that uses Celestia for data availability but settles on any EVM chain. The Blobstream operates by having the Celestia validator set periodically sign over batched data commitments and validator set updates, which are relayed an EVM smart contract. The data commitments are stored in the EVM chain's state, and can be used to prove inclusion of any data historically posted to Celestia.
+A Blobstream rollup is a blockchain that uses Celestia for data availability but settles on any EVM chain. Blobstream operates by having the Celestia validator set periodically sign over batched data commitments and validator set updates, which are relayed an EVM smart contract. The data commitments are stored in the EVM chain's state, and can be used to prove inclusion of any data historically posted to Celestia.
 
 ## Fraud Proofs
 
