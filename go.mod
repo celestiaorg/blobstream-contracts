@@ -2,7 +2,7 @@ module github.com/celestiaorg/blobstream-contracts/v3
 
 go 1.21.1
 
-require github.com/ethereum/go-ethereum v1.13.2
+require github.com/ethereum/go-ethereum v1.13.3
 
 require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
@@ -26,11 +26,11 @@ require (
 	github.com/supranational/blst v0.3.11 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
-	golang.org/x/crypto v0.12.0 // indirect
-	golang.org/x/exp v0.0.0-20230810033253-352e893a4cad // indirect
-	golang.org/x/mod v0.11.0 // indirect
+	golang.org/x/crypto v0.13.0 // indirect
+	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
+	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
-	golang.org/x/tools v0.9.1 // indirect
+	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/tools v0.13.0 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
