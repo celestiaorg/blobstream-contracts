@@ -5,7 +5,7 @@ import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 
 import "../Constants.sol";
 import "../DataRootTuple.sol";
-import "../QuantumGravityBridge.sol";
+import "../Blobstream.sol";
 import "../lib/tree/binary/BinaryMerkleProof.sol";
 
 import "ds-test/test.sol";
@@ -35,7 +35,7 @@ contract Benchmark is DSTest {
     // Private keys used for test signatures.
     uint256[] private privateKeys;
 
-    QuantumGravityBridge private bridge;
+    Blobstream private bridge;
 
     Validator[] private validators;
     uint256 private totalValidatorPower = 1000000;
@@ -50,7 +50,7 @@ contract Benchmark is DSTest {
         validators = initializeValidators(privateKeys);
 
         bytes32 hash = computeValidatorSetHash(validators);
-        bridge = new QuantumGravityBridge();
+        bridge = new Blobstream();
         bridge.initialize(initialVelsetNonce, (2 * totalValidatorPower) / 3, hash);
     }
 
