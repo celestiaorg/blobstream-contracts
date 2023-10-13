@@ -1,6 +1,6 @@
 {
-  "name": "quantum-gravity-bridge",
-  "version": "2.0.0",
+  "name": "blobstream-contracts",
+  "version": "3.0.0",
   "description": "Celestia -> EVM bridge",
   "main": "index.js",
   "directories": {
@@ -12,17 +12,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/celestiaorg/quantum-gravity-bridge.git"
+    "url": "git+https://github.com/celestiaorg/blobstream-contracts.git"
   },
   "keywords": [
-    "qgb"
+    "blobstream"
   ],
   "author": "",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/celestiaorg/quantum-gravity-bridge/issues"
+    "url": "https://github.com/celestiaorg/blobstream-contracts/issues"
   },
-  "homepage": "https://github.com/celestiaorg/quantum-gravity-bridge#readme",
+  "homepage": "https://github.com/celestiaorg/blobstream-contracts#readme",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
     "hardhat": "^2.17.4",
