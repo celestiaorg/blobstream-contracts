@@ -78,7 +78,7 @@ library DAVerifier {
     /// @return `true` if the proof is valid, `false` otherwise.
     /// @return an error code if the proof is invalid, ErrorCodes.NoError otherwise.
     function verifySharesToDataRootTupleRoot(IDAOracle _bridge, SharesProof memory _sharesProof, bytes32 _root)
-        external
+        internal
         view
         returns (bool, ErrorCodes)
     {
@@ -136,7 +136,7 @@ library DAVerifier {
         BinaryMerkleProof memory _rowProof,
         AttestationProof memory _attestationProof,
         bytes32 _root
-    ) public view returns (bool, ErrorCodes) {
+    ) internal view returns (bool, ErrorCodes) {
         // checking that the data root was committed to by the Blobstream smart contract
         if (
             !_bridge.verifyAttestation(
@@ -167,7 +167,7 @@ library DAVerifier {
         BinaryMerkleProof[] memory _rowProofs,
         AttestationProof memory _attestationProof,
         bytes32 _root
-    ) public view returns (bool, ErrorCodes) {
+    ) internal view returns (bool, ErrorCodes) {
         // checking that the data root was committed to by the Blobstream smart contract
         if (
             !_bridge.verifyAttestation(
@@ -202,7 +202,7 @@ library DAVerifier {
     /// @return The square size of the corresponding block.
     /// @return an error code if the _proof is invalid, Errors.NoError otherwise.
     function computeSquareSizeFromRowProof(BinaryMerkleProof memory _proof)
-        external
+        internal
         pure
         returns (uint256, ErrorCodes)
     {
@@ -221,7 +221,7 @@ library DAVerifier {
     /// Note: the minimum square size is 1. Thus, we don't expect the proof not to contain any side node.
     /// @param _proof The proof of the shares to the row/column root.
     /// @return The square size of the corresponding block.
-    function computeSquareSizeFromShareProof(NamespaceMerkleMultiproof memory _proof) external pure returns (uint256) {
+    function computeSquareSizeFromShareProof(NamespaceMerkleMultiproof memory _proof) internal pure returns (uint256) {
         uint256 extendedSquareRowSize = 2 ** _proof.sideNodes.length;
         // we divide the extended square row size by 2 because the square size is the
         // the size of the row of the original square size.
