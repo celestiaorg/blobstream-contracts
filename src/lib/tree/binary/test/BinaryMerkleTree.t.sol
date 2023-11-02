@@ -223,7 +223,7 @@ contract BinaryMerkleProofTest is DSTest {
 
         uint256 key = 1;
         // correct numLeaves: 5
-        uint256 numLeaves = 7;
+        uint256 numLeaves = 200;
         BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = bytes(hex"01");
         bool isValid = BinaryMerkleTree.verify(root, proof, data);
