@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.22;
 
 import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
@@ -198,27 +198,23 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
         uint256 _powerThreshold
     ) private pure {
         uint256 cumulativePower = 0;
-        // Note: be cautious when updating the code inside the unchecked block.
-        // Make sure to verify if all the bypassed security checks are respected.
-        unchecked {
-            for (uint256 i = 0; i < _currentValidators.length; i++) {
-                // If the signature is nil, then it's not present so continue.
-                if (isSigNil(_sigs[i])) {
-                    continue;
-                }
+        for (uint256 i = 0; i < _currentValidators.length; i++) {
+            // If the signature is nil, then it's not present so continue.
+            if (isSigNil(_sigs[i])) {
+                continue;
+            }
 
-                // Check that the current validator has signed off on the hash.
-                if (!verifySig(_currentValidators[i].addr, _digest, _sigs[i])) {
-                    revert InvalidSignature();
-                }
+            // Check that the current validator has signed off on the hash.
+            if (!verifySig(_currentValidators[i].addr, _digest, _sigs[i])) {
+                revert InvalidSignature();
+            }
 
-                // Sum up cumulative power.
-                cumulativePower += _currentValidators[i].power;
+            // Sum up cumulative power.
+            cumulativePower += _currentValidators[i].power;
 
-                // Break early to avoid wasting gas.
-                if (cumulativePower >= _powerThreshold) {
-                    break;
-                }
+            // Break early to avoid wasting gas.
+            if (cumulativePower >= _powerThreshold) {
+                break;
             }
         }
         // Check that there was enough power.
