@@ -88,7 +88,7 @@ library BinaryMerkleTree {
         if (_begin > _end) {
             revert("Invalid range: _begin is greater than _end");
         }
-        if (_begin >= _data.length || _end >= _data.length) {
+        if (_begin > _data.length || _end > _data.length) {
             revert("Invalid range: _begin or _end are out of bounds");
         }
         bytes32[] memory out = new bytes32[](_end-_begin);
