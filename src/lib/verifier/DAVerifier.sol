@@ -236,6 +236,9 @@ library DAVerifier {
     /// @param _end The ending of the range (exclusive).
     /// @return _ the sliced data.
     function slice(bytes[] memory _data, uint256 _begin, uint256 _end) internal pure returns (bytes[] memory) {
+        if (_begin > _end) {
+            revert("Invalid range: _begin is greater than _end");
+        }
         bytes[] memory out = new bytes[](_end-_begin);
         for (uint256 i = _begin; i < _end; i++) {
             out[i - _begin] = _data[i];
