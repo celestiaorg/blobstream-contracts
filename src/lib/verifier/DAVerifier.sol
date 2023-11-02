@@ -66,7 +66,9 @@ library DAVerifier {
         /// @notice The number of leaves in the binary merkle proof is not divisible by 4.
         InvalidNumberOfLeavesInProof,
         /// @notice The provided range is invalid.
-        InvalidRange
+        InvalidRange,
+        /// @notice The provided range is out of bounds.
+        OutOfBoundsRange
     }
 
     ///////////////
@@ -245,6 +247,9 @@ library DAVerifier {
     {
         if (_begin > _end) {
             return (_data, ErrorCodes.InvalidRange);
+        }
+        if (_begin > _data.length || _end > _data.length) {
+            return (_data, ErrorCodes.OutOfBoundsRange);
         }
         bytes[] memory out = new bytes[](_end-_begin);
         for (uint256 i = _begin; i < _end; i++) {
