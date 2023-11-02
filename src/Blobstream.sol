@@ -197,8 +197,8 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
         bytes32 _digest,
         uint256 _powerThreshold
     ) private pure {
-        uint256 cumulativePower;
-        for (uint256 i; i < _currentValidators.length;) {
+        uint256 cumulativePower = 0;
+        for (uint256 i = 0; i < _currentValidators.length; i++) {
             // If the signature is nil, then it's not present so continue.
             if (isSigNil(_sigs[i])) {
                 continue;
@@ -215,10 +215,6 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
             // Break early to avoid wasting gas.
             if (cumulativePower >= _powerThreshold) {
                 break;
-            }
-
-            unchecked {
-                ++i;
             }
         }
         // Check that there was enough power.
