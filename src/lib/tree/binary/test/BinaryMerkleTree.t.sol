@@ -181,4 +181,84 @@ contract BinaryMerkleProofTest is DSTest {
         bool isValid = BinaryMerkleTree.verify(root, proof, data);
         assertTrue(isValid);
     }
+
+    function testVerifyInvalidProofRoot() external {
+        // correct root: 0xb855b42d6c30f5b087e05266783fbd6e394f7b926013ccaa67700a8b0c5a596f;
+        bytes32 root = 0xc855b42d6c30f5b087e05266783fbd6e394f7b926013ccaa67700a8b0c5a596f;
+        bytes32[] memory sideNodes = new bytes32[](3);
+        sideNodes[0] = 0x96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7;
+        sideNodes[1] = 0x52c56b473e5246933e7852989cd9feba3b38f078742b93afff1e65ed46797825;
+        sideNodes[2] = 0x4f35212d12f9ad2036492c95f1fe79baf4ec7bd9bef3dffa7579f2293ff546a4;
+
+        uint256 key = 1;
+        uint256 numLeaves = 5;
+        BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
+        bytes memory data = bytes(hex"01");
+        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        assertTrue(!isValid);
+    }
+
+    function testVerifyInvalidProofKey() external {
+        bytes32 root = 0xb855b42d6c30f5b087e05266783fbd6e394f7b926013ccaa67700a8b0c5a596f;
+        bytes32[] memory sideNodes = new bytes32[](3);
+        sideNodes[0] = 0x96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7;
+        sideNodes[1] = 0x52c56b473e5246933e7852989cd9feba3b38f078742b93afff1e65ed46797825;
+        sideNodes[2] = 0x4f35212d12f9ad2036492c95f1fe79baf4ec7bd9bef3dffa7579f2293ff546a4;
+
+        // correct key: 1
+        uint256 key = 2;
+        uint256 numLeaves = 5;
+        BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
+        bytes memory data = bytes(hex"01");
+        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        assertTrue(!isValid);
+    }
+
+    function testVerifyInvalidProofNumberOfLeaves() external {
+        bytes32 root = 0xb855b42d6c30f5b087e05266783fbd6e394f7b926013ccaa67700a8b0c5a596f;
+        bytes32[] memory sideNodes = new bytes32[](3);
+        sideNodes[0] = 0x96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7;
+        sideNodes[1] = 0x52c56b473e5246933e7852989cd9feba3b38f078742b93afff1e65ed46797825;
+        sideNodes[2] = 0x4f35212d12f9ad2036492c95f1fe79baf4ec7bd9bef3dffa7579f2293ff546a4;
+
+        uint256 key = 1;
+        // correct numLeaves: 5
+        uint256 numLeaves = 7;
+        BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
+        bytes memory data = bytes(hex"01");
+        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        assertTrue(!isValid);
+    }
+
+    function testVerifyInvalidProofSideNodes() external {
+        bytes32 root = 0xb855b42d6c30f5b087e05266783fbd6e394f7b926013ccaa67700a8b0c5a596f;
+        bytes32[] memory sideNodes = new bytes32[](3);
+        sideNodes[0] = 0x96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7;
+        sideNodes[1] = 0x52c56b473e5246933e7852989cd9feba3b38f078742b93afff1e65ed46797825;
+        // correct side node: 0x4f35212d12f9ad2036492c95f1fe79baf4ec7bd9bef3dffa7579f2293ff546a4;
+        sideNodes[2] = 0x5f35212d12f9ad2036492c95f1fe79baf4ec7bd9bef3dffa7579f2293ff546a4;
+
+        uint256 key = 1;
+        uint256 numLeaves = 5;
+        BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
+        bytes memory data = bytes(hex"01");
+        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        assertTrue(!isValid);
+    }
+
+    function testVerifyInvalidProofData() external {
+        bytes32 root = 0xb855b42d6c30f5b087e05266783fbd6e394f7b926013ccaa67700a8b0c5a596f;
+        bytes32[] memory sideNodes = new bytes32[](3);
+        sideNodes[0] = 0x96a296d224f285c67bee93c30f8a309157f0daa35dc5b87e410b78630a09cfc7;
+        sideNodes[1] = 0x52c56b473e5246933e7852989cd9feba3b38f078742b93afff1e65ed46797825;
+        sideNodes[2] = 0x4f35212d12f9ad2036492c95f1fe79baf4ec7bd9bef3dffa7579f2293ff546a4;
+
+        uint256 key = 1;
+        uint256 numLeaves = 5;
+        BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
+        // correct data: 01
+        bytes memory data = bytes(hex"012345");
+        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        assertTrue(!isValid);
+    }
 }
