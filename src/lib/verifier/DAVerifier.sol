@@ -64,7 +64,9 @@ library DAVerifier {
         /// @notice The verifier data length isn't equal to the number of shares in the shares proofs.
         UnequalDataLengthAndNumberOfSharesProofs,
         /// @notice The number of leaves in the binary merkle proof is not divisible by 4.
-        InvalidNumberOfLeavesInProof
+        InvalidNumberOfLeavesInProof,
+        /// @notice The provided range is invalid.
+        InvalidRange
     }
 
     ///////////////
@@ -107,12 +109,13 @@ library DAVerifier {
         uint256 cursor = 0;
         for (uint256 i = 0; i < _sharesProof.shareProofs.length; i++) {
             uint256 sharesUsed = _sharesProof.shareProofs[i].endKey - _sharesProof.shareProofs[i].beginKey;
+            (bytes[] memory s, ErrorCodes err) = slice(_sharesProof.data, cursor, cursor + sharesUsed);
+            if (err != ErrorCodes.NoError) {
+                return (false, err);
+            }
             if (
                 !NamespaceMerkleTree.verifyMulti(
-                    _sharesProof.rowRoots[i],
-                    _sharesProof.shareProofs[i],
-                    _sharesProof.namespace,
-                    slice(_sharesProof.data, cursor, cursor + sharesUsed)
+                    _sharesProof.rowRoots[i], _sharesProof.shareProofs[i], _sharesProof.namespace, s
                 )
             ) {
                 return (false, ErrorCodes.InvalidSharesToRowsProof);
@@ -235,14 +238,18 @@ library DAVerifier {
     /// @param _begin The beginning of the range (inclusive).
     /// @param _end The ending of the range (exclusive).
     /// @return _ the sliced data.
-    function slice(bytes[] memory _data, uint256 _begin, uint256 _end) internal pure returns (bytes[] memory) {
+    function slice(bytes[] memory _data, uint256 _begin, uint256 _end)
+        internal
+        pure
+        returns (bytes[] memory, ErrorCodes)
+    {
         if (_begin > _end) {
-            revert("Invalid range: _begin is greater than _end");
+            return (_data, ErrorCodes.InvalidRange);
         }
         bytes[] memory out = new bytes[](_end-_begin);
         for (uint256 i = _begin; i < _end; i++) {
             out[i - _begin] = _data[i];
         }
-        return out;
+        return (out, ErrorCodes.NoError);
     }
 }
