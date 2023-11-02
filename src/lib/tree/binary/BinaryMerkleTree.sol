@@ -87,7 +87,7 @@ library BinaryMerkleTree {
     function slice(bytes32[] memory _data, uint256 _begin, uint256 _end) internal pure returns (bytes32[] memory) {
         bytes32[] memory out = new bytes32[](_end-_begin);
         for (uint256 i = _begin; i < _end; i++) {
-            out[i] = _data[i];
+            out[i - _begin] = _data[i];
         }
         return out;
     }
