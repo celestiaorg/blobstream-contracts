@@ -211,8 +211,9 @@ contract RollupInclusionProofTest is DSTest {
 
         validators.push(Validator(cheats.addr(testPriv1), votingPower));
         bytes32 hash = computeValidatorSetHash(validators);
+        bytes32 checkpoint = domainSeparateValidatorSetHash(initialVelsetNonce, (2 * votingPower) / 3, hash);
         bridge = new Blobstream();
-        bridge.initialize(initialVelsetNonce, (2 * votingPower) / 3, hash);
+        bridge.initialize(initialVelsetNonce, (2 * votingPower) / 3, checkpoint);
 
         fixture = new TestFixture();
 
@@ -364,6 +365,17 @@ contract RollupInclusionProofTest is DSTest {
 
     function computeValidatorSetHash(Validator[] memory _validators) private pure returns (bytes32) {
         return keccak256(abi.encode(_validators));
+    }
+
+    function domainSeparateValidatorSetHash(uint256 _nonce, uint256 _powerThreshold, bytes32 _validatorSetHash)
+        private
+        pure
+        returns (bytes32)
+    {
+        bytes32 c =
+            keccak256(abi.encode(VALIDATOR_SET_HASH_DOMAIN_SEPARATOR, _nonce, _powerThreshold, _validatorSetHash));
+
+        return c;
     }
 
     function domainSeparateDataRootTupleRoot(uint256 _nonce, bytes32 _dataRootTupleRoot)
