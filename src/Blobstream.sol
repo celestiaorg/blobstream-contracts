@@ -101,7 +101,7 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
     /// @param _nonce Initial event nonce.
     /// @param _powerThreshold Initial voting power that is needed to approve
     /// operations.
-    /// @param _validatorSetCheckpoint Initial validator set domainSeparateValidatorSetHash. This does not need
+    /// @param _validatorSetCheckpoint Initial checkpoint of the validator set. This does not need
     /// to be the genesis validator set of the bridged chain, only the initial
     /// validator set of the bridge.
     /// @dev DO NOT REMOVE THE INITIALIZER! It is mandatory for upgradability.
