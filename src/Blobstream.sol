@@ -101,28 +101,20 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
     /// @param _nonce Initial event nonce.
     /// @param _powerThreshold Initial voting power that is needed to approve
     /// operations.
-    /// @param _validatorSetHash Initial validator set hash. This does not need
+    /// @param _validatorSetCheckpoint Initial checkpoint of the validator set. This does not need
     /// to be the genesis validator set of the bridged chain, only the initial
     /// validator set of the bridge.
     /// @dev DO NOT REMOVE THE INITIALIZER! It is mandatory for upgradability.
-    function initialize(uint256 _nonce, uint256 _powerThreshold, bytes32 _validatorSetHash) public initializer {
-        // CHECKS
-
-        bytes32 newCheckpoint = domainSeparateValidatorSetHash(_nonce, _powerThreshold, _validatorSetHash);
-
+    function initialize(uint256 _nonce, uint256 _powerThreshold, bytes32 _validatorSetCheckpoint) public initializer {
         // EFFECTS
 
         state_eventNonce = _nonce;
-        state_lastValidatorSetCheckpoint = newCheckpoint;
+        state_lastValidatorSetCheckpoint = _validatorSetCheckpoint;
         state_powerThreshold = _powerThreshold;
 
         /// @dev Initialize the OwnableUpgradeable explicitly.
         /// DO NOT REMOVE! It is mandatory for allowing the owner to upgrade.
         __Ownable_init(_msgSender());
-
-        // LOGS
-
-        emit ValidatorSetUpdatedEvent(_nonce, _powerThreshold, _validatorSetHash);
     }
 
     /// @dev only authorize the upgrade for the owner of the contract.

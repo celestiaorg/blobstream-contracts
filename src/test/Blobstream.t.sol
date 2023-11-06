@@ -25,28 +25,28 @@ contract RelayerTest is DSTest {
 
     Validator[] private validators;
     uint256 private votingPower = 5000;
-    uint256 private dataTupleRootNonce = 0;
 
     // Set up Foundry cheatcodes.
     CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
 
     function setUp() public {
-        uint256 initialVelsetNonce = 0;
+        uint256 initialVelsetNonce = 1;
 
         validators.push(Validator(cheats.addr(testPriv1), votingPower));
         bytes32 hash = computeValidatorSetHash(validators);
+        bytes32 validatorSetCheckpoint = domainSeparateValidatorSetHash(initialVelsetNonce, (2 * votingPower) / 3, hash);
         bridge = new Blobstream();
-        bridge.initialize(initialVelsetNonce, (2 * votingPower) / 3, hash);
+        bridge.initialize(initialVelsetNonce, (2 * votingPower) / 3, validatorSetCheckpoint);
     }
 
     function testUpdateValidatorSet() public {
-        uint256 initialVelsetNonce = 0;
+        uint256 initialVelsetNonce = 1;
 
         // Save the old test validator set before we add to it.
         Validator[] memory oldVS = new Validator[](1);
         oldVS[0] = Validator(cheats.addr(testPriv1), votingPower);
 
-        uint256 newNonce = 1;
+        uint256 newNonce = 2;
         validators.push(Validator(cheats.addr(testPriv2), votingPower));
         votingPower += votingPower;
         uint256 newPowerThreshold = (2 * votingPower) / 3;
@@ -67,8 +67,8 @@ contract RelayerTest is DSTest {
     }
 
     function testSubmitDataRootTupleRoot() public {
-        uint256 initialVelsetNonce = 0;
-        uint256 nonce = 1;
+        uint256 initialVelsetNonce = 1;
+        uint256 nonce = 2;
         // 32 bytes, chosen at random.
         bytes32 newTupleRoot = 0x0de92bac0b356560d821f8e7b6f5c9fe4f3f88f6c822283efd7ab51ad56a640e;
 
@@ -89,6 +89,35 @@ contract RelayerTest is DSTest {
         assertEq(bridge.state_dataRootTupleRoots(nonce), newTupleRoot);
     }
 
+    function testDeployContractAtCustomNonce() public {
+        uint256 initialVelsetNonce = 1;
+        uint256 targetNonce = 200;
+
+        Validator[] memory valSet = new Validator[](1);
+        valSet[0] = Validator(cheats.addr(testPriv1), votingPower);
+
+        bytes32 hash = computeValidatorSetHash(valSet);
+        bytes32 validatorSetCheckpoint = domainSeparateValidatorSetHash(initialVelsetNonce, (2 * votingPower) / 3, hash);
+        Blobstream newBridge = new Blobstream();
+        newBridge.initialize(targetNonce, (2 * votingPower) / 3, validatorSetCheckpoint);
+
+        // 32 bytes, chosen at random.
+        bytes32 newTupleRoot = 0x0de92bac0b356560d821f8e7b6f5c9fe4f3f88f6c822283efd7ab51ad56a640e;
+
+        bytes32 newDataRootTupleRoot = domainSeparateDataRootTupleRoot(targetNonce + 1, newTupleRoot);
+
+        // Signature for the update.
+        Signature[] memory sigs = new Signature[](1);
+        bytes32 digest_eip191 = ECDSA.toEthSignedMessageHash(newDataRootTupleRoot);
+        (uint8 v, bytes32 r, bytes32 s) = cheats.sign(testPriv1, digest_eip191);
+        sigs[0] = Signature(v, r, s);
+
+        newBridge.submitDataRootTupleRoot(targetNonce + 1, initialVelsetNonce, newTupleRoot, valSet, sigs);
+
+        assertEq(newBridge.state_eventNonce(), targetNonce + 1);
+        assertEq(newBridge.state_dataRootTupleRoots(targetNonce + 1), newTupleRoot);
+    }
+
     /*
     the values used in the verify attestation test are in the format `<height padded to 32 bytes || data root>`, which
     represent an encoded `abi.encode(DataRootTuple)`:
@@ -99,9 +128,9 @@ contract RelayerTest is DSTest {
     0x00000000000000000000000000000000000000000000000000000000000000030303030303030303030303030303030303030303030303030303030303030303
     */
     function testVerifyAttestation() public {
-        uint256 initialVelsetNonce = 0;
+        uint256 initialVelsetNonce = 1;
         // data root tuple root nonce.
-        uint256 nonce = 1;
+        uint256 nonce = 2;
         // commitment to a set of roots.
         // these values were generated using the tendermint implementation of binary merkle trees:
         // https://github.com/celestiaorg/celestia-core/blob/60310e7aa554bb76b735a010847a6613bcfe06e8/crypto/merkle/proof.go#L33-L48
