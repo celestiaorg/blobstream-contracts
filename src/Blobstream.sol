@@ -246,6 +246,8 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
         Validator[] calldata _currentValidatorSet,
         Signature[] calldata _sigs
     ) external {
+        _newNonce = 1;
+
         // CHECKS
 
         uint256 currentNonce = state_eventNonce;
