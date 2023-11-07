@@ -194,6 +194,46 @@ contract DAVerifierTest is DSTest {
         assertEq(actualSquareSize, expectedSquareSize);
     }
 
+    function testValidSlice() public {
+        bytes[] memory data = new bytes[](4);
+        data[0] = "a";
+        data[1] = "b";
+        data[2] = "c";
+        data[3] = "d";
+
+        (bytes[] memory result, DAVerifier.ErrorCodes error) = DAVerifier.slice(data, 1, 3);
+
+        assertEq(uint256(error), uint256(DAVerifier.ErrorCodes.NoError));
+        assertEq(string(result[0]), string(data[1]));
+        assertEq(string(result[1]), string(data[2]));
+    }
+
+    function testInvalidSliceBeginEnd() public {
+        bytes[] memory data = new bytes[](4);
+        data[0] = "a";
+        data[1] = "b";
+        data[2] = "c";
+        data[3] = "d";
+
+        (bytes[] memory result, DAVerifier.ErrorCodes error) = DAVerifier.slice(data, 2, 1);
+
+        assertEq(uint256(error), uint256(DAVerifier.ErrorCodes.InvalidRange));
+    }
+
+    function testOutOfBoundsSlice() public {
+        bytes[] memory data = new bytes[](4);
+        data[0] = "a";
+        data[1] = "b";
+        data[2] = "c";
+        data[3] = "d";
+
+        (bytes[] memory result, DAVerifier.ErrorCodes error) = DAVerifier.slice(data, 2, 5);
+        assertEq(uint256(error), uint256(DAVerifier.ErrorCodes.OutOfBoundsRange));
+
+        (result, error) = DAVerifier.slice(data, 6, 8);
+        assertEq(uint256(error), uint256(DAVerifier.ErrorCodes.OutOfBoundsRange));
+    }
+
     function computeValidatorSetHash(Validator[] memory _validators) private pure returns (bytes32) {
         return keccak256(abi.encode(_validators));
     }
