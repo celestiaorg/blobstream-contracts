@@ -34,7 +34,7 @@ struct Signature {
 /// (see ./DataRootTuple.sol), with each tuple representing a single data root
 /// in a Celestia block header. Relayed tuples are in the same order as the
 /// block headers.
-/// @dev DO NOT REMOVE INHERITENCE OF THE FOLLOWING CONTRACTS: Initializable, UUPSUpgradeable and
+/// @dev DO NOT REMOVE INHERITANCE OF THE FOLLOWING CONTRACTS: Initializable, UUPSUpgradeable and
 /// OwnableUpgradeable! They're essential for upgradability.
 contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgradeable {
     // Don't change the order of state for working upgrades AND BE AWARE OF
@@ -292,7 +292,7 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
     ///
     /// The data root root is the Merkle root of the binary Merkle tree
     /// (https://github.com/celestiaorg/celestia-specs/blob/master/src/specs/data_structures.md#binary-merkle-tree)
-    /// where each leaf in an ABI-encoded `DataRootTuple`. Each relayed data
+    /// where each leaf is in an ABI-encoded `DataRootTuple`. Each relayed data
     /// root tuple will 1:1 mirror data roots as they are included in headers
     /// on Celestia, _in order of inclusion_.
     ///
