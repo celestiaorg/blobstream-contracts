@@ -2,6 +2,7 @@
 pragma solidity ^0.8.22;
 
 import "ds-test/test.sol";
+import "forge-std/Vm.sol";
 
 import "../BinaryMerkleProof.sol";
 import "../BinaryMerkleTree.sol";
@@ -40,6 +41,8 @@ import "../BinaryMerkleTree.sol";
  */
 
 contract BinaryMerkleProofTest is DSTest {
+    Vm private constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
+
     function setUp() external {}
 
     function testVerifyNone() external {
@@ -260,5 +263,40 @@ contract BinaryMerkleProofTest is DSTest {
         bytes memory data = bytes(hex"012345");
         bool isValid = BinaryMerkleTree.verify(root, proof, data);
         assertTrue(!isValid);
+    }
+
+    function testValidSlice() public {
+        bytes32[] memory data = new bytes32[](4);
+        data[0] = "a";
+        data[1] = "b";
+        data[2] = "c";
+        data[3] = "d";
+
+        bytes32[] memory result = BinaryMerkleTree.slice(data, 1, 3);
+
+        assertEq(result[0], data[1]);
+        assertEq(result[1], data[2]);
+    }
+
+    function testInvalidSliceBeginEnd() public {
+        bytes32[] memory data = new bytes32[](4);
+        data[0] = "a";
+        data[1] = "b";
+        data[2] = "c";
+        data[3] = "d";
+
+        vm.expectRevert("Invalid range: _begin is greater than _end");
+        BinaryMerkleTree.slice(data, 2, 1);
+    }
+
+    function testOutOfBoundsSlice() public {
+        bytes32[] memory data = new bytes32[](4);
+        data[0] = "a";
+        data[1] = "b";
+        data[2] = "c";
+        data[3] = "d";
+
+        vm.expectRevert("Invalid range: _begin or _end are out of bounds");
+        BinaryMerkleTree.slice(data, 2, 5);
     }
 }
