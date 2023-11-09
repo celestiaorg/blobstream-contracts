@@ -42,65 +42,59 @@ library BinaryMerkleTree {
             }
         }
 
-        uint256 height = 1;
-        uint256 stableEnd = proof.key;
+        bytes32 computedHash = computeRootHash(proof.key, proof.numLeaves, digest, proof.sideNodes);
 
-        // While the current subtree (of height 'height') is complete, determine
-        // the position of the next sibling using the complete subtree algorithm.
-        // 'stableEnd' tells us the ending index of the last full subtree. It gets
-        // initialized to 'key' because the first full subtree was the
-        // subtree of height 1, created above (and had an ending index of
-        // 'key').
+        return (computedHash == root);
+    }
 
-        while (true) {
-            // Determine if the subtree is complete. This is accomplished by
-            // rounding down the key to the nearest 1 << 'height', adding 1
-            // << 'height', and comparing the result to the number of leaves in the
-            // Merkle tree.
-
-            uint256 subTreeStartIndex = (proof.key / (1 << height)) * (1 << height);
-            uint256 subTreeEndIndex = subTreeStartIndex + (1 << height) - 1;
-
-            // If the Merkle tree does not have a leaf at index
-            // 'subTreeEndIndex', then the subtree of the current height is not
-            // a complete subtree.
-            if (subTreeEndIndex >= proof.numLeaves) {
-                break;
-            }
-            stableEnd = subTreeEndIndex;
-
-            // Determine if the key is in the first or the second half of
-            // the subtree.
-            if (proof.sideNodes.length <= height - 1) {
-                return false;
-            }
-            if (proof.key - subTreeStartIndex < (1 << (height - 1))) {
-                digest = nodeDigest(digest, proof.sideNodes[height - 1]);
-            } else {
-                digest = nodeDigest(proof.sideNodes[height - 1], digest);
-            }
-
-            height += 1;
+    /// @notice Use the leafHash and innerHashes to get the root merkle hash.
+    /// If the length of the innerHashes slice isn't exactly correct, the result is nil.
+    /// Recursive impl.
+    function computeRootHash(uint256 key, uint256 numLeaves, bytes32 leafHash, bytes32[] memory sideNodes)
+        private
+        pure
+        returns (bytes32)
+    {
+        if (numLeaves == 0) {
+            revert("cannot call computeRootHash with 0 number of leaves");
         }
-
-        // Determine if the next hash belongs to an orphan that was elevated. This
-        // is the case IFF 'stableEnd' (the last index of the largest full subtree)
-        // is equal to the number of leaves in the Merkle tree.
-        if (stableEnd != proof.numLeaves - 1) {
-            if (proof.sideNodes.length <= height - 1) {
-                return false;
+        if (numLeaves == 1) {
+            if (sideNodes.length != 0) {
+                revert("unexpected inner hashes");
             }
-            digest = nodeDigest(digest, proof.sideNodes[height - 1]);
-            height += 1;
+            return leafHash;
         }
-
-        // All remaining elements in the proof set will belong to a left sibling\
-        // i.e proof sideNodes are hashed in "from the left"
-        while (height - 1 < proof.sideNodes.length) {
-            digest = nodeDigest(proof.sideNodes[height - 1], digest);
-            height += 1;
+        if (sideNodes.length == 0) {
+            revert("expected at least one inner hash");
         }
+        uint256 numLeft = _getSplitPoint(numLeaves);
+        bytes32[] memory sideNodesLeft = slice(sideNodes, 0, sideNodes.length - 1);
+        if (key < numLeft) {
+            bytes32 leftHash = computeRootHash(key, numLeft, leafHash, sideNodesLeft);
+            return nodeDigest(leftHash, sideNodes[sideNodes.length - 1]);
+        }
+        bytes32 rightHash = computeRootHash(key - numLeft, numLeaves - numLeft, leafHash, sideNodesLeft);
+        return nodeDigest(sideNodes[sideNodes.length - 1], rightHash);
+    }
 
-        return (digest == root);
+    /// @notice creates a slice of bytes32 from the data slice of bytes32 containing the elements
+    /// that correspond to the provided range.
+    /// It selects a half-open range which includes the begin element, but excludes the end one.
+    /// @param _data The slice that we want to select data from.
+    /// @param _begin The beginning of the range (inclusive).
+    /// @param _end The ending of the range (exclusive).
+    /// @return _ the sliced data.
+    function slice(bytes32[] memory _data, uint256 _begin, uint256 _end) internal pure returns (bytes32[] memory) {
+        if (_begin > _end) {
+            revert("Invalid range: _begin is greater than _end");
+        }
+        if (_begin > _data.length || _end > _data.length) {
+            revert("Invalid range: _begin or _end are out of bounds");
+        }
+        bytes32[] memory out = new bytes32[](_end-_begin);
+        for (uint256 i = _begin; i < _end; i++) {
+            out[i - _begin] = _data[i];
+        }
+        return out;
     }
 }

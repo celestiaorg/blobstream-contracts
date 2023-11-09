@@ -218,37 +218,6 @@ library NamespaceMerkleTree {
         return count;
     }
 
-    /// @notice Returns the minimum number of bits required to represent `x`; the
-    /// result is 0 for `x` == 0.
-    /// @param x Number.
-    function _bitsLen(uint256 x) private pure returns (uint256) {
-        uint256 count = 0;
-
-        while (x != 0) {
-            count++;
-            x >>= 1;
-        }
-
-        return count;
-    }
-
-    /// @notice Returns the largest power of 2 less than `x`.
-    /// @param x Number.
-    function _getSplitPoint(uint256 x) private pure returns (uint256) {
-        // Note: since `x` is always an unsigned int * 2, the only way for this
-        // to be violated is if the input == 0. Since the input is the end
-        // index exclusive, an input of 0 is guaranteed to be invalid (it would
-        // be a proof of inclusion of nothing, which is vacuous).
-        require(x >= 1);
-
-        uint256 bitLen = _bitsLen(x);
-        uint256 k = 1 << (bitLen - 1);
-        if (k == x) {
-            k >>= 1;
-        }
-        return k;
-    }
-
     /// @notice Computes the NMT root recursively.
     /// @param proof Namespace Merkle multiproof for the leaves.
     /// @param leafNodes Leaf nodes for which inclusion is proven.
