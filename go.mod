@@ -1,4 +1,4 @@
-module github.com/celestiaorg/blobstream-contracts/v3
+module github.com/celestiaorg/blobstream-contracts/v4
 
 go 1.21.1
 
