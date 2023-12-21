@@ -251,7 +251,7 @@ library DAVerifier {
         if (_begin > _data.length || _end > _data.length) {
             return (_data, ErrorCodes.OutOfBoundsRange);
         }
-        bytes[] memory out = new bytes[](_end-_begin);
+        bytes[] memory out = new bytes[](_end - _begin);
         for (uint256 i = _begin; i < _end; i++) {
             out[i - _begin] = _data[i];
         }
