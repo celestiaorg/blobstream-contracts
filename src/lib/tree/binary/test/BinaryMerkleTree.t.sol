@@ -39,7 +39,6 @@ import "../BinaryMerkleTree.sol";
  * 0xc1ad6548cb4c7663110df219ec8b36ca63b01158956f4be31a38a88d0c7f7071
  *
  */
-
 contract BinaryMerkleProofTest is DSTest {
     Vm private constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
