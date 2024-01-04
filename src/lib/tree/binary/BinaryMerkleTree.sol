@@ -15,17 +15,17 @@ library BinaryMerkleTree {
     /// @return `true` is proof is valid, `false` otherwise.
     /// @dev proof.numLeaves is necessary to determine height of subtree containing the data to prove.
     function verify(bytes32 root, BinaryMerkleProof memory proof, bytes memory data) internal pure returns (bool) {
-        // Check key is in tree
-        if (proof.key >= proof.numLeaves) {
-            return false;
-        }
-
         // Check proof is correct length for the key it is proving
         if (proof.numLeaves <= 1) {
             if (proof.sideNodes.length != 0) {
                 return false;
             }
         } else if (proof.sideNodes.length != pathLengthFromKey(proof.key, proof.numLeaves)) {
+            return false;
+        }
+
+        // Check key is in tree
+        if (proof.key >= proof.numLeaves) {
             return false;
         }
 
