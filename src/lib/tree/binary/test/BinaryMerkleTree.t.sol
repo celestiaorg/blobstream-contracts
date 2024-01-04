@@ -277,6 +277,28 @@ contract BinaryMerkleProofTest is DSTest {
         assertEq(result[1], data[2]);
     }
 
+    function testSameKeyAndLeavesNumber() external {
+        bytes32 root = 0xb855b42d6c30f5b087e05266783fbd6e394f7b926013ccaa67700a8b0c5a596f;
+        bytes32[] memory sideNodes = new bytes32[](0);
+        uint256 key = 3;
+        uint256 numLeaves = 3;
+        BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
+        bytes memory data = bytes(hex"01");
+        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        assert(!isValid);
+    }
+
+    function testConsecutiveKeyAndNumberOfLeaves() external {
+        bytes32 root = 0xb855b42d6c30f5b087e05266783fbd6e394f7b926013ccaa67700a8b0c5a596f;
+        bytes32[] memory sideNodes = new bytes32[](0);
+        uint256 key = 6;
+        uint256 numLeaves = 7;
+        BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
+        bytes memory data = bytes(hex"01");
+        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        assert(!isValid);
+    }
+
     function testInvalidSliceBeginEnd() public {
         bytes32[] memory data = new bytes32[](4);
         data[0] = "a";

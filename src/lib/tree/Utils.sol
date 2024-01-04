@@ -20,9 +20,12 @@ function getStartingBit(uint256 numLeaves) pure returns (uint256 startingBit) {
 /// @param key: The key of the leaf
 /// @param numLeaves: The total number of leaves in the tree
 /// @return pathLength : The length of the path to the leaf
-/// @dev A precondition to this function is that `numLeaves > 1`, so that `(pathLength - 1)` does not cause an underflow when pathLength = 0.
 // solhint-disable-next-line func-visibility
 function pathLengthFromKey(uint256 key, uint256 numLeaves) pure returns (uint256 pathLength) {
+    if (numLeaves <= 1) {
+        // if the number of leaves of the tree is 1 or 0, the path always is 0.
+        return 0;
+    }
     // Get the height of the left subtree. This is equal to the offset of the starting bit of the path
     pathLength = Constants.MAX_HEIGHT - getStartingBit(numLeaves);
 
