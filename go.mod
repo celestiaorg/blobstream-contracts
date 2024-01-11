@@ -2,7 +2,7 @@ module github.com/celestiaorg/blobstream-contracts/v4
 
 go 1.21.1
 
-require github.com/ethereum/go-ethereum v1.13.9
+require github.com/ethereum/go-ethereum v1.13.10
 
 require (
 	github.com/Microsoft/go-winio v0.6.1 // indirect
