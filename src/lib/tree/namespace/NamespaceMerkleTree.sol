@@ -106,7 +106,7 @@ library NamespaceMerkleTree {
             if (proof.sideNodes.length + heightOffset <= height - 1) {
                 return false;
             }
-            if (proof.key - subTreeStartIndex < (1 << (height - heightOffset - 1))) {
+            if (proof.key - subTreeStartIndex < (1 << (height - 1))) {
                 node = nodeDigest(node, proof.sideNodes[height - heightOffset - 1]);
             } else {
                 node = nodeDigest(proof.sideNodes[height - heightOffset - 1], node);
@@ -119,7 +119,7 @@ library NamespaceMerkleTree {
         // is the case IFF 'stableEnd' (the last index of the largest full subtree)
         // is equal to the number of leaves in the Merkle tree.
         if (stableEnd != proof.numLeaves - 1) {
-            if (proof.sideNodes.length <= height - 1) {
+            if (proof.sideNodes.length <= height - heightOffset - 1) {
                 return false;
             }
             node = nodeDigest(node, proof.sideNodes[height - heightOffset - 1]);
