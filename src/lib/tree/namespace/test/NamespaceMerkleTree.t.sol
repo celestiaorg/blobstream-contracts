@@ -7,7 +7,6 @@ import "../NamespaceNode.sol";
 import "../NamespaceMerkleProof.sol";
 import "../NamespaceMerkleTree.sol";
 import "../../Constants.sol";
-import "forge-std/console.sol";
 
 /**
  * TEST VECTORS
