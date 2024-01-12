@@ -152,7 +152,8 @@ library DAVerifier {
         }
 
         bytes memory rowRoot = abi.encodePacked(_rowRoot.min.toBytes(), _rowRoot.max.toBytes(), _rowRoot.digest);
-        if (!BinaryMerkleTree.verify(_root, _rowProof, rowRoot)) {
+        (bool valid,) = BinaryMerkleTree.verify(_root, _rowProof, rowRoot);
+        if (!valid) {
             return (false, ErrorCodes.InvalidRowToDataRootProof);
         }
 
@@ -190,7 +191,8 @@ library DAVerifier {
         for (uint256 i = 0; i < _rowProofs.length; i++) {
             bytes memory rowRoot =
                 abi.encodePacked(_rowRoots[i].min.toBytes(), _rowRoots[i].max.toBytes(), _rowRoots[i].digest);
-            if (!BinaryMerkleTree.verify(_root, _rowProofs[i], rowRoot)) {
+            (bool valid,) = BinaryMerkleTree.verify(_root, _rowProofs[i], rowRoot);
+            if (!valid) {
                 return (false, ErrorCodes.InvalidRowsToDataRootProof);
             }
         }

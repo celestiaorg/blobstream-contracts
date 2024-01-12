@@ -359,7 +359,7 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
         bytes32 root = state_dataRootTupleRoots[_tupleRootNonce];
 
         // Verify the proof.
-        bool isProofValid = BinaryMerkleTree.verify(root, _proof, abi.encode(_tuple));
+        (bool isProofValid,) = BinaryMerkleTree.verify(root, _proof, abi.encode(_tuple));
 
         return isProofValid;
     }

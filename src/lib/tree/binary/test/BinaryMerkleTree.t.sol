@@ -51,7 +51,7 @@ contract BinaryMerkleProofTest is DSTest {
         uint256 numLeaves = 0;
         BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
         bytes memory data;
-        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        (bool isValid,) = BinaryMerkleTree.verify(root, proof, data);
         assertTrue(!isValid);
     }
 
@@ -62,7 +62,8 @@ contract BinaryMerkleProofTest is DSTest {
         uint256 numLeaves = 1;
         BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
         bytes memory data;
-        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        (bool isValid, BinaryMerkleTree.ErrorCodes error) = BinaryMerkleTree.verify(root, proof, data);
+        assertEq(uint256(BinaryMerkleTree.ErrorCodes.NoError), uint256(error));
         assertTrue(isValid);
     }
 
@@ -73,7 +74,8 @@ contract BinaryMerkleProofTest is DSTest {
         uint256 numLeaves = 1;
         BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = hex"deadbeef";
-        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        (bool isValid, BinaryMerkleTree.ErrorCodes error) = BinaryMerkleTree.verify(root, proof, data);
+        assertEq(uint256(BinaryMerkleTree.ErrorCodes.NoError), uint256(error));
         assertTrue(isValid);
     }
 
@@ -84,7 +86,8 @@ contract BinaryMerkleProofTest is DSTest {
         uint256 numLeaves = 1;
         BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = hex"01";
-        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        (bool isValid, BinaryMerkleTree.ErrorCodes error) = BinaryMerkleTree.verify(root, proof, data);
+        assertEq(uint256(BinaryMerkleTree.ErrorCodes.NoError), uint256(error));
         assertTrue(isValid);
     }
 
@@ -99,7 +102,8 @@ contract BinaryMerkleProofTest is DSTest {
         uint256 numLeaves = 8;
         BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = hex"01";
-        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        (bool isValid, BinaryMerkleTree.ErrorCodes error) = BinaryMerkleTree.verify(root, proof, data);
+        assertEq(uint256(BinaryMerkleTree.ErrorCodes.NoError), uint256(error));
         assertTrue(isValid);
     }
 
@@ -114,7 +118,8 @@ contract BinaryMerkleProofTest is DSTest {
         uint256 numLeaves = 8;
         BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = hex"02";
-        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        (bool isValid, BinaryMerkleTree.ErrorCodes error) = BinaryMerkleTree.verify(root, proof, data);
+        assertEq(uint256(BinaryMerkleTree.ErrorCodes.NoError), uint256(error));
         assertTrue(isValid);
     }
 
@@ -129,7 +134,8 @@ contract BinaryMerkleProofTest is DSTest {
         uint256 numLeaves = 8;
         BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = hex"03";
-        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        (bool isValid, BinaryMerkleTree.ErrorCodes error) = BinaryMerkleTree.verify(root, proof, data);
+        assertEq(uint256(BinaryMerkleTree.ErrorCodes.NoError), uint256(error));
         assertTrue(isValid);
     }
 
@@ -144,7 +150,8 @@ contract BinaryMerkleProofTest is DSTest {
         uint256 numLeaves = 8;
         BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = hex"07";
-        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        (bool isValid, BinaryMerkleTree.ErrorCodes error) = BinaryMerkleTree.verify(root, proof, data);
+        assertEq(uint256(BinaryMerkleTree.ErrorCodes.NoError), uint256(error));
         assertTrue(isValid);
     }
 
@@ -159,7 +166,8 @@ contract BinaryMerkleProofTest is DSTest {
         uint256 numLeaves = 8;
         BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = hex"08";
-        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        (bool isValid, BinaryMerkleTree.ErrorCodes error) = BinaryMerkleTree.verify(root, proof, data);
+        assertEq(uint256(BinaryMerkleTree.ErrorCodes.NoError), uint256(error));
         assertTrue(isValid);
     }
 
@@ -180,7 +188,8 @@ contract BinaryMerkleProofTest is DSTest {
         uint256 numLeaves = 5;
         BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = bytes(hex"01");
-        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        (bool isValid, BinaryMerkleTree.ErrorCodes error) = BinaryMerkleTree.verify(root, proof, data);
+        assertEq(uint256(BinaryMerkleTree.ErrorCodes.NoError), uint256(error));
         assertTrue(isValid);
     }
 
@@ -196,7 +205,8 @@ contract BinaryMerkleProofTest is DSTest {
         uint256 numLeaves = 5;
         BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = bytes(hex"01");
-        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        (bool isValid, BinaryMerkleTree.ErrorCodes error) = BinaryMerkleTree.verify(root, proof, data);
+        assertEq(uint256(BinaryMerkleTree.ErrorCodes.NoError), uint256(error));
         assertTrue(!isValid);
     }
 
@@ -212,7 +222,8 @@ contract BinaryMerkleProofTest is DSTest {
         uint256 numLeaves = 5;
         BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = bytes(hex"01");
-        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        (bool isValid, BinaryMerkleTree.ErrorCodes error) = BinaryMerkleTree.verify(root, proof, data);
+        assertEq(uint256(BinaryMerkleTree.ErrorCodes.NoError), uint256(error));
         assertTrue(!isValid);
     }
 
@@ -228,7 +239,7 @@ contract BinaryMerkleProofTest is DSTest {
         uint256 numLeaves = 200;
         BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = bytes(hex"01");
-        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        (bool isValid,) = BinaryMerkleTree.verify(root, proof, data);
         assertTrue(!isValid);
     }
 
@@ -244,7 +255,8 @@ contract BinaryMerkleProofTest is DSTest {
         uint256 numLeaves = 5;
         BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = bytes(hex"01");
-        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        (bool isValid, BinaryMerkleTree.ErrorCodes error) = BinaryMerkleTree.verify(root, proof, data);
+        assertEq(uint256(BinaryMerkleTree.ErrorCodes.NoError), uint256(error));
         assertTrue(!isValid);
     }
 
@@ -260,7 +272,8 @@ contract BinaryMerkleProofTest is DSTest {
         BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
         // correct data: 01
         bytes memory data = bytes(hex"012345");
-        bool isValid = BinaryMerkleTree.verify(root, proof, data);
+        (bool isValid, BinaryMerkleTree.ErrorCodes error) = BinaryMerkleTree.verify(root, proof, data);
+        assertEq(uint256(BinaryMerkleTree.ErrorCodes.NoError), uint256(error));
         assertTrue(!isValid);
     }
 
@@ -284,8 +297,8 @@ contract BinaryMerkleProofTest is DSTest {
         uint256 numLeaves = 3;
         BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = bytes(hex"01");
-        bool isValid = BinaryMerkleTree.verify(root, proof, data);
-        assert(!isValid);
+        (bool isValid,) = BinaryMerkleTree.verify(root, proof, data);
+        assertTrue(!isValid);
     }
 
     function testConsecutiveKeyAndNumberOfLeaves() external {
@@ -295,8 +308,8 @@ contract BinaryMerkleProofTest is DSTest {
         uint256 numLeaves = 7;
         BinaryMerkleProof memory proof = BinaryMerkleProof(sideNodes, key, numLeaves);
         bytes memory data = bytes(hex"01");
-        bool isValid = BinaryMerkleTree.verify(root, proof, data);
-        assert(!isValid);
+        (bool isValid,) = BinaryMerkleTree.verify(root, proof, data);
+        assertTrue(!isValid);
     }
 
     function testInvalidSliceBeginEnd() public {

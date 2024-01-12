@@ -8,25 +8,50 @@ import "./BinaryMerkleProof.sol";
 
 /// @title Binary Merkle Tree.
 library BinaryMerkleTree {
+    /////////////////
+    // Error codes //
+    /////////////////
+
+    enum ErrorCodes {
+        NoError,
+        /// @notice The provided side nodes count is invalid for the proof.
+        InvalidNumberOfSideNodes,
+        /// @notice The provided proof key is not part of the tree.
+        KeyNotInTree,
+        /// @notice The number of leaves in the binary merkle proof is not divisible by 4.
+        InvalidNumberOfLeavesInProof,
+        /// @notice The proof contains unexpected side nodes.
+        UnexpectedInnerHashes,
+        /// @notice The proof verification expected at least one inner hash.
+        ExpectedAtLeastOneInnerHash
+    }
+
+    ///////////////
+    // Functions //
+    ///////////////
+
     /// @notice Verify if element exists in Merkle tree, given data, proof, and root.
     /// @param root The root of the tree in which verify the given leaf.
     /// @param proof Binary Merkle proof for the leaf.
     /// @param data The data of the leaf to verify.
     /// @return `true` is proof is valid, `false` otherwise.
     /// @dev proof.numLeaves is necessary to determine height of subtree containing the data to prove.
-    function verify(bytes32 root, BinaryMerkleProof memory proof, bytes memory data) internal pure returns (bool) {
+    function verify(bytes32 root, BinaryMerkleProof memory proof, bytes memory data)
+        internal
+        pure
+        returns (bool, ErrorCodes)
+    {
         // Check proof is correct length for the key it is proving
-        if (proof.numLeaves <= 1) {
-            if (proof.sideNodes.length != 0) {
-                return false;
-            }
-        } else if (proof.sideNodes.length != pathLengthFromKey(proof.key, proof.numLeaves)) {
-            return false;
+        if (
+            proof.numLeaves <= 1 && proof.sideNodes.length != 0
+                || proof.sideNodes.length != pathLengthFromKey(proof.key, proof.numLeaves)
+        ) {
+            return (false, ErrorCodes.InvalidNumberOfSideNodes);
         }
 
         // Check key is in tree
         if (proof.key >= proof.numLeaves) {
-            return false;
+            return (false, ErrorCodes.KeyNotInTree);
         }
 
         // A sibling at height 1 is created by getting the hash of the data to prove.
@@ -36,15 +61,19 @@ library BinaryMerkleTree {
         // If so, just verify hash(data) is root
         if (proof.sideNodes.length == 0) {
             if (proof.numLeaves == 1) {
-                return (root == digest);
+                return (root == digest, ErrorCodes.NoError);
             } else {
-                return false;
+                return (false, ErrorCodes.NoError);
             }
         }
 
-        bytes32 computedHash = computeRootHash(proof.key, proof.numLeaves, digest, proof.sideNodes);
+        (bytes32 computedHash, ErrorCodes error) = computeRootHash(proof.key, proof.numLeaves, digest, proof.sideNodes);
 
-        return (computedHash == root);
+        if (error != ErrorCodes.NoError) {
+            return (false, error);
+        }
+
+        return (computedHash == root, ErrorCodes.NoError);
     }
 
     /// @notice Use the leafHash and innerHashes to get the root merkle hash.
@@ -53,28 +82,37 @@ library BinaryMerkleTree {
     function computeRootHash(uint256 key, uint256 numLeaves, bytes32 leafHash, bytes32[] memory sideNodes)
         private
         pure
-        returns (bytes32)
+        returns (bytes32, ErrorCodes)
     {
         if (numLeaves == 0) {
-            revert("cannot call computeRootHash with 0 number of leaves");
+            return (leafHash, ErrorCodes.InvalidNumberOfLeavesInProof);
         }
         if (numLeaves == 1) {
             if (sideNodes.length != 0) {
-                revert("unexpected inner hashes");
+                return (leafHash, ErrorCodes.UnexpectedInnerHashes);
             }
-            return leafHash;
+            return (leafHash, ErrorCodes.NoError);
         }
         if (sideNodes.length == 0) {
-            revert("expected at least one inner hash");
+            return (leafHash, ErrorCodes.ExpectedAtLeastOneInnerHash);
         }
         uint256 numLeft = _getSplitPoint(numLeaves);
         bytes32[] memory sideNodesLeft = slice(sideNodes, 0, sideNodes.length - 1);
+        ErrorCodes error;
         if (key < numLeft) {
-            bytes32 leftHash = computeRootHash(key, numLeft, leafHash, sideNodesLeft);
-            return nodeDigest(leftHash, sideNodes[sideNodes.length - 1]);
+            bytes32 leftHash;
+            (leftHash, error) = computeRootHash(key, numLeft, leafHash, sideNodesLeft);
+            if (error != ErrorCodes.NoError) {
+                return (leafHash, error);
+            }
+            return (nodeDigest(leftHash, sideNodes[sideNodes.length - 1]), ErrorCodes.NoError);
         }
-        bytes32 rightHash = computeRootHash(key - numLeft, numLeaves - numLeft, leafHash, sideNodesLeft);
-        return nodeDigest(sideNodes[sideNodes.length - 1], rightHash);
+        bytes32 rightHash;
+        (rightHash, error) = computeRootHash(key - numLeft, numLeaves - numLeft, leafHash, sideNodesLeft);
+        if (error != ErrorCodes.NoError) {
+            return (leafHash, error);
+        }
+        return (nodeDigest(sideNodes[sideNodes.length - 1], rightHash), ErrorCodes.NoError);
     }
 
     /// @notice creates a slice of bytes32 from the data slice of bytes32 containing the elements
