@@ -42,10 +42,11 @@ library BinaryMerkleTree {
         returns (bool, ErrorCodes)
     {
         // Check proof is correct length for the key it is proving
-        if (
-            proof.numLeaves <= 1 && proof.sideNodes.length != 0
-                || proof.sideNodes.length != pathLengthFromKey(proof.key, proof.numLeaves)
-        ) {
+        if (proof.numLeaves <= 1) {
+            if (proof.sideNodes.length != 0) {
+                return (false, ErrorCodes.InvalidNumberOfSideNodes);
+            }
+        } else if (proof.sideNodes.length != pathLengthFromKey(proof.key, proof.numLeaves)) {
             return (false, ErrorCodes.InvalidNumberOfSideNodes);
         }
 
