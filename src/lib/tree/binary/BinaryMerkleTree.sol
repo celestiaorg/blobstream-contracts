@@ -18,7 +18,7 @@ library BinaryMerkleTree {
         InvalidNumberOfSideNodes,
         /// @notice The provided proof key is not part of the tree.
         KeyNotInTree,
-        /// @notice The number of leaves in the binary merkle proof is not divisible by 4.
+        /// @notice Invalid number of leaves in proof.
         InvalidNumberOfLeavesInProof,
         /// @notice The proof contains unexpected side nodes.
         UnexpectedInnerHashes,
