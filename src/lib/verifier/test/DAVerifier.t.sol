@@ -167,8 +167,9 @@ contract DAVerifierTest is DSTest {
     }
 
     function testComputeSquareSizeFromRowProof() public {
-        bool validMerkleProof =
+        (bool validMerkleProof, BinaryMerkleTree.ErrorCodes error) =
             BinaryMerkleTree.verify(fixture.dataRoot(), fixture.getRowRootToDataRootProof(), fixture.firstRowRoot());
+        assertEq(uint256(error), uint256(BinaryMerkleTree.ErrorCodes.NoError));
         assertTrue(validMerkleProof);
 
         // check that the computed square size is correct
