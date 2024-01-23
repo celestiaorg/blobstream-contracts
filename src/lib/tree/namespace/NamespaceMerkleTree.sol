@@ -65,7 +65,6 @@ library NamespaceMerkleTree {
             return false;
         }
         // Handle case where proof is empty: i.e, only one leaf exists, so verify hash(data) is root
-        // TODO handle case where inner node is actually the root of a tree with more than one node
         if (proof.sideNodes.length == 0) {
             if (proof.numLeaves == 1) {
                 return namespaceNodeEquals(root, node);
@@ -73,6 +72,10 @@ library NamespaceMerkleTree {
                 return false;
             }
         }
+
+        // The case where inner node is actually the root of a tree with more than one node is not relevant
+        // to our use case, since the only case where an inner node is the root of the tree is when the tree
+        // has only one inner node. So, there is no need to handle that case.
 
         uint256 height = startingHeight;
         uint256 stableEnd = proof.key;
