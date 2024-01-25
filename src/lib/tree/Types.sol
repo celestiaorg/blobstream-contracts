@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.22;
 
 /// @notice A representation of the Celestia-app namespace ID and its version.
 /// See: https://celestiaorg.github.io/celestia-app/specs/namespace.html

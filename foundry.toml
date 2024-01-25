@@ -1,4 +1,4 @@
 [profile.default]
-solc_version = "0.8.21"
+solc_version = "0.8.22"
 via_ir = true
 gas_reports = ["*"]

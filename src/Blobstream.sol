@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.22;
 
 import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
@@ -34,7 +34,7 @@ struct Signature {
 /// (see ./DataRootTuple.sol), with each tuple representing a single data root
 /// in a Celestia block header. Relayed tuples are in the same order as the
 /// block headers.
-/// @dev DO NOT REMOVE INHERITENCE OF THE FOLLOWING CONTRACTS: Initializable, UUPSUpgradeable and
+/// @dev DO NOT REMOVE INHERITANCE OF THE FOLLOWING CONTRACTS: Initializable, UUPSUpgradeable and
 /// OwnableUpgradeable! They're essential for upgradability.
 contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgradeable {
     // Don't change the order of state for working upgrades AND BE AWARE OF
@@ -101,28 +101,20 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
     /// @param _nonce Initial event nonce.
     /// @param _powerThreshold Initial voting power that is needed to approve
     /// operations.
-    /// @param _validatorSetHash Initial validator set hash. This does not need
+    /// @param _validatorSetCheckpoint Initial checkpoint of the validator set. This does not need
     /// to be the genesis validator set of the bridged chain, only the initial
     /// validator set of the bridge.
     /// @dev DO NOT REMOVE THE INITIALIZER! It is mandatory for upgradability.
-    function initialize(uint256 _nonce, uint256 _powerThreshold, bytes32 _validatorSetHash) public initializer {
-        // CHECKS
-
-        bytes32 newCheckpoint = domainSeparateValidatorSetHash(_nonce, _powerThreshold, _validatorSetHash);
-
+    function initialize(uint256 _nonce, uint256 _powerThreshold, bytes32 _validatorSetCheckpoint) public initializer {
         // EFFECTS
 
         state_eventNonce = _nonce;
-        state_lastValidatorSetCheckpoint = newCheckpoint;
+        state_lastValidatorSetCheckpoint = _validatorSetCheckpoint;
         state_powerThreshold = _powerThreshold;
 
         /// @dev Initialize the OwnableUpgradeable explicitly.
         /// DO NOT REMOVE! It is mandatory for allowing the owner to upgrade.
         __Ownable_init(_msgSender());
-
-        // LOGS
-
-        emit ValidatorSetUpdatedEvent(_nonce, _powerThreshold, _validatorSetHash);
     }
 
     /// @dev only authorize the upgrade for the owner of the contract.
@@ -198,27 +190,23 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
         uint256 _powerThreshold
     ) private pure {
         uint256 cumulativePower = 0;
-        // Note: be cautious when updating the code inside the unchecked block.
-        // Make sure to verify if all the bypassed security checks are respected.
-        unchecked {
-            for (uint256 i = 0; i < _currentValidators.length; i++) {
-                // If the signature is nil, then it's not present so continue.
-                if (isSigNil(_sigs[i])) {
-                    continue;
-                }
+        for (uint256 i = 0; i < _currentValidators.length; i++) {
+            // If the signature is nil, then it's not present so continue.
+            if (isSigNil(_sigs[i])) {
+                continue;
+            }
 
-                // Check that the current validator has signed off on the hash.
-                if (!verifySig(_currentValidators[i].addr, _digest, _sigs[i])) {
-                    revert InvalidSignature();
-                }
+            // Check that the current validator has signed off on the hash.
+            if (!verifySig(_currentValidators[i].addr, _digest, _sigs[i])) {
+                revert InvalidSignature();
+            }
 
-                // Sum up cumulative power.
-                cumulativePower += _currentValidators[i].power;
+            // Sum up cumulative power.
+            cumulativePower += _currentValidators[i].power;
 
-                // Break early to avoid wasting gas.
-                if (cumulativePower >= _powerThreshold) {
-                    break;
-                }
+            // Break early to avoid wasting gas.
+            if (cumulativePower >= _powerThreshold) {
+                break;
             }
         }
         // Check that there was enough power.
@@ -296,7 +284,7 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
     ///
     /// The data root root is the Merkle root of the binary Merkle tree
     /// (https://github.com/celestiaorg/celestia-specs/blob/master/src/specs/data_structures.md#binary-merkle-tree)
-    /// where each leaf in an ABI-encoded `DataRootTuple`. Each relayed data
+    /// where each leaf is in an ABI-encoded `DataRootTuple`. Each relayed data
     /// root tuple will 1:1 mirror data roots as they are included in headers
     /// on Celestia, _in order of inclusion_.
     ///
@@ -371,7 +359,7 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
         bytes32 root = state_dataRootTupleRoots[_tupleRootNonce];
 
         // Verify the proof.
-        bool isProofValid = BinaryMerkleTree.verify(root, _proof, abi.encode(_tuple));
+        (bool isProofValid,) = BinaryMerkleTree.verify(root, _proof, abi.encode(_tuple));
 
         return isProofValid;
     }

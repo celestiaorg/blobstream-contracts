@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.22;
 
 import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 
@@ -77,8 +77,9 @@ contract DAVerifierTest is DSTest {
 
         validators.push(Validator(cheats.addr(testPriv1), votingPower));
         bytes32 hash = computeValidatorSetHash(validators);
+        bytes32 checkpoint = domainSeparateValidatorSetHash(initialVelsetNonce, (2 * votingPower) / 3, hash);
         bridge = new Blobstream();
-        bridge.initialize(initialVelsetNonce, (2 * votingPower) / 3, hash);
+        bridge.initialize(initialVelsetNonce, (2 * votingPower) / 3, checkpoint);
 
         bytes32 newDataRootTupleRoot =
             domainSeparateDataRootTupleRoot(fixture.dataRootTupleRootNonce(), fixture.dataRootTupleRoot());
@@ -166,8 +167,9 @@ contract DAVerifierTest is DSTest {
     }
 
     function testComputeSquareSizeFromRowProof() public {
-        bool validMerkleProof =
+        (bool validMerkleProof, BinaryMerkleTree.ErrorCodes error) =
             BinaryMerkleTree.verify(fixture.dataRoot(), fixture.getRowRootToDataRootProof(), fixture.firstRowRoot());
+        assertEq(uint256(error), uint256(BinaryMerkleTree.ErrorCodes.NoError));
         assertTrue(validMerkleProof);
 
         // check that the computed square size is correct
@@ -194,8 +196,59 @@ contract DAVerifierTest is DSTest {
         assertEq(actualSquareSize, expectedSquareSize);
     }
 
+    function testValidSlice() public {
+        bytes[] memory data = new bytes[](4);
+        data[0] = "a";
+        data[1] = "b";
+        data[2] = "c";
+        data[3] = "d";
+
+        (bytes[] memory result, DAVerifier.ErrorCodes error) = DAVerifier.slice(data, 1, 3);
+
+        assertEq(uint256(error), uint256(DAVerifier.ErrorCodes.NoError));
+        assertEq(string(result[0]), string(data[1]));
+        assertEq(string(result[1]), string(data[2]));
+    }
+
+    function testInvalidSliceBeginEnd() public {
+        bytes[] memory data = new bytes[](4);
+        data[0] = "a";
+        data[1] = "b";
+        data[2] = "c";
+        data[3] = "d";
+
+        (bytes[] memory result, DAVerifier.ErrorCodes error) = DAVerifier.slice(data, 2, 1);
+
+        assertEq(uint256(error), uint256(DAVerifier.ErrorCodes.InvalidRange));
+    }
+
+    function testOutOfBoundsSlice() public {
+        bytes[] memory data = new bytes[](4);
+        data[0] = "a";
+        data[1] = "b";
+        data[2] = "c";
+        data[3] = "d";
+
+        (bytes[] memory result, DAVerifier.ErrorCodes error) = DAVerifier.slice(data, 2, 5);
+        assertEq(uint256(error), uint256(DAVerifier.ErrorCodes.OutOfBoundsRange));
+
+        (result, error) = DAVerifier.slice(data, 6, 8);
+        assertEq(uint256(error), uint256(DAVerifier.ErrorCodes.OutOfBoundsRange));
+    }
+
     function computeValidatorSetHash(Validator[] memory _validators) private pure returns (bytes32) {
         return keccak256(abi.encode(_validators));
+    }
+
+    function domainSeparateValidatorSetHash(uint256 _nonce, uint256 _powerThreshold, bytes32 _validatorSetHash)
+        private
+        pure
+        returns (bytes32)
+    {
+        bytes32 c =
+            keccak256(abi.encode(VALIDATOR_SET_HASH_DOMAIN_SEPARATOR, _nonce, _powerThreshold, _validatorSetHash));
+
+        return c;
     }
 
     function domainSeparateDataRootTupleRoot(uint256 _nonce, bytes32 _dataRootTupleRoot)

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.22;
 
 import "../Constants.sol";
 import "../Types.sol";
@@ -65,7 +65,6 @@ library NamespaceMerkleTree {
             return false;
         }
         // Handle case where proof is empty: i.e, only one leaf exists, so verify hash(data) is root
-        // TODO handle case where inner node is actually the root of a tree with more than one node
         if (proof.sideNodes.length == 0) {
             if (proof.numLeaves == 1) {
                 return namespaceNodeEquals(root, node);
@@ -73,6 +72,10 @@ library NamespaceMerkleTree {
                 return false;
             }
         }
+
+        // The case where inner node is actually the root of a tree with more than one node is not relevant
+        // to our use case, since the only case where an inner node is the root of the tree is when the tree
+        // has only one inner node. So, there is no need to handle that case.
 
         uint256 height = startingHeight;
         uint256 stableEnd = proof.key;
@@ -106,7 +109,7 @@ library NamespaceMerkleTree {
             if (proof.sideNodes.length + heightOffset <= height - 1) {
                 return false;
             }
-            if (proof.key - subTreeStartIndex < (1 << (height - heightOffset - 1))) {
+            if (proof.key - subTreeStartIndex < (1 << (height - 1))) {
                 node = nodeDigest(node, proof.sideNodes[height - heightOffset - 1]);
             } else {
                 node = nodeDigest(proof.sideNodes[height - heightOffset - 1], node);
@@ -119,7 +122,7 @@ library NamespaceMerkleTree {
         // is the case IFF 'stableEnd' (the last index of the largest full subtree)
         // is equal to the number of leaves in the Merkle tree.
         if (stableEnd != proof.numLeaves - 1) {
-            if (proof.sideNodes.length <= height - 1) {
+            if (proof.sideNodes.length <= height - heightOffset - 1) {
                 return false;
             }
             node = nodeDigest(node, proof.sideNodes[height - heightOffset - 1]);
@@ -216,37 +219,6 @@ library NamespaceMerkleTree {
         }
 
         return count;
-    }
-
-    /// @notice Returns the minimum number of bits required to represent `x`; the
-    /// result is 0 for `x` == 0.
-    /// @param x Number.
-    function _bitsLen(uint256 x) private pure returns (uint256) {
-        uint256 count = 0;
-
-        while (x != 0) {
-            count++;
-            x >>= 1;
-        }
-
-        return count;
-    }
-
-    /// @notice Returns the largest power of 2 less than `x`.
-    /// @param x Number.
-    function _getSplitPoint(uint256 x) private pure returns (uint256) {
-        // Note: since `x` is always an unsigned int * 2, the only way for this
-        // to be violated is if the input == 0. Since the input is the end
-        // index exclusive, an input of 0 is guaranteed to be invalid (it would
-        // be a proof of inclusion of nothing, which is vacuous).
-        require(x >= 1);
-
-        uint256 bitLen = _bitsLen(x);
-        uint256 k = 1 << (bitLen - 1);
-        if (k == x) {
-            k >>= 1;
-        }
-        return k;
     }
 
     /// @notice Computes the NMT root recursively.

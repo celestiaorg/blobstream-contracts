@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.22;
 
 import "./Constants.sol";
 
@@ -20,9 +20,12 @@ function getStartingBit(uint256 numLeaves) pure returns (uint256 startingBit) {
 /// @param key: The key of the leaf
 /// @param numLeaves: The total number of leaves in the tree
 /// @return pathLength : The length of the path to the leaf
-/// @dev A precondition to this function is that `numLeaves > 1`, so that `(pathLength - 1)` does not cause an underflow when pathLength = 0.
 // solhint-disable-next-line func-visibility
 function pathLengthFromKey(uint256 key, uint256 numLeaves) pure returns (uint256 pathLength) {
+    if (numLeaves <= 1) {
+        // if the number of leaves of the tree is 1 or 0, the path always is 0.
+        return 0;
+    }
     // Get the height of the left subtree. This is equal to the offset of the starting bit of the path
     pathLength = Constants.MAX_HEIGHT - getStartingBit(numLeaves);
 
@@ -41,4 +44,35 @@ function pathLengthFromKey(uint256 key, uint256 numLeaves) pure returns (uint256
     else {
         return 1 + pathLengthFromKey(key - numLeavesLeftSubTree, numLeaves - numLeavesLeftSubTree);
     }
+}
+
+/// @notice Returns the minimum number of bits required to represent `x`; the
+/// result is 0 for `x` == 0.
+/// @param x Number.
+function _bitsLen(uint256 x) pure returns (uint256) {
+    uint256 count = 0;
+
+    while (x != 0) {
+        count++;
+        x >>= 1;
+    }
+
+    return count;
+}
+
+/// @notice Returns the largest power of 2 less than `x`.
+/// @param x Number.
+function _getSplitPoint(uint256 x) pure returns (uint256) {
+    // Note: since `x` is always an unsigned int * 2, the only way for this
+    // to be violated is if the input == 0. Since the input is the end
+    // index exclusive, an input of 0 is guaranteed to be invalid (it would
+    // be a proof of inclusion of nothing, which is vacuous).
+    require(x >= 1);
+
+    uint256 bitLen = _bitsLen(x);
+    uint256 k = 1 << (bitLen - 1);
+    if (k == x) {
+        k >>= 1;
+    }
+    return k;
 }
