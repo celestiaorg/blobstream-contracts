@@ -94,32 +94,63 @@ library DAVerifier {
             return (false, errorCode);
         }
 
+        (bool valid, ErrorCodes error) = verifySharesToDataRootTupleRootProof(
+            _sharesProof.data,
+            _sharesProof.shareProofs,
+            _sharesProof.namespace,
+            _sharesProof.rowRoots,
+            _sharesProof.rowProofs,
+            _root
+        );
+
+        return (valid, error);
+    }
+
+    /// @notice Verifies the shares to data root tuple root proof.
+    /// @param _data The data that needs to proven.
+    /// @param _shareProofs The share to the row roots proof.
+    /// @param _namespace The namespace of the shares.
+    /// @param _rowRoots The row roots where the shares belong.
+    /// @param _rowProofs The proofs of the rowRoots to the data root.
+    /// @param _root The data root of the block that contains the shares.
+    /// @return `true` if the proof is valid, `false` otherwise.
+    /// @return an error code if the proof is invalid, ErrorCodes.NoError otherwise.
+    function verifySharesToDataRootTupleRootProof(
+        bytes[] memory _data,
+        NamespaceMerkleMultiproof[] memory _shareProofs,
+        Namespace memory _namespace,
+        NamespaceNode[] memory _rowRoots,
+        BinaryMerkleProof[] memory _rowProofs,
+        bytes32 _root
+    ) internal pure returns (bool, ErrorCodes) {
+        // verifying the row root to data root tuple root proof.
+        (bool success, ErrorCodes errorCode) = verifyMultiRowRootsToDataRootTupleRootProof(_rowRoots, _rowProofs, _root);
+        if (!success) {
+            return (false, errorCode);
+        }
+
         // checking that the shares were committed to by the rows roots.
-        if (_sharesProof.shareProofs.length != _sharesProof.rowRoots.length) {
+        if (_shareProofs.length != _rowRoots.length) {
             return (false, ErrorCodes.UnequalShareProofsAndRowRootsNumber);
         }
 
         uint256 numberOfSharesInProofs = 0;
-        for (uint256 i = 0; i < _sharesProof.shareProofs.length; i++) {
-            numberOfSharesInProofs += _sharesProof.shareProofs[i].endKey - _sharesProof.shareProofs[i].beginKey;
+        for (uint256 i = 0; i < _shareProofs.length; i++) {
+            numberOfSharesInProofs += _shareProofs[i].endKey - _shareProofs[i].beginKey;
         }
 
-        if (_sharesProof.data.length != numberOfSharesInProofs) {
+        if (_data.length != numberOfSharesInProofs) {
             return (false, ErrorCodes.UnequalDataLengthAndNumberOfSharesProofs);
         }
 
         uint256 cursor = 0;
-        for (uint256 i = 0; i < _sharesProof.shareProofs.length; i++) {
-            uint256 sharesUsed = _sharesProof.shareProofs[i].endKey - _sharesProof.shareProofs[i].beginKey;
-            (bytes[] memory s, ErrorCodes err) = slice(_sharesProof.data, cursor, cursor + sharesUsed);
+        for (uint256 i = 0; i < _shareProofs.length; i++) {
+            uint256 sharesUsed = _shareProofs[i].endKey - _shareProofs[i].beginKey;
+            (bytes[] memory s, ErrorCodes err) = slice(_data, cursor, cursor + sharesUsed);
             if (err != ErrorCodes.NoError) {
                 return (false, err);
             }
-            if (
-                !NamespaceMerkleTree.verifyMulti(
-                    _sharesProof.rowRoots[i], _sharesProof.shareProofs[i], _sharesProof.namespace, s
-                )
-            ) {
+            if (!NamespaceMerkleTree.verifyMulti(_rowRoots[i], _shareProofs[i], _namespace, s)) {
                 return (false, ErrorCodes.InvalidSharesToRowsProof);
             }
             cursor += sharesUsed;
@@ -151,6 +182,22 @@ library DAVerifier {
             return (false, ErrorCodes.InvalidDataRootTupleToDataRootTupleRootProof);
         }
 
+        (bool valid, ErrorCodes error) = verifyRowRootToDataRootTupleRootProof(_rowRoot, _rowProof, _root);
+
+        return (valid, error);
+    }
+
+    /// @notice Verifies that a row/column root proof, from a Celestia block, to the data root tuple root.
+    /// @param _rowRoot The row/column root to be proven.
+    /// @param _rowProof The proof of the row/column root to the data root.
+    /// @param _root The data root of the block that contains the row.
+    /// @return `true` if the proof is valid, `false` otherwise.
+    /// @return an error code if the proof is invalid, ErrorCodes.NoError otherwise.
+    function verifyRowRootToDataRootTupleRootProof(
+        NamespaceNode memory _rowRoot,
+        BinaryMerkleProof memory _rowProof,
+        bytes32 _root
+    ) internal pure returns (bool, ErrorCodes) {
         bytes memory rowRoot = abi.encodePacked(_rowRoot.min.toBytes(), _rowRoot.max.toBytes(), _rowRoot.digest);
         (bool valid,) = BinaryMerkleTree.verify(_root, _rowProof, rowRoot);
         if (!valid) {
@@ -183,6 +230,23 @@ library DAVerifier {
             return (false, ErrorCodes.InvalidDataRootTupleToDataRootTupleRootProof);
         }
 
+        // checking that the rows roots commit to the data root.
+        (bool valid, ErrorCodes error) = verifyMultiRowRootsToDataRootTupleRootProof(_rowRoots, _rowProofs, _root);
+
+        return (valid, error);
+    }
+
+    /// @notice Verifies the proof a set of rows/columns, from a Celestia block, to their corresponding data root.
+    /// @param _rowRoots The set of row/column roots to be proved.
+    /// @param _rowProofs The set of proofs of the _rowRoots in the same order.
+    /// @param _root The data root of the block that contains the rows.
+    /// @return `true` if the proof is valid, `false` otherwise.
+    /// @return an error code if the proof is invalid, ErrorCodes.NoError otherwise.
+    function verifyMultiRowRootsToDataRootTupleRootProof(
+        NamespaceNode[] memory _rowRoots,
+        BinaryMerkleProof[] memory _rowProofs,
+        bytes32 _root
+    ) internal pure returns (bool, ErrorCodes) {
         // checking that the rows roots commit to the data root.
         if (_rowProofs.length != _rowRoots.length) {
             return (false, ErrorCodes.UnequalRowProofsAndRowRootsNumber);
