@@ -45,18 +45,18 @@ contract Benchmark is DSTest {
     CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
 
     function setUp() public {
-        uint256 initialVelsetNonce = 0;
+        uint256 initialValsetNonce = 0;
         privateKeys = derivePrivateKeys(numberOfValidators);
         validators = initializeValidators(privateKeys);
 
         bytes32 hash = computeValidatorSetHash(validators);
-        bytes32 checkpoint = domainSeparateValidatorSetHash(initialVelsetNonce, (2 * totalValidatorPower) / 3, hash);
+        bytes32 checkpoint = domainSeparateValidatorSetHash(initialValsetNonce, (2 * totalValidatorPower) / 3, hash);
         bridge = new Blobstream();
-        bridge.initialize(initialVelsetNonce, (2 * totalValidatorPower) / 3, checkpoint);
+        bridge.initialize(initialValsetNonce, (2 * totalValidatorPower) / 3, checkpoint);
     }
 
     function testBenchmarkSubmitDataRootTupleRoot() public {
-        uint256 initialVelsetNonce = 0;
+        uint256 initialValsetNonce = 0;
         uint256 nonce = 1;
 
         // 32 bytes, chosen at random.
@@ -83,7 +83,7 @@ contract Benchmark is DSTest {
         //        bridge.domainSeparateValidatorSetHash(nonce, currentPowerThreshold, currentValidatorSetHash);
         //        bridge.checkValidatorSignatures(validators, sigs, newDataRootTupleRoot, currentPowerThreshold);
 
-        bridge.submitDataRootTupleRoot(nonce, initialVelsetNonce, newTupleRoot, validators, sigs);
+        bridge.submitDataRootTupleRoot(nonce, initialValsetNonce, newTupleRoot, validators, sigs);
     }
 
     function computeValidatorSetHash(Validator[] memory _validators) private pure returns (bytes32) {

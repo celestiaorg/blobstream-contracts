@@ -30,17 +30,17 @@ contract RelayerTest is DSTest {
     CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
 
     function setUp() public {
-        uint256 initialVelsetNonce = 1;
+        uint256 initialValsetNonce = 1;
 
         validators.push(Validator(cheats.addr(testPriv1), votingPower));
         bytes32 hash = computeValidatorSetHash(validators);
-        bytes32 validatorSetCheckpoint = domainSeparateValidatorSetHash(initialVelsetNonce, (2 * votingPower) / 3, hash);
+        bytes32 validatorSetCheckpoint = domainSeparateValidatorSetHash(initialValsetNonce, (2 * votingPower) / 3, hash);
         bridge = new Blobstream();
-        bridge.initialize(initialVelsetNonce, (2 * votingPower) / 3, validatorSetCheckpoint);
+        bridge.initialize(initialValsetNonce, (2 * votingPower) / 3, validatorSetCheckpoint);
     }
 
     function testUpdateValidatorSet() public {
-        uint256 initialVelsetNonce = 1;
+        uint256 initialValsetNonce = 1;
 
         // Save the old test validator set before we add to it.
         Validator[] memory oldVS = new Validator[](1);
@@ -59,7 +59,7 @@ contract RelayerTest is DSTest {
         (uint8 v, bytes32 r, bytes32 s) = cheats.sign(testPriv1, digest_eip191);
         sigs[0] = Signature(v, r, s);
 
-        bridge.updateValidatorSet(newNonce, initialVelsetNonce, newPowerThreshold, newVSHash, oldVS, sigs);
+        bridge.updateValidatorSet(newNonce, initialValsetNonce, newPowerThreshold, newVSHash, oldVS, sigs);
 
         assertEq(bridge.state_eventNonce(), newNonce);
         assertEq(bridge.state_powerThreshold(), newPowerThreshold);
@@ -67,7 +67,7 @@ contract RelayerTest is DSTest {
     }
 
     function testSubmitDataRootTupleRoot() public {
-        uint256 initialVelsetNonce = 1;
+        uint256 initialValsetNonce = 1;
         uint256 nonce = 2;
         // 32 bytes, chosen at random.
         bytes32 newTupleRoot = 0x0de92bac0b356560d821f8e7b6f5c9fe4f3f88f6c822283efd7ab51ad56a640e;
@@ -83,21 +83,21 @@ contract RelayerTest is DSTest {
         Validator[] memory valSet = new Validator[](1);
         valSet[0] = Validator(cheats.addr(testPriv1), votingPower);
 
-        bridge.submitDataRootTupleRoot(nonce, initialVelsetNonce, newTupleRoot, valSet, sigs);
+        bridge.submitDataRootTupleRoot(nonce, initialValsetNonce, newTupleRoot, valSet, sigs);
 
         assertEq(bridge.state_eventNonce(), nonce);
         assertEq(bridge.state_dataRootTupleRoots(nonce), newTupleRoot);
     }
 
     function testDeployContractAtCustomNonce() public {
-        uint256 initialVelsetNonce = 1;
+        uint256 initialValsetNonce = 1;
         uint256 targetNonce = 200;
 
         Validator[] memory valSet = new Validator[](1);
         valSet[0] = Validator(cheats.addr(testPriv1), votingPower);
 
         bytes32 hash = computeValidatorSetHash(valSet);
-        bytes32 validatorSetCheckpoint = domainSeparateValidatorSetHash(initialVelsetNonce, (2 * votingPower) / 3, hash);
+        bytes32 validatorSetCheckpoint = domainSeparateValidatorSetHash(initialValsetNonce, (2 * votingPower) / 3, hash);
         Blobstream newBridge = new Blobstream();
         newBridge.initialize(targetNonce, (2 * votingPower) / 3, validatorSetCheckpoint);
 
@@ -112,7 +112,7 @@ contract RelayerTest is DSTest {
         (uint8 v, bytes32 r, bytes32 s) = cheats.sign(testPriv1, digest_eip191);
         sigs[0] = Signature(v, r, s);
 
-        newBridge.submitDataRootTupleRoot(targetNonce + 1, initialVelsetNonce, newTupleRoot, valSet, sigs);
+        newBridge.submitDataRootTupleRoot(targetNonce + 1, initialValsetNonce, newTupleRoot, valSet, sigs);
 
         assertEq(newBridge.state_eventNonce(), targetNonce + 1);
         assertEq(newBridge.state_dataRootTupleRoots(targetNonce + 1), newTupleRoot);
@@ -128,7 +128,7 @@ contract RelayerTest is DSTest {
     0x00000000000000000000000000000000000000000000000000000000000000030303030303030303030303030303030303030303030303030303030303030303
     */
     function testVerifyAttestation() public {
-        uint256 initialVelsetNonce = 1;
+        uint256 initialValsetNonce = 1;
         // data root tuple root nonce.
         uint256 nonce = 2;
         // commitment to a set of roots.
@@ -159,7 +159,7 @@ contract RelayerTest is DSTest {
         Validator[] memory valSet = new Validator[](1);
         valSet[0] = Validator(cheats.addr(testPriv1), votingPower);
 
-        bridge.submitDataRootTupleRoot(nonce, initialVelsetNonce, newTupleRoot, valSet, sigs);
+        bridge.submitDataRootTupleRoot(nonce, initialValsetNonce, newTupleRoot, valSet, sigs);
 
         assertEq(bridge.state_eventNonce(), nonce);
         assertEq(bridge.state_dataRootTupleRoots(nonce), newTupleRoot);
