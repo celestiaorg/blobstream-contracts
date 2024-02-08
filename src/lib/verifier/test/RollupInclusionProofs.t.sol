@@ -207,13 +207,13 @@ contract RollupInclusionProofTest is DSTest {
     // - initial valset.
     // - data root tuple root that commits to the proofs tested below.
     function setUp() public {
-        uint256 initialVelsetNonce = 1;
+        uint256 initialValsetNonce = 1;
 
         validators.push(Validator(cheats.addr(testPriv1), votingPower));
         bytes32 hash = computeValidatorSetHash(validators);
-        bytes32 checkpoint = domainSeparateValidatorSetHash(initialVelsetNonce, (2 * votingPower) / 3, hash);
+        bytes32 checkpoint = domainSeparateValidatorSetHash(initialValsetNonce, (2 * votingPower) / 3, hash);
         bridge = new Blobstream();
-        bridge.initialize(initialVelsetNonce, (2 * votingPower) / 3, checkpoint);
+        bridge.initialize(initialValsetNonce, (2 * votingPower) / 3, checkpoint);
 
         fixture = new TestFixture();
 
@@ -230,7 +230,7 @@ contract RollupInclusionProofTest is DSTest {
         valSet[0] = Validator(cheats.addr(testPriv1), votingPower);
 
         bridge.submitDataRootTupleRoot(
-            fixture.dataRootTupleRootNonce(), initialVelsetNonce, fixture.dataRootTupleRoot(), valSet, sigs
+            fixture.dataRootTupleRootNonce(), initialValsetNonce, fixture.dataRootTupleRoot(), valSet, sigs
         );
 
         assertEq(bridge.state_eventNonce(), fixture.dataRootTupleRootNonce());
