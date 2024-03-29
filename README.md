@@ -93,3 +93,11 @@ Relayed tuples are in the same order as Celestia block headers.
  **Batches**:
  The relayer informs the Blobstream contract of new data root tuple roots.
  This results in an execution of the `submitDataRootTupleRoot` function.
+
+## Audits
+
+| Date       | Auditor                                       | Version                                                                                                                                                                                               | Report                                                                                                                                         |
+|------------|-----------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2023/10/17 | [Binary Builders](https://binary.builders/)   | celestia-app/x/qgb [v1.0.0-rc10](https://github.com/celestiaorg/celestia-app/releases/tag/v1.0.0-rc10), blobstream-contracts TBD                                                                      | [binary-builders.pdf](https://github.com/celestiaorg/blobstream-contracts/files/13961809/2023-10-17_Celestia_Audit_Report_Binary_Builders.pdf) |
+| 2023/10/26 | [Informal Systems](https://informal.systems/) | celestia-app/x/qgb [6515446b](), blobstream-contracts [cf301adf]()                                                                                                                                    | [informal-systems.pdf](https://github.com/celestiaorg/blobstream-contracts/files/13961767/Celestia_.Q4.2023.QGB-v2-20231026_182304.pdf)        |
+| 2023/11/16 | [Ottersec](https://osec.io/)                  | celestia-app/x/qgb [v1.3.0](https://github.com/celestiaorg/celestia-app/releases/tag/v1.3.0)   blobstream-contracts [v3.1.0](https://github.com/celestiaorg/blobstream-contracts/releases/tag/v3.1.0) | [ottersec.pdf](https://github.com/celestiaorg/blobstream-contracts/files/14383577/celestia_blobstream_audit_final.pdf)                         |
