@@ -107,6 +107,7 @@ library DAVerifier {
     }
 
     /// @notice Verifies the shares to data root tuple root proof.
+    /// NOTE: This doesn't authenticate the proof to Blobstream. It only verifies if the proof is valid.
     /// @param _data The data that needs to proven.
     /// @param _shareProofs The share to the row roots proof.
     /// @param _namespace The namespace of the shares.
@@ -188,6 +189,7 @@ library DAVerifier {
     }
 
     /// @notice Verifies that a row/column root proof, from a Celestia block, to the data root tuple root.
+    /// NOTE: This doesn't authenticate the proof to Blobstream. It only verifies if the proof is valid.
     /// @param _rowRoot The row/column root to be proven.
     /// @param _rowProof The proof of the row/column root to the data root.
     /// @param _root The data root of the block that contains the row.
@@ -237,6 +239,7 @@ library DAVerifier {
     }
 
     /// @notice Verifies the proof a set of rows/columns, from a Celestia block, to their corresponding data root.
+    /// NOTE: This doesn't authenticate the proof to Blobstream. It only verifies if the proof is valid.
     /// @param _rowRoots The set of row/column roots to be proved.
     /// @param _rowProofs The set of proofs of the _rowRoots in the same order.
     /// @param _root The data root of the block that contains the rows.
