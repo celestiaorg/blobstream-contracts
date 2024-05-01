@@ -27,7 +27,7 @@ jobs:
         run: forge build --build-info --skip test script
 
       - name: Run Slither
-        uses: crytic/slither-action@v0.3.2
+        uses: crytic/slither-action@v0.4.0
         id: slither
         with:
           ignore-compile: true
