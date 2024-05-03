@@ -126,8 +126,7 @@ contract DAVerifierTest is DSTest {
         SharesProof memory sharesProof =
             SharesProof(_data, _shareProofs, fixture.getNamespace(), _rowRoots, _rowProofs, attestationProof);
 
-        (bool valid, DAVerifier.ErrorCodes errorCode) =
-            DAVerifier.verifySharesToDataRootTupleRoot(bridge, sharesProof, fixture.dataRoot());
+        (bool valid, DAVerifier.ErrorCodes errorCode) = DAVerifier.verifySharesToDataRootTupleRoot(bridge, sharesProof);
         assertTrue(valid);
         assertEq(uint8(errorCode), uint8(DAVerifier.ErrorCodes.NoError));
     }
@@ -138,11 +137,7 @@ contract DAVerifierTest is DSTest {
         );
 
         (bool valid, DAVerifier.ErrorCodes errorCode) = DAVerifier.verifyRowRootToDataRootTupleRoot(
-            bridge,
-            fixture.getFirstRowRootNode(),
-            fixture.getRowRootToDataRootProof(),
-            attestationProof,
-            fixture.dataRoot()
+            bridge, fixture.getFirstRowRootNode(), fixture.getRowRootToDataRootProof(), attestationProof
         );
         assertTrue(valid);
         assertEq(uint8(errorCode), uint8(DAVerifier.ErrorCodes.NoError));
@@ -159,9 +154,8 @@ contract DAVerifierTest is DSTest {
             fixture.dataRootTupleRootNonce(), fixture.getDataRootTuple(), fixture.getDataRootTupleProof()
         );
 
-        (bool valid, DAVerifier.ErrorCodes errorCode) = DAVerifier.verifyMultiRowRootsToDataRootTupleRoot(
-            bridge, _rowRoots, _rowProofs, attestationProof, fixture.dataRoot()
-        );
+        (bool valid, DAVerifier.ErrorCodes errorCode) =
+            DAVerifier.verifyMultiRowRootsToDataRootTupleRoot(bridge, _rowRoots, _rowProofs, attestationProof);
         assertTrue(valid);
         assertEq(uint8(errorCode), uint8(DAVerifier.ErrorCodes.NoError));
     }

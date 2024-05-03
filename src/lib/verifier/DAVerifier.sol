@@ -78,17 +78,16 @@ library DAVerifier {
     /// @notice Verifies that the shares, which were posted to Celestia, were committed to by the Blobstream smart contract.
     /// @param _bridge The Blobstream smart contract instance.
     /// @param _sharesProof The proof of the shares to the data root tuple root.
-    /// @param _root The data root of the block that contains the shares.
     /// @return `true` if the proof is valid, `false` otherwise.
     /// @return an error code if the proof is invalid, ErrorCodes.NoError otherwise.
-    function verifySharesToDataRootTupleRoot(IDAOracle _bridge, SharesProof memory _sharesProof, bytes32 _root)
+    function verifySharesToDataRootTupleRoot(IDAOracle _bridge, SharesProof memory _sharesProof)
         internal
         view
         returns (bool, ErrorCodes)
     {
         // checking that the data root was committed to by the Blobstream smart contract.
         (bool success, ErrorCodes errorCode) = verifyMultiRowRootsToDataRootTupleRoot(
-            _bridge, _sharesProof.rowRoots, _sharesProof.rowProofs, _sharesProof.attestationProof, _root
+            _bridge, _sharesProof.rowRoots, _sharesProof.rowProofs, _sharesProof.attestationProof
         );
         if (!success) {
             return (false, errorCode);
@@ -100,7 +99,7 @@ library DAVerifier {
             _sharesProof.namespace,
             _sharesProof.rowRoots,
             _sharesProof.rowProofs,
-            _root
+            _sharesProof.attestationProof.tuple.dataRoot
         );
 
         return (valid, error);
@@ -164,15 +163,13 @@ library DAVerifier {
     /// @param _bridge The Blobstream smart contract instance.
     /// @param _rowRoot The row/column root to be proven.
     /// @param _rowProof The proof of the row/column root to the data root.
-    /// @param _root The data root of the block that contains the row.
     /// @return `true` if the proof is valid, `false` otherwise.
     /// @return an error code if the proof is invalid, ErrorCodes.NoError otherwise.
     function verifyRowRootToDataRootTupleRoot(
         IDAOracle _bridge,
         NamespaceNode memory _rowRoot,
         BinaryMerkleProof memory _rowProof,
-        AttestationProof memory _attestationProof,
-        bytes32 _root
+        AttestationProof memory _attestationProof
     ) internal view returns (bool, ErrorCodes) {
         // checking that the data root was committed to by the Blobstream smart contract
         if (
@@ -183,7 +180,8 @@ library DAVerifier {
             return (false, ErrorCodes.InvalidDataRootTupleToDataRootTupleRootProof);
         }
 
-        (bool valid, ErrorCodes error) = verifyRowRootToDataRootTupleRootProof(_rowRoot, _rowProof, _root);
+        (bool valid, ErrorCodes error) =
+            verifyRowRootToDataRootTupleRootProof(_rowRoot, _rowProof, _attestationProof.tuple.dataRoot);
 
         return (valid, error);
     }
@@ -213,15 +211,13 @@ library DAVerifier {
     /// @param _bridge The Blobstream smart contract instance.
     /// @param _rowRoots The set of row/column roots to be proved.
     /// @param _rowProofs The set of proofs of the _rowRoots in the same order.
-    /// @param _root The data root of the block that contains the rows.
     /// @return `true` if the proof is valid, `false` otherwise.
     /// @return an error code if the proof is invalid, ErrorCodes.NoError otherwise.
     function verifyMultiRowRootsToDataRootTupleRoot(
         IDAOracle _bridge,
         NamespaceNode[] memory _rowRoots,
         BinaryMerkleProof[] memory _rowProofs,
-        AttestationProof memory _attestationProof,
-        bytes32 _root
+        AttestationProof memory _attestationProof
     ) internal view returns (bool, ErrorCodes) {
         // checking that the data root was committed to by the Blobstream smart contract
         if (
@@ -233,7 +229,8 @@ library DAVerifier {
         }
 
         // checking that the rows roots commit to the data root.
-        (bool valid, ErrorCodes error) = verifyMultiRowRootsToDataRootTupleRootProof(_rowRoots, _rowProofs, _root);
+        (bool valid, ErrorCodes error) =
+            verifyMultiRowRootsToDataRootTupleRootProof(_rowRoots, _rowProofs, _attestationProof.tuple.dataRoot);
 
         return (valid, error);
     }
