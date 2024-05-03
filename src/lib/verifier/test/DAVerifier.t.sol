@@ -137,11 +137,7 @@ contract DAVerifierTest is DSTest {
         );
 
         (bool valid, DAVerifier.ErrorCodes errorCode) = DAVerifier.verifyRowRootToDataRootTupleRoot(
-            bridge,
-            fixture.getFirstRowRootNode(),
-            fixture.getRowRootToDataRootProof(),
-            attestationProof,
-            fixture.dataRoot()
+            bridge, fixture.getFirstRowRootNode(), fixture.getRowRootToDataRootProof(), attestationProof
         );
         assertTrue(valid);
         assertEq(uint8(errorCode), uint8(DAVerifier.ErrorCodes.NoError));

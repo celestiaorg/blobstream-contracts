@@ -163,15 +163,13 @@ library DAVerifier {
     /// @param _bridge The Blobstream smart contract instance.
     /// @param _rowRoot The row/column root to be proven.
     /// @param _rowProof The proof of the row/column root to the data root.
-    /// @param _root The data root of the block that contains the row.
     /// @return `true` if the proof is valid, `false` otherwise.
     /// @return an error code if the proof is invalid, ErrorCodes.NoError otherwise.
     function verifyRowRootToDataRootTupleRoot(
         IDAOracle _bridge,
         NamespaceNode memory _rowRoot,
         BinaryMerkleProof memory _rowProof,
-        AttestationProof memory _attestationProof,
-        bytes32 _root
+        AttestationProof memory _attestationProof
     ) internal view returns (bool, ErrorCodes) {
         // checking that the data root was committed to by the Blobstream smart contract
         if (
@@ -182,7 +180,8 @@ library DAVerifier {
             return (false, ErrorCodes.InvalidDataRootTupleToDataRootTupleRootProof);
         }
 
-        (bool valid, ErrorCodes error) = verifyRowRootToDataRootTupleRootProof(_rowRoot, _rowProof, _root);
+        (bool valid, ErrorCodes error) =
+            verifyRowRootToDataRootTupleRootProof(_rowRoot, _rowProof, _attestationProof.tuple.dataRoot);
 
         return (valid, error);
     }
