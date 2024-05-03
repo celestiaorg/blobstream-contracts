@@ -323,8 +323,7 @@ contract RollupInclusionProofTest is DSTest {
 
         // let's authenticate the share proof to the data root tuple root to be sure that
         // the square size is valid.
-        (bool success, DAVerifier.ErrorCodes error) =
-            DAVerifier.verifySharesToDataRootTupleRoot(bridge, shareProof, fixture.dataRoot());
+        (bool success, DAVerifier.ErrorCodes error) = DAVerifier.verifySharesToDataRootTupleRoot(bridge, shareProof);
         assertTrue(success);
         assertEq(uint8(error), uint8(DAVerifier.ErrorCodes.NoError));
 

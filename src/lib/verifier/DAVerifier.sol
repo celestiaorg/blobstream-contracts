@@ -78,17 +78,16 @@ library DAVerifier {
     /// @notice Verifies that the shares, which were posted to Celestia, were committed to by the Blobstream smart contract.
     /// @param _bridge The Blobstream smart contract instance.
     /// @param _sharesProof The proof of the shares to the data root tuple root.
-    /// @param _root The data root of the block that contains the shares.
     /// @return `true` if the proof is valid, `false` otherwise.
     /// @return an error code if the proof is invalid, ErrorCodes.NoError otherwise.
-    function verifySharesToDataRootTupleRoot(IDAOracle _bridge, SharesProof memory _sharesProof, bytes32 _root)
+    function verifySharesToDataRootTupleRoot(IDAOracle _bridge, SharesProof memory _sharesProof)
         internal
         view
         returns (bool, ErrorCodes)
     {
         // checking that the data root was committed to by the Blobstream smart contract.
         (bool success, ErrorCodes errorCode) = verifyMultiRowRootsToDataRootTupleRoot(
-            _bridge, _sharesProof.rowRoots, _sharesProof.rowProofs, _sharesProof.attestationProof, _root
+            _bridge, _sharesProof.rowRoots, _sharesProof.rowProofs, _sharesProof.attestationProof
         );
         if (!success) {
             return (false, errorCode);
@@ -100,7 +99,7 @@ library DAVerifier {
             _sharesProof.namespace,
             _sharesProof.rowRoots,
             _sharesProof.rowProofs,
-            _root
+            _sharesProof.attestationProof.tuple.dataRoot
         );
 
         return (valid, error);
@@ -213,7 +212,6 @@ library DAVerifier {
     /// @param _bridge The Blobstream smart contract instance.
     /// @param _rowRoots The set of row/column roots to be proved.
     /// @param _rowProofs The set of proofs of the _rowRoots in the same order.
-    /// @param _root The data root of the block that contains the rows.
     /// @return `true` if the proof is valid, `false` otherwise.
     /// @return an error code if the proof is invalid, ErrorCodes.NoError otherwise.
     function verifyMultiRowRootsToDataRootTupleRoot(
