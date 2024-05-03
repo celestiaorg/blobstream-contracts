@@ -220,8 +220,7 @@ library DAVerifier {
         IDAOracle _bridge,
         NamespaceNode[] memory _rowRoots,
         BinaryMerkleProof[] memory _rowProofs,
-        AttestationProof memory _attestationProof,
-        bytes32 _root
+        AttestationProof memory _attestationProof
     ) internal view returns (bool, ErrorCodes) {
         // checking that the data root was committed to by the Blobstream smart contract
         if (
@@ -233,7 +232,8 @@ library DAVerifier {
         }
 
         // checking that the rows roots commit to the data root.
-        (bool valid, ErrorCodes error) = verifyMultiRowRootsToDataRootTupleRootProof(_rowRoots, _rowProofs, _root);
+        (bool valid, ErrorCodes error) =
+            verifyMultiRowRootsToDataRootTupleRootProof(_rowRoots, _rowProofs, _attestationProof.tuple.dataRoot);
 
         return (valid, error);
     }
