@@ -265,6 +265,7 @@ library DAVerifier {
     }
 
     /// @notice computes the Celestia block square size from a row/column root to data root binary merkle proof.
+    /// The square size is the number of rows of the original square.
     /// Note: the provided proof is not authenticated to the Blobstream smart contract. It is the user's responsibility
     /// to verify that the proof is valid and was successfully committed to using
     //  the `DAVerifier.verifyRowRootToDataRootTupleRoot()` method
@@ -286,6 +287,7 @@ library DAVerifier {
     }
 
     /// @notice computes the Celestia block square size from a shares to row/column root proof.
+    /// The square size is the number of rows of the original square.
     /// Note: the provided proof is not authenticated to the Blobstream smart contract. It is the user's responsibility
     /// to verify that the proof is valid and that the shares were successfully committed to using
     /// the `DAVerifier.verifySharesToDataRootTupleRoot()` method.
