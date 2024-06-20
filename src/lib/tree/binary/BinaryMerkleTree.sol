@@ -5,6 +5,7 @@ import "../Constants.sol";
 import "../Utils.sol";
 import "./TreeHasher.sol";
 import "./BinaryMerkleProof.sol";
+import "./BinaryMerkleMultiproof.sol";
 
 /// @title Binary Merkle Tree.
 library BinaryMerkleTree {
@@ -75,6 +76,14 @@ library BinaryMerkleTree {
         }
 
         return (computedHash == root, ErrorCodes.NoError);
+    }
+
+    function verifyMulti(
+        bytes[] memory root,
+        BinaryMerkleMultiproof memory proof,
+        bytes[] memory data
+    ) internal pure returns (bool) {
+
     }
 
     /// @notice Use the leafHash and innerHashes to get the root merkle hash.
