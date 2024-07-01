@@ -79,11 +79,114 @@ library BinaryMerkleTree {
     }
 
     function verifyMulti(
-        bytes[] memory root,
-        BinaryMerkleMultiproof memory proof,
+        bytes32 root,
+        BinaryMerkleMultiproof memory proof, /* maybe calldata */
         bytes[] memory data
     ) internal pure returns (bool) {
+        bytes32[] memory nodes = new bytes32[](data.length);
+        for (uint256 i = 0; i < data.length; i++) {
+            nodes[i] = leafDigest(data[i]);
+        }
 
+        return verifyMultiHashes(root, proof, nodes);
+    }
+
+    function verifyMultiHashes(
+        bytes32 root,
+        BinaryMerkleMultiproof memory proof,
+        bytes32[] memory leafNodes
+    ) internal pure returns (bool) {
+        uint256 leafIndex = 0;
+        bytes32[] memory leftSubtrees = new bytes32[](proof.sideNodes.length);
+
+        for (uint256 i = 0; leafIndex != proof.beginKey && i < proof.sideNodes.length; ++i) {
+            uint256 subtreeSize = _nextSubtreeSize(leafIndex, proof.beginKey);
+            leftSubtrees[i] = proof.sideNodes[i];
+            leafIndex += subtreeSize;
+        }
+
+        uint256 proofRangeSubtreeEstimate = _getSplitPoint(proof.endKey) * 2;
+        if (proofRangeSubtreeEstimate < 1) {
+            proofRangeSubtreeEstimate = 1;
+        }
+
+        return false;
+    }
+
+    function _computeRootMulti(
+        BinaryMerkleMultiproof memory proof,
+        bytes32[] memory leafNodes,
+        uint256 begin,
+        uint256 end,
+        uint256 headProof,
+        uint256 headLeaves
+    ) private pure returns (bytes32, uint256, uint256, bool) {
+        // reached a leaf
+        if (end - begin == 1) {
+            // if current range overlaps with proof range, pop and return a leaf
+            if (proof.beginKey <= begin && begin < proof.endKey) {
+                // Note: second return value is guaranteed to be `false` by
+                // construction.
+                return _popLeavesIfNonEmpty(leafNodes, headLeaves, leafNodes.length, headProof);
+            }
+
+            // if current range does not overlap with proof range,
+            // pop and return a proof node (leaf) if present,
+            // else return nil because leaf doesn't exist
+            return _popProofIfNonEmpty(proof.sideNodes, headProof, end, headLeaves);
+        }
+
+        // if current range does not overlap with proof range,
+        // pop and return a proof node if present,
+        // else return nil because subtree doesn't exist
+        if (end <= proof.beginKey || begin >= proof.endKey) {
+            return _popProofIfNonEmpty(proof.sideNodes, headProof, end, headLeaves);
+        }
+
+        // Recursively get left and right subtree
+        uint256 k = _getSplitPoint(end - begin);
+        (bytes32 left, uint256 newHeadProofLeft, uint256 newHeadLeavesLeft,) =
+            _computeRootMulti(proof, leafNodes, begin, begin + k, headProof, headLeaves);
+        (bytes32 right, uint256 newHeadProof, uint256 newHeadLeaves, bool rightIsNil) =
+            _computeRootMulti(proof, leafNodes, begin + k, end, newHeadProofLeft, newHeadLeavesLeft);
+
+        // only right leaf/subtree can be non-existent
+        if (rightIsNil == true) {
+            return (left, newHeadProof, newHeadLeaves, false);
+        }
+        bytes32 hash = nodeDigest(left, right);
+        return (hash, newHeadProof, newHeadLeaves, false);
+
+    }
+
+    function _popProofIfNonEmpty(bytes32[] memory nodes, uint256 headProof, uint256 end, uint256 headLeaves)
+        private
+        pure
+        returns (bytes32, uint256, uint256, bool)
+    {
+        (bytes32 node, uint256 newHead, bool isNil) = _popIfNonEmpty(nodes, headProof, end);
+        return (node, newHead, headLeaves, isNil);
+    }
+
+    function _popLeavesIfNonEmpty(bytes32[] memory nodes, uint256 headLeaves, uint256 end, uint256 headProof)
+        private
+        pure
+        returns (bytes32, uint256, uint256, bool)
+    {
+        (bytes32 node, uint256 newHead, bool isNil) = _popIfNonEmpty(nodes, headLeaves, end);
+        return (node, headProof, newHead, isNil);
+    }
+
+    function _popIfNonEmpty(bytes32[] memory nodes, uint256 head, uint256 end)
+        private
+        pure
+        returns (bytes32, uint256, bool)
+    {
+        if (nodes.length == 0 || head >= nodes.length || head >= end) {
+            bytes32 node;
+            return (node, head, true);
+        }
+        return (nodes[head], head + 1, false);
     }
 
     /// @notice Use the leafHash and innerHashes to get the root merkle hash.

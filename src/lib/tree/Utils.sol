@@ -76,3 +76,31 @@ function _getSplitPoint(uint256 x) pure returns (uint256) {
     }
     return k;
 }
+
+/// @notice Returns the size of the subtree adjacent to `begin` that does
+/// not overlap `end`.
+/// @param begin Begin index, inclusive.
+/// @param end End index, exclusive.
+function _nextSubtreeSize(uint256 begin, uint256 end) pure returns (uint256) {
+    uint256 ideal = _bitsTrailingZeroes(begin);
+    uint256 max = _bitsLen(end - begin) - 1;
+    if (ideal > max) {
+        return 1 << max;
+    }
+    return 1 << ideal;
+}
+
+/// @notice Returns the number of trailing zero bits in `x`; the result is
+/// 256 for `x` == 0.
+/// @param x Number.
+function _bitsTrailingZeroes(uint256 x) pure returns (uint256) {
+    uint256 mask = 1;
+    uint256 count = 0;
+
+    while (x != 0 && mask & x == 0) {
+        count++;
+        x >>= 1;
+    }
+
+    return count;
+}
