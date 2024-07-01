@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.19;
 
 import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 
@@ -16,7 +16,10 @@ import "ds-test/test.sol";
 interface CheatCodes {
     function addr(uint256 privateKey) external returns (address);
 
-    function sign(uint256 privateKey, bytes32 digest) external returns (uint8 v, bytes32 r, bytes32 s);
+    function sign(
+        uint256 privateKey,
+        bytes32 digest
+    ) external returns (uint8 v, bytes32 r, bytes32 s);
 }
 
 /// @notice A span sequence defines the location of the rollup transaction data
@@ -192,7 +195,8 @@ to be defined by rollups depending on how they handle their state.
 
 contract RollupInclusionProofTest is DSTest {
     // Private keys used for test signatures.
-    uint256 constant testPriv1 = 0x64a1d6f0e760a8d62b4afdde4096f16f51b401eaaecc915740f71770ea76a8ad;
+    uint256 constant testPriv1 =
+        0x64a1d6f0e760a8d62b4afdde4096f16f51b401eaaecc915740f71770ea76a8ad;
 
     Blobstream bridge;
     TestFixture fixture;
@@ -211,18 +215,30 @@ contract RollupInclusionProofTest is DSTest {
 
         validators.push(Validator(cheats.addr(testPriv1), votingPower));
         bytes32 hash = computeValidatorSetHash(validators);
-        bytes32 checkpoint = domainSeparateValidatorSetHash(initialValsetNonce, (2 * votingPower) / 3, hash);
+        bytes32 checkpoint = domainSeparateValidatorSetHash(
+            initialValsetNonce,
+            (2 * votingPower) / 3,
+            hash
+        );
         bridge = new Blobstream();
-        bridge.initialize(initialValsetNonce, (2 * votingPower) / 3, checkpoint);
+        bridge.initialize(
+            initialValsetNonce,
+            (2 * votingPower) / 3,
+            checkpoint
+        );
 
         fixture = new TestFixture();
 
-        bytes32 newDataRootTupleRoot =
-            domainSeparateDataRootTupleRoot(fixture.dataRootTupleRootNonce(), fixture.dataRootTupleRoot());
+        bytes32 newDataRootTupleRoot = domainSeparateDataRootTupleRoot(
+            fixture.dataRootTupleRootNonce(),
+            fixture.dataRootTupleRoot()
+        );
 
         // Signature for the update.
         Signature[] memory sigs = new Signature[](1);
-        bytes32 digest_eip191 = ECDSA.toEthSignedMessageHash(newDataRootTupleRoot);
+        bytes32 digest_eip191 = ECDSA.toEthSignedMessageHash(
+            newDataRootTupleRoot
+        );
         (uint8 v, bytes32 r, bytes32 s) = cheats.sign(testPriv1, digest_eip191);
         sigs[0] = Signature(v, r, s);
 
@@ -230,17 +246,30 @@ contract RollupInclusionProofTest is DSTest {
         valSet[0] = Validator(cheats.addr(testPriv1), votingPower);
 
         bridge.submitDataRootTupleRoot(
-            fixture.dataRootTupleRootNonce(), initialValsetNonce, fixture.dataRootTupleRoot(), valSet, sigs
+            fixture.dataRootTupleRootNonce(),
+            initialValsetNonce,
+            fixture.dataRootTupleRoot(),
+            valSet,
+            sigs
         );
 
         assertEq(bridge.state_eventNonce(), fixture.dataRootTupleRootNonce());
-        assertEq(bridge.state_dataRootTupleRoots(fixture.dataRootTupleRootNonce()), fixture.dataRootTupleRoot());
+        assertEq(
+            bridge.state_dataRootTupleRoots(fixture.dataRootTupleRootNonce()),
+            fixture.dataRootTupleRoot()
+        );
 
         DataRootTuple memory _tuple;
         _tuple.height = fixture.height();
         _tuple.dataRoot = fixture.dataRoot();
 
-        assertTrue(bridge.verifyAttestation(fixture.dataRootTupleRootNonce(), _tuple, fixture.getDataRootTupleProof()));
+        assertTrue(
+            bridge.verifyAttestation(
+                fixture.dataRootTupleRootNonce(),
+                _tuple,
+                fixture.getDataRootTupleProof()
+            )
+        );
     }
 
     // test case 1: a rollup header pointing to data that was not published to Celestia.
@@ -251,24 +280,31 @@ contract RollupInclusionProofTest is DSTest {
         uint256 length = 10;
         SpanSequence memory sequence = SpanSequence(height, startIndex, length);
         // an invalid header that points to data that don't exist in the target Celestia block.
-        RollupHeader memory header =
-            RollupHeader(0x215bd7509274803c556914e2a4b840826bb8b7d94de9344dfb2c2b0e71ba2d26, sequence);
+        RollupHeader memory header = RollupHeader(
+            0x215bd7509274803c556914e2a4b840826bb8b7d94de9344dfb2c2b0e71ba2d26,
+            sequence
+        );
 
         // let's first calculate the square size of the Celestia block referenced in the header
         // Note: the square size can also be computed from the shares proof.
-        (uint256 squareSize, DAVerifier.ErrorCodes error) =
-            DAVerifier.computeSquareSizeFromRowProof(fixture.getRowRootToDataRootProof());
+        (uint256 squareSize, DAVerifier.ErrorCodes error) = DAVerifier
+            .computeSquareSizeFromRowProof(fixture.getRowRootToDataRootProof());
         assertEq(uint8(error), uint8(DAVerifier.ErrorCodes.NoError));
         assertEq(fixture.squareSize(), squareSize);
 
         // let's authenticate the row proof to the data root tuple root to be sure that
         // the square size is valid.
         AttestationProof memory attestationProof = AttestationProof(
-            fixture.dataRootTupleRootNonce(), fixture.getDataRootTuple(), fixture.getDataRootTupleProof()
+            fixture.dataRootTupleRootNonce(),
+            fixture.getDataRootTuple(),
+            fixture.getDataRootTupleProof()
         );
         bool success;
         (success, error) = DAVerifier.verifyRowRootToDataRootTupleRoot(
-            bridge, fixture.getFirstRowRootNode(), fixture.getRowRootToDataRootProof(), attestationProof
+            bridge,
+            fixture.getFirstRowRootNode(),
+            fixture.getRowRootToDataRootProof(),
+            attestationProof
         );
         assertTrue(success);
         assertEq(uint8(error), uint8(DAVerifier.ErrorCodes.NoError));
@@ -290,11 +326,15 @@ contract RollupInclusionProofTest is DSTest {
         uint256 length = 1;
         SpanSequence memory sequence = SpanSequence(height, startIndex, length);
         // a header that points to the rollup data posted in Celestia.
-        RollupHeader memory header =
-            RollupHeader(0x215bd7509274803c556914e2a4b840826bb8b7d94de9344dfb2c2b0e71ba2d26, sequence);
+        RollupHeader memory header = RollupHeader(
+            0x215bd7509274803c556914e2a4b840826bb8b7d94de9344dfb2c2b0e71ba2d26,
+            sequence
+        );
 
         // let's first calculate the square size of the Celestia block referenced in the header
-        uint256 squareSize = DAVerifier.computeSquareSizeFromShareProof(fixture.getShareToRowRootProof());
+        uint256 squareSize = DAVerifier.computeSquareSizeFromShareProof(
+            fixture.getShareToRowRootProof()
+        );
         assertEq(fixture.squareSize(), squareSize);
 
         // let's create the share to data root tuple root proof to be able to validate the square
@@ -303,7 +343,8 @@ contract RollupInclusionProofTest is DSTest {
         bytes[] memory data = new bytes[](1);
         data[0] = fixture.shareData();
         shareProof.data = data;
-        NamespaceMerkleMultiproof[] memory shareToRowRootProof = new NamespaceMerkleMultiproof[](1);
+        NamespaceMerkleMultiproof[]
+            memory shareToRowRootProof = new NamespaceMerkleMultiproof[](1);
         shareToRowRootProof[0] = fixture.getShareToRowRootProof();
         shareProof.shareProofs = shareToRowRootProof;
         shareProof.namespace = fixture.getNamespace();
@@ -314,12 +355,15 @@ contract RollupInclusionProofTest is DSTest {
         rowProofs[0] = fixture.getRowRootToDataRootProof();
         shareProof.rowProofs = rowProofs;
         shareProof.attestationProof = AttestationProof(
-            fixture.dataRootTupleRootNonce(), fixture.getDataRootTuple(), fixture.getDataRootTupleProof()
+            fixture.dataRootTupleRootNonce(),
+            fixture.getDataRootTuple(),
+            fixture.getDataRootTupleProof()
         );
 
         // let's authenticate the share proof to the data root tuple root to be sure that
         // the square size is valid.
-        (bool success, DAVerifier.ErrorCodes error) = DAVerifier.verifySharesToDataRootTupleRoot(bridge, shareProof);
+        (bool success, DAVerifier.ErrorCodes error) = DAVerifier
+            .verifySharesToDataRootTupleRoot(bridge, shareProof);
         assertTrue(success);
         assertEq(uint8(error), uint8(DAVerifier.ErrorCodes.NoError));
 
@@ -342,8 +386,9 @@ contract RollupInclusionProofTest is DSTest {
         // Note: In the case of multiple shares in the proof, we will need to check all the shares
         // if they're part of the sequence of spans. Then, only use the ones that are part of it.
         uint256 shareIndexInRow = shareProof.shareProofs[0].beginKey;
-        uint256 shareIndexInRowMajorOrder =
-            shareIndexInRow + shareProof.rowProofs[0].numLeaves * shareProof.rowProofs[0].key;
+        uint256 shareIndexInRowMajorOrder = shareIndexInRow +
+            shareProof.rowProofs[0].numLeaves *
+            shareProof.rowProofs[0].key;
 
         // check if the share is part of the sequence of spans
         assertTrue(header.sequence.index <= shareIndexInRowMajorOrder);
@@ -358,27 +403,40 @@ contract RollupInclusionProofTest is DSTest {
         // specific.
     }
 
-    function computeValidatorSetHash(Validator[] memory _validators) private pure returns (bytes32) {
+    function computeValidatorSetHash(
+        Validator[] memory _validators
+    ) private pure returns (bytes32) {
         return keccak256(abi.encode(_validators));
     }
 
-    function domainSeparateValidatorSetHash(uint256 _nonce, uint256 _powerThreshold, bytes32 _validatorSetHash)
-        private
-        pure
-        returns (bytes32)
-    {
-        bytes32 c =
-            keccak256(abi.encode(VALIDATOR_SET_HASH_DOMAIN_SEPARATOR, _nonce, _powerThreshold, _validatorSetHash));
+    function domainSeparateValidatorSetHash(
+        uint256 _nonce,
+        uint256 _powerThreshold,
+        bytes32 _validatorSetHash
+    ) private pure returns (bytes32) {
+        bytes32 c = keccak256(
+            abi.encode(
+                VALIDATOR_SET_HASH_DOMAIN_SEPARATOR,
+                _nonce,
+                _powerThreshold,
+                _validatorSetHash
+            )
+        );
 
         return c;
     }
 
-    function domainSeparateDataRootTupleRoot(uint256 _nonce, bytes32 _dataRootTupleRoot)
-        private
-        pure
-        returns (bytes32)
-    {
-        bytes32 c = keccak256(abi.encode(DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _nonce, _dataRootTupleRoot));
+    function domainSeparateDataRootTupleRoot(
+        uint256 _nonce,
+        bytes32 _dataRootTupleRoot
+    ) private pure returns (bytes32) {
+        bytes32 c = keccak256(
+            abi.encode(
+                DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR,
+                _nonce,
+                _dataRootTupleRoot
+            )
+        );
 
         return c;
     }
@@ -389,67 +447,77 @@ contract RollupInclusionProofTest is DSTest {
 /// the beginning of this file.
 contract TestFixture {
     /// @notice the share containing the blob that was published to Celestia.
-    bytes public shareData = abi.encodePacked(
-        hex"0000000000000000000000000000000000000012131232424324328899010000",
-        hex"0117283078623130393742314439393239623837336641304132413830383134",
-        hex"313339446231323838323932362c307862313039374231443939323962383733",
-        hex"6641304132413830383134313339446231323838323932372c313030293b2830",
-        hex"7862313039374231443939323962383733664130413241383038313431333944",
-        hex"6231323838323932362c30786231303937423144393932396238373366413041",
-        hex"32413830383134313339446231323838323932382c3230303030293b28307862",
-        hex"3130393742314439393239623837336641304132413830383134313339446231",
-        hex"323838323932362c307862313039374231443939323962383733664130413241",
-        hex"3830383134313339446231323838323932392c31303030302900000000000000",
-        hex"0000000000000000000000000000000000000000000000000000000000000000",
-        hex"0000000000000000000000000000000000000000000000000000000000000000",
-        hex"0000000000000000000000000000000000000000000000000000000000000000",
-        hex"0000000000000000000000000000000000000000000000000000000000000000",
-        hex"0000000000000000000000000000000000000000000000000000000000000000",
-        hex"0000000000000000000000000000000000000000000000000000000000000000"
-    );
+    bytes public shareData =
+        abi.encodePacked(
+            hex"0000000000000000000000000000000000000012131232424324328899010000",
+            hex"0117283078623130393742314439393239623837336641304132413830383134",
+            hex"313339446231323838323932362c307862313039374231443939323962383733",
+            hex"6641304132413830383134313339446231323838323932372c313030293b2830",
+            hex"7862313039374231443939323962383733664130413241383038313431333944",
+            hex"6231323838323932362c30786231303937423144393932396238373366413041",
+            hex"32413830383134313339446231323838323932382c3230303030293b28307862",
+            hex"3130393742314439393239623837336641304132413830383134313339446231",
+            hex"323838323932362c307862313039374231443939323962383733664130413241",
+            hex"3830383134313339446231323838323932392c31303030302900000000000000",
+            hex"0000000000000000000000000000000000000000000000000000000000000000",
+            hex"0000000000000000000000000000000000000000000000000000000000000000",
+            hex"0000000000000000000000000000000000000000000000000000000000000000",
+            hex"0000000000000000000000000000000000000000000000000000000000000000",
+            hex"0000000000000000000000000000000000000000000000000000000000000000",
+            hex"0000000000000000000000000000000000000000000000000000000000000000"
+        );
 
     /// @notice the first EDS row root.
-    bytes public firstRowRoot = abi.encodePacked(
-        hex"00000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000012131232424324328899eca190450f1424f4c96f50142cae150261466dcf4d47fb52b5e1cccef047f2fe"
-    );
+    bytes public firstRowRoot =
+        abi.encodePacked(
+            hex"00000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000012131232424324328899eca190450f1424f4c96f50142cae150261466dcf4d47fb52b5e1cccef047f2fe"
+        );
 
     /// @notice the second EDS row root.
-    bytes public secondRowRoot = abi.encodePacked(
-        hex"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffffffffffffffffffffffffffffffffffffffffffffffffffffffe94ddc2da7e01f575f757fbb4fa42ba202d51a576b609a8aeb114fd226c6e7372"
-    );
+    bytes public secondRowRoot =
+        abi.encodePacked(
+            hex"fffffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffffffffffffffffffffffffffffffffffffffffffffffffffffffe94ddc2da7e01f575f757fbb4fa42ba202d51a576b609a8aeb114fd226c6e7372"
+        );
 
     /// @notice the third EDS row root.
-    bytes public thirdRowRoot = abi.encodePacked(
-        hex"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff33622135c2a12b0e5b3f67fd2cdacddbd58b88abbe67a9ce42e456bb88e137c7"
-    );
+    bytes public thirdRowRoot =
+        abi.encodePacked(
+            hex"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff33622135c2a12b0e5b3f67fd2cdacddbd58b88abbe67a9ce42e456bb88e137c7"
+        );
 
     /// @notice the fourth EDS row root.
-    bytes public fourthRowRoot = abi.encodePacked(
-        hex"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc096faf6ef0b9f1d3439d619b29bbd4b810825e80b658ed1fa7525220dc796b0"
-    );
+    bytes public fourthRowRoot =
+        abi.encodePacked(
+            hex"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc096faf6ef0b9f1d3439d619b29bbd4b810825e80b658ed1fa7525220dc796b0"
+        );
 
     /// @notice the first EDS column root.
-    bytes public firstColumnRoot = abi.encodePacked(
-        hex"0000000000000000000000000000000000000000000000000000000004fffffffffffffffffffffffffffffffffffffffffffffffffffffffffe43e76fdc8b119c62dd02c197ad666b5c00ccc4736bf34573c9bd995558a2cf0d"
-    );
+    bytes public firstColumnRoot =
+        abi.encodePacked(
+            hex"0000000000000000000000000000000000000000000000000000000004fffffffffffffffffffffffffffffffffffffffffffffffffffffffffe43e76fdc8b119c62dd02c197ad666b5c00ccc4736bf34573c9bd995558a2cf0d"
+        );
 
     /// @notice the second EDS column root.
-    bytes public secondColumnRoot = abi.encodePacked(
-        hex"0000000000000000000000000000000000000012131232424324328899fffffffffffffffffffffffffffffffffffffffffffffffffffffffffe37a4e02492e5c60e661b531861ae3f45cf4d6ae5237bab37d857b39763373556"
-    );
+    bytes public secondColumnRoot =
+        abi.encodePacked(
+            hex"0000000000000000000000000000000000000012131232424324328899fffffffffffffffffffffffffffffffffffffffffffffffffffffffffe37a4e02492e5c60e661b531861ae3f45cf4d6ae5237bab37d857b39763373556"
+        );
 
     /// @notice the third EDS column root.
-    bytes public thirdColumnRoot = abi.encodePacked(
-        hex"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff215bd7509274803c556914e2a4b840826bb8b7d94de9344dfb2c2b0e71ba2d26"
-    );
+    bytes public thirdColumnRoot =
+        abi.encodePacked(
+            hex"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff215bd7509274803c556914e2a4b840826bb8b7d94de9344dfb2c2b0e71ba2d26"
+        );
 
     /// @notice the fourth EDS column root.
-    bytes public fourthColumnRoot = abi.encodePacked(
-        hex"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff35543dab513d606fd51dddbecce5a0ff86d5a5a4b1e081e6fb9afeeaa36ff6"
-    );
+    bytes public fourthColumnRoot =
+        abi.encodePacked(
+            hex"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff35543dab513d606fd51dddbecce5a0ff86d5a5a4b1e081e6fb9afeeaa36ff6"
+        );
 
     /// @notice the data root of the block containing the submitted blob.
-    bytes32 public dataRoot = 0xb9b0d94eae45e56a551e9415701bec462b18329d2a42bcce3e37a22a2ca83a6f;
+    bytes32 public dataRoot =
+        0xb9b0d94eae45e56a551e9415701bec462b18329d2a42bcce3e37a22a2ca83a6f;
 
     /// @notice the height of the block containing the submitted blob.
     uint256 public height = 21;
@@ -458,41 +526,68 @@ contract TestFixture {
     uint256 public squareSize = 2;
 
     /// @notice the data root tuple root committing to the Celestia block.
-    bytes32 public dataRootTupleRoot = 0xd149f160dec348d8582b8c2629c91fab8189b8dca205c4c01bb378f2f5450c3b;
+    bytes32 public dataRootTupleRoot =
+        0xd149f160dec348d8582b8c2629c91fab8189b8dca205c4c01bb378f2f5450c3b;
 
     /// @notice the data root tuple root nonce in the Blobstream contract.
     uint256 public dataRootTupleRootNonce = 2;
 
     /// @notice the data root tuple to data root tuple root proof side nodes.
     bytes32[] public dataRootProofSideNodes = [
-        bytes32(0x062f1c98fda4619e8ce92c39d1fa02dc68a880fdcf2c28c9ac31cf3abb1d6ab2),
-        bytes32(0x8aa95c4c4ef50468dc728d4e90a07560f1c0095d2df4491879e50ef96305751d)
+        bytes32(
+            0x062f1c98fda4619e8ce92c39d1fa02dc68a880fdcf2c28c9ac31cf3abb1d6ab2
+        ),
+        bytes32(
+            0x8aa95c4c4ef50468dc728d4e90a07560f1c0095d2df4491879e50ef96305751d
+        )
     ];
 
     /// @notice shares to row root proof side nodes.
     NamespaceNode[] public shareToRowRootProofSideNodes = [
         NamespaceNode(
-            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000004),
-            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000004),
+            Namespace(
+                0x00,
+                0x00000000000000000000000000000000000000000000000000000004
+            ),
+            Namespace(
+                0x00,
+                0x00000000000000000000000000000000000000000000000000000004
+            ),
             0x2505b82d3c2a3f9262539478dd5f3257fcc452496f0c159c3bc5aae77e8f85ce
         ),
         NamespaceNode(
-            Namespace(0xff, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
-            Namespace(0xff, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
+            Namespace(
+                0xff,
+                0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+            ),
+            Namespace(
+                0xff,
+                0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+            ),
             0x9e80fef0ef39caacaa4e0f5b4ace155b42dd0ca70ecd72a047e68a5244a3c6fa
         )
     ];
 
     /// @notice row root to data root proof side nodes.
     bytes32[] public rowRootToDataRootProofSideNodes = [
-        bytes32(0xba0a74b15f58344239a4e89847b45d39db30c257c1876a375e246c98c3666cab),
-        bytes32(0x89d6a174bb5327c792535cb769d388e5e5904ebdf2c650dc5ff2e1c90b5eb764),
-        bytes32(0x5e48d0e89322b5caac9925f7acf77621dc0b06844fef864a2ab92b108fae4101)
+        bytes32(
+            0xba0a74b15f58344239a4e89847b45d39db30c257c1876a375e246c98c3666cab
+        ),
+        bytes32(
+            0x89d6a174bb5327c792535cb769d388e5e5904ebdf2c650dc5ff2e1c90b5eb764
+        ),
+        bytes32(
+            0x5e48d0e89322b5caac9925f7acf77621dc0b06844fef864a2ab92b108fae4101
+        )
     ];
 
     /// @notice the share's namespace.
     function getNamespace() public pure returns (Namespace memory) {
-        return Namespace(0x00, 0x00000000000000000000000000000000000012131232424324328899);
+        return
+            Namespace(
+                0x00,
+                0x00000000000000000000000000000000000012131232424324328899
+            );
     }
 
     /// @notice the data root tuple of the block containing the submitted blob.
@@ -501,89 +596,173 @@ contract TestFixture {
     }
 
     /// @notice the data root tuple to data root tuple root proof.
-    function getDataRootTupleProof() public view returns (BinaryMerkleProof memory) {
+    function getDataRootTupleProof()
+        public
+        view
+        returns (BinaryMerkleProof memory)
+    {
         return BinaryMerkleProof(dataRootProofSideNodes, 0, 4);
     }
 
     /// @notice the first EDS row root.
     function getFirstRowRootNode() public pure returns (NamespaceNode memory) {
-        return NamespaceNode(
-            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000004),
-            Namespace(0x00, 0x00000000000000000000000000000000000012131232424324328899),
-            0xeca190450f1424f4c96f50142cae150261466dcf4d47fb52b5e1cccef047f2fe
-        );
+        return
+            NamespaceNode(
+                Namespace(
+                    0x00,
+                    0x00000000000000000000000000000000000000000000000000000004
+                ),
+                Namespace(
+                    0x00,
+                    0x00000000000000000000000000000000000012131232424324328899
+                ),
+                0xeca190450f1424f4c96f50142cae150261466dcf4d47fb52b5e1cccef047f2fe
+            );
     }
 
     /// @notice the second EDS row root.
     function getSecondRowRootNode() public pure returns (NamespaceNode memory) {
-        return NamespaceNode(
-            Namespace(0xff, 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffe),
-            Namespace(0xff, 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffe),
-            0x94ddc2da7e01f575f757fbb4fa42ba202d51a576b609a8aeb114fd226c6e7372
-        );
+        return
+            NamespaceNode(
+                Namespace(
+                    0xff,
+                    0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffe
+                ),
+                Namespace(
+                    0xff,
+                    0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffe
+                ),
+                0x94ddc2da7e01f575f757fbb4fa42ba202d51a576b609a8aeb114fd226c6e7372
+            );
     }
 
     /// @notice the third EDS row root.
     function getThirdRowRootNode() public pure returns (NamespaceNode memory) {
-        return NamespaceNode(
-            Namespace(0xff, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
-            Namespace(0xff, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
-            0x33622135c2a12b0e5b3f67fd2cdacddbd58b88abbe67a9ce42e456bb88e137c7
-        );
+        return
+            NamespaceNode(
+                Namespace(
+                    0xff,
+                    0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+                ),
+                Namespace(
+                    0xff,
+                    0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+                ),
+                0x33622135c2a12b0e5b3f67fd2cdacddbd58b88abbe67a9ce42e456bb88e137c7
+            );
     }
 
     /// @notice the fourth EDS row root.
     function getFourthRowRootNode() public pure returns (NamespaceNode memory) {
-        return NamespaceNode(
-            Namespace(0xff, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
-            Namespace(0xff, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
-            0xc096faf6ef0b9f1d3439d619b29bbd4b810825e80b658ed1fa7525220dc796b0
-        );
+        return
+            NamespaceNode(
+                Namespace(
+                    0xff,
+                    0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+                ),
+                Namespace(
+                    0xff,
+                    0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+                ),
+                0xc096faf6ef0b9f1d3439d619b29bbd4b810825e80b658ed1fa7525220dc796b0
+            );
     }
 
     /// @notice the first EDS column root.
-    function getFirstColumnRootNode() public pure returns (NamespaceNode memory) {
-        return NamespaceNode(
-            Namespace(0xff, 0x00000000000000000000000000000000000000000000000000000004),
-            Namespace(0xff, 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffe),
-            0x43e76fdc8b119c62dd02c197ad666b5c00ccc4736bf34573c9bd995558a2cf0d
-        );
+    function getFirstColumnRootNode()
+        public
+        pure
+        returns (NamespaceNode memory)
+    {
+        return
+            NamespaceNode(
+                Namespace(
+                    0xff,
+                    0x00000000000000000000000000000000000000000000000000000004
+                ),
+                Namespace(
+                    0xff,
+                    0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffe
+                ),
+                0x43e76fdc8b119c62dd02c197ad666b5c00ccc4736bf34573c9bd995558a2cf0d
+            );
     }
 
     /// @notice the second EDS column root.
-    function getSecondColumnRootNode() public pure returns (NamespaceNode memory) {
-        return NamespaceNode(
-            Namespace(0x00, 0x00000000000000000000000000000000000012131232424324328899),
-            Namespace(0xff, 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffe),
-            0x37a4e02492e5c60e661b531861ae3f45cf4d6ae5237bab37d857b39763373556
-        );
+    function getSecondColumnRootNode()
+        public
+        pure
+        returns (NamespaceNode memory)
+    {
+        return
+            NamespaceNode(
+                Namespace(
+                    0x00,
+                    0x00000000000000000000000000000000000012131232424324328899
+                ),
+                Namespace(
+                    0xff,
+                    0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffe
+                ),
+                0x37a4e02492e5c60e661b531861ae3f45cf4d6ae5237bab37d857b39763373556
+            );
     }
 
     /// @notice the third EDS column root.
-    function getThirdColumnRootNode() public pure returns (NamespaceNode memory) {
-        return NamespaceNode(
-            Namespace(0x00, 0x00000000000000000000000000000000000012131232424324328899),
-            Namespace(0xff, 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffe),
-            0x37a4e02492e5c60e661b531861ae3f45cf4d6ae5237bab37d857b39763373556
-        );
+    function getThirdColumnRootNode()
+        public
+        pure
+        returns (NamespaceNode memory)
+    {
+        return
+            NamespaceNode(
+                Namespace(
+                    0x00,
+                    0x00000000000000000000000000000000000012131232424324328899
+                ),
+                Namespace(
+                    0xff,
+                    0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffe
+                ),
+                0x37a4e02492e5c60e661b531861ae3f45cf4d6ae5237bab37d857b39763373556
+            );
     }
 
     /// @notice the fourth EDS column root.
-    function getFourthColumnRootNode() public pure returns (NamespaceNode memory) {
-        return NamespaceNode(
-            Namespace(0xff, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
-            Namespace(0xff, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
-            0x215bd7509274803c556914e2a4b840826bb8b7d94de9344dfb2c2b0e71ba2d26
-        );
+    function getFourthColumnRootNode()
+        public
+        pure
+        returns (NamespaceNode memory)
+    {
+        return
+            NamespaceNode(
+                Namespace(
+                    0xff,
+                    0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+                ),
+                Namespace(
+                    0xff,
+                    0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+                ),
+                0x215bd7509274803c556914e2a4b840826bb8b7d94de9344dfb2c2b0e71ba2d26
+            );
     }
 
     /// @notice shares to row root proof.
-    function getShareToRowRootProof() public view returns (NamespaceMerkleMultiproof memory) {
+    function getShareToRowRootProof()
+        public
+        view
+        returns (NamespaceMerkleMultiproof memory)
+    {
         return NamespaceMerkleMultiproof(1, 2, shareToRowRootProofSideNodes);
     }
 
     /// @notice row root to data root proof.
-    function getRowRootToDataRootProof() public view returns (BinaryMerkleProof memory) {
+    function getRowRootToDataRootProof()
+        public
+        view
+        returns (BinaryMerkleProof memory)
+    {
         return BinaryMerkleProof(rowRootToDataRootProofSideNodes, 0, 8);
     }
 }

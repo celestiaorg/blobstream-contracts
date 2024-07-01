@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.19;
 
 import "../Types.sol";
 
@@ -18,6 +18,12 @@ struct NamespaceNode {
 /// @param second Second node.
 /// @return `true` is equal, `false otherwise.
 // solhint-disable-next-line func-visibility
-function namespaceNodeEquals(NamespaceNode memory first, NamespaceNode memory second) pure returns (bool) {
-    return first.min.equalTo(second.min) && first.max.equalTo(second.max) && (first.digest == second.digest);
+function namespaceNodeEquals(
+    NamespaceNode memory first,
+    NamespaceNode memory second
+) pure returns (bool) {
+    return
+        first.min.equalTo(second.min) &&
+        first.max.equalTo(second.max) &&
+        (first.digest == second.digest);
 }

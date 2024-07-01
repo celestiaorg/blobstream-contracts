@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.19;
 
 import "ds-test/test.sol";
 
@@ -48,7 +48,10 @@ import "../NamespaceMerkleTree.sol";
 contract NamespaceMerkleMultiproofTest is DSTest {
     function setUp() external {}
 
-    function assertEqNamespaceNode(NamespaceNode memory first, NamespaceNode memory second) internal {
+    function assertEqNamespaceNode(
+        NamespaceNode memory first,
+        NamespaceNode memory second
+    ) internal {
         assertTrue(first.min.equalTo(second.min));
         assertTrue(first.max.equalTo(second.max));
         assertEq(first.digest, second.digest);
@@ -56,21 +59,42 @@ contract NamespaceMerkleMultiproofTest is DSTest {
 
     /// @notice Verify inclusion of leaves 0 and 1.
     function testVerifyMulti01() external {
-        Namespace memory nid = Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010);
+        Namespace memory nid = Namespace(
+            0x00,
+            0x00000000000000000000000000000000000000000000000000000010
+        );
         NamespaceNode memory root = NamespaceNode(
-            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
-            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
+            Namespace(
+                0x00,
+                0x00000000000000000000000000000000000000000000000000000010
+            ),
+            Namespace(
+                0x00,
+                0x00000000000000000000000000000000000000000000000000000010
+            ),
             0x5b3328b03a538d627db78668034089cb395f63d05b24fdf99558d36fe991d268
         );
         NamespaceNode[] memory sideNodes = new NamespaceNode[](3);
         sideNodes[0] = NamespaceNode(
-            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
-            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
+            Namespace(
+                0x00,
+                0x00000000000000000000000000000000000000000000000000000010
+            ),
+            Namespace(
+                0x00,
+                0x00000000000000000000000000000000000000000000000000000010
+            ),
             0xfdb4e3c872666aa9869a1d46c8a5a0e735becdf17c62b9c3ccf4258449475bda
         );
         sideNodes[1] = NamespaceNode(
-            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
-            Namespace(0x00, 0x00000000000000000000000000000000000000000000000000000010),
+            Namespace(
+                0x00,
+                0x00000000000000000000000000000000000000000000000000000010
+            ),
+            Namespace(
+                0x00,
+                0x00000000000000000000000000000000000000000000000000000010
+            ),
             0xc350aeddd5ada629057034f15d4545065213a7a28f9f9b77bdc71c4225145920
         );
         sideNodes[2] = NamespaceNode(
@@ -81,7 +105,11 @@ contract NamespaceMerkleMultiproofTest is DSTest {
 
         uint256 beginKey = 1;
         uint256 endKey = 3;
-        NamespaceMerkleMultiproof memory proof = NamespaceMerkleMultiproof(beginKey, endKey, sideNodes);
+        NamespaceMerkleMultiproof memory proof = NamespaceMerkleMultiproof(
+            beginKey,
+            endKey,
+            sideNodes
+        );
         bytes[] memory data = new bytes[](2);
         data[0] = hex"02";
         data[1] = hex"03";

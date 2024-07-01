@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.19;
 
 import "./Constants.sol";
 
@@ -21,7 +21,10 @@ function getStartingBit(uint256 numLeaves) pure returns (uint256 startingBit) {
 /// @param numLeaves: The total number of leaves in the tree
 /// @return pathLength : The length of the path to the leaf
 // solhint-disable-next-line func-visibility
-function pathLengthFromKey(uint256 key, uint256 numLeaves) pure returns (uint256 pathLength) {
+function pathLengthFromKey(
+    uint256 key,
+    uint256 numLeaves
+) pure returns (uint256 pathLength) {
     if (numLeaves <= 1) {
         // if the number of leaves of the tree is 1 or 0, the path always is 0.
         return 0;
@@ -42,7 +45,12 @@ function pathLengthFromKey(uint256 key, uint256 numLeaves) pure returns (uint256
     }
     // Otherwise, add 1 to height and recurse into right subtree
     else {
-        return 1 + pathLengthFromKey(key - numLeavesLeftSubTree, numLeaves - numLeavesLeftSubTree);
+        return
+            1 +
+            pathLengthFromKey(
+                key - numLeavesLeftSubTree,
+                numLeaves - numLeavesLeftSubTree
+            );
     }
 }
 

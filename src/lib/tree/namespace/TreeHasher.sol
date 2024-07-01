@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.19;
 
 import "../Constants.sol";
 import "../Types.sol";
@@ -7,7 +7,10 @@ import "./NamespaceNode.sol";
 
 /// @notice Get the minimum namespace.
 // solhint-disable-next-line func-visibility
-function namespaceMin(Namespace memory l, Namespace memory r) pure returns (Namespace memory) {
+function namespaceMin(
+    Namespace memory l,
+    Namespace memory r
+) pure returns (Namespace memory) {
     if (l.lessThan(r)) {
         return l;
     } else {
@@ -17,7 +20,10 @@ function namespaceMin(Namespace memory l, Namespace memory r) pure returns (Name
 
 /// @notice Get the maximum namespace.
 // solhint-disable-next-line func-visibility
-function namespaceMax(Namespace memory l, Namespace memory r) pure returns (Namespace memory) {
+function namespaceMax(
+    Namespace memory l,
+    Namespace memory r
+) pure returns (Namespace memory) {
     if (l.greaterThan(r)) {
         return l;
     } else {
@@ -30,8 +36,13 @@ function namespaceMax(Namespace memory l, Namespace memory r) pure returns (Name
 /// @param data Raw data of the leaf.
 /// @dev More details in https://github.com/celestiaorg/celestia-specs/blob/master/src/specs/data_structures.md#namespace-merkle-tree
 // solhint-disable-next-line func-visibility
-function leafDigest(Namespace memory namespace, bytes memory data) pure returns (NamespaceNode memory) {
-    bytes32 digest = sha256(abi.encodePacked(Constants.LEAF_PREFIX, namespace.toBytes(), data));
+function leafDigest(
+    Namespace memory namespace,
+    bytes memory data
+) pure returns (NamespaceNode memory) {
+    bytes32 digest = sha256(
+        abi.encodePacked(Constants.LEAF_PREFIX, namespace.toBytes(), data)
+    );
     NamespaceNode memory node = NamespaceNode(namespace, namespace, digest);
     return node;
 }
@@ -41,7 +52,10 @@ function leafDigest(Namespace memory namespace, bytes memory data) pure returns 
 /// @param r Right child.
 /// @dev More details in https://github.com/celestiaorg/celestia-specs/blob/master/src/specs/data_structures.md#namespace-merkle-tree
 // solhint-disable-next-line func-visibility
-function nodeDigest(NamespaceNode memory l, NamespaceNode memory r) pure returns (NamespaceNode memory) {
+function nodeDigest(
+    NamespaceNode memory l,
+    NamespaceNode memory r
+) pure returns (NamespaceNode memory) {
     Namespace memory min = namespaceMin(l.min, r.min);
     Namespace memory max;
     if (l.min.equalTo(PARITY_SHARE_NAMESPACE())) {

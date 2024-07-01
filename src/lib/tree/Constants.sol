@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.19;
 
 import "./Types.sol";
 
@@ -19,5 +19,9 @@ library Constants {
 /// @dev Parity share namespace.
 /// utility function to provide the parity share namespace as a Namespace struct.
 function PARITY_SHARE_NAMESPACE() pure returns (Namespace memory) {
-    return Namespace(0xFF, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF);
+    return
+        Namespace(
+            0xFF,
+            0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+        );
 }

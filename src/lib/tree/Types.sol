@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.19;
 
 /// @notice A representation of the Celestia-app namespace ID and its version.
 /// See: https://celestiaorg.github.io/celestia-app/specs/namespace.html
@@ -20,7 +20,10 @@ function lessThan(Namespace memory l, Namespace memory r) pure returns (bool) {
     return l.toBytes() < r.toBytes();
 }
 
-function greaterThan(Namespace memory l, Namespace memory r) pure returns (bool) {
+function greaterThan(
+    Namespace memory l,
+    Namespace memory r
+) pure returns (bool) {
     return l.toBytes() > r.toBytes();
 }
 

@@ -5,7 +5,7 @@ import fs from "fs";
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.22",
+    version: "0.8.19",
     settings: {
       optimizer: {
         enabled: true,

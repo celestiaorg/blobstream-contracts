@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.19;
 
 import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import "openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
@@ -36,7 +36,12 @@ struct Signature {
 /// block headers.
 /// @dev DO NOT REMOVE INHERITANCE OF THE FOLLOWING CONTRACTS: Initializable, UUPSUpgradeable and
 /// OwnableUpgradeable! They're essential for upgradability.
-contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgradeable {
+contract Blobstream is
+    IDAOracle,
+    Initializable,
+    UUPSUpgradeable,
+    OwnableUpgradeable
+{
     // Don't change the order of state for working upgrades AND BE AWARE OF
     // INHERITANCE VARIABLES! Inherited contracts contain storage slots and must
     // be accounted for in any upgrades. Always test an exact upgrade on testnet
@@ -63,14 +68,21 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
     /// @param nonce Event nonce.
     /// @param dataRootTupleRoot Merkle root of relayed data root tuples.
     /// See `submitDataRootTupleRoot`.
-    event DataRootTupleRootEvent(uint256 indexed nonce, bytes32 dataRootTupleRoot);
+    event DataRootTupleRootEvent(
+        uint256 indexed nonce,
+        bytes32 dataRootTupleRoot
+    );
 
     /// @notice Emitted when the validator set is updated.
     /// @param nonce Event nonce.
     /// @param powerThreshold New voting power threshold.
     /// @param validatorSetHash Hash of new validator set.
     /// See `updateValidatorSet`.
-    event ValidatorSetUpdatedEvent(uint256 indexed nonce, uint256 powerThreshold, bytes32 validatorSetHash);
+    event ValidatorSetUpdatedEvent(
+        uint256 indexed nonce,
+        uint256 powerThreshold,
+        bytes32 validatorSetHash
+    );
 
     ////////////
     // Errors //
@@ -105,7 +117,11 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
     /// to be the genesis validator set of the bridged chain, only the initial
     /// validator set of the bridge.
     /// @dev DO NOT REMOVE THE INITIALIZER! It is mandatory for upgradability.
-    function initialize(uint256 _nonce, uint256 _powerThreshold, bytes32 _validatorSetCheckpoint) public initializer {
+    function initialize(
+        uint256 _nonce,
+        uint256 _powerThreshold,
+        bytes32 _validatorSetCheckpoint
+    ) public initializer {
         // EFFECTS
 
         state_eventNonce = _nonce;
@@ -129,7 +145,11 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
     }
 
     /// @notice Utility function to verify EIP-191 signatures.
-    function verifySig(address _signer, bytes32 _digest, Signature calldata _sig) private pure returns (bool) {
+    function verifySig(
+        address _signer,
+        bytes32 _digest,
+        Signature calldata _sig
+    ) private pure returns (bool) {
         bytes32 digest_eip191 = ECDSA.toEthSignedMessageHash(_digest);
 
         return _signer == ECDSA.recover(digest_eip191, _sig.v, _sig.r, _sig.s);
@@ -137,7 +157,9 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
 
     /// @dev Computes the hash of a validator set.
     /// @param _validators The validator set to hash.
-    function computeValidatorSetHash(Validator[] calldata _validators) private pure returns (bytes32) {
+    function computeValidatorSetHash(
+        Validator[] calldata _validators
+    ) private pure returns (bytes32) {
         return keccak256(abi.encode(_validators));
     }
 
@@ -149,13 +171,19 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
     /// @param _nonce Nonce.
     /// @param _powerThreshold The voting power threshold.
     /// @param _validatorSetHash Validator set hash.
-    function domainSeparateValidatorSetHash(uint256 _nonce, uint256 _powerThreshold, bytes32 _validatorSetHash)
-        private
-        pure
-        returns (bytes32)
-    {
-        bytes32 c =
-            keccak256(abi.encode(VALIDATOR_SET_HASH_DOMAIN_SEPARATOR, _nonce, _powerThreshold, _validatorSetHash));
+    function domainSeparateValidatorSetHash(
+        uint256 _nonce,
+        uint256 _powerThreshold,
+        bytes32 _validatorSetHash
+    ) private pure returns (bytes32) {
+        bytes32 c = keccak256(
+            abi.encode(
+                VALIDATOR_SET_HASH_DOMAIN_SEPARATOR,
+                _nonce,
+                _powerThreshold,
+                _validatorSetHash
+            )
+        );
 
         return c;
     }
@@ -166,12 +194,17 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
     ///     keccak256(DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, nonce, dataRootTupleRoot)
     /// @param _nonce Event nonce.
     /// @param _dataRootTupleRoot Data root tuple root.
-    function domainSeparateDataRootTupleRoot(uint256 _nonce, bytes32 _dataRootTupleRoot)
-        private
-        pure
-        returns (bytes32)
-    {
-        bytes32 c = keccak256(abi.encode(DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _nonce, _dataRootTupleRoot));
+    function domainSeparateDataRootTupleRoot(
+        uint256 _nonce,
+        bytes32 _dataRootTupleRoot
+    ) private pure returns (bytes32) {
+        bytes32 c = keccak256(
+            abi.encode(
+                DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR,
+                _nonce,
+                _dataRootTupleRoot
+            )
+        );
 
         return c;
     }
@@ -255,17 +288,31 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
         }
 
         // Check that the supplied current validator set matches the saved checkpoint.
-        bytes32 currentValidatorSetHash = computeValidatorSetHash(_currentValidatorSet);
+        bytes32 currentValidatorSetHash = computeValidatorSetHash(
+            _currentValidatorSet
+        );
         if (
-            domainSeparateValidatorSetHash(_oldNonce, currentPowerThreshold, currentValidatorSetHash)
-                != lastValidatorSetCheckpoint
+            domainSeparateValidatorSetHash(
+                _oldNonce,
+                currentPowerThreshold,
+                currentValidatorSetHash
+            ) != lastValidatorSetCheckpoint
         ) {
             revert SuppliedValidatorSetInvalid();
         }
 
         // Check that enough current validators have signed off on the new validator set.
-        bytes32 newCheckpoint = domainSeparateValidatorSetHash(_newNonce, _newPowerThreshold, _newValidatorSetHash);
-        checkValidatorSignatures(_currentValidatorSet, _sigs, newCheckpoint, currentPowerThreshold);
+        bytes32 newCheckpoint = domainSeparateValidatorSetHash(
+            _newNonce,
+            _newPowerThreshold,
+            _newValidatorSetHash
+        );
+        checkValidatorSignatures(
+            _currentValidatorSet,
+            _sigs,
+            newCheckpoint,
+            currentPowerThreshold
+        );
 
         // EFFECTS
 
@@ -275,7 +322,11 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
 
         // LOGS
 
-        emit ValidatorSetUpdatedEvent(_newNonce, _newPowerThreshold, _newValidatorSetHash);
+        emit ValidatorSetUpdatedEvent(
+            _newNonce,
+            _newPowerThreshold,
+            _newValidatorSetHash
+        );
     }
 
     /// @notice Relays a root of Celestia data root tuples to an EVM chain. Anyone
@@ -320,18 +371,31 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
         }
 
         // Check that the supplied current validator set matches the saved checkpoint.
-        bytes32 currentValidatorSetHash = computeValidatorSetHash(_currentValidatorSet);
+        bytes32 currentValidatorSetHash = computeValidatorSetHash(
+            _currentValidatorSet
+        );
         if (
-            domainSeparateValidatorSetHash(_validatorSetNonce, currentPowerThreshold, currentValidatorSetHash)
-                != lastValidatorSetCheckpoint
+            domainSeparateValidatorSetHash(
+                _validatorSetNonce,
+                currentPowerThreshold,
+                currentValidatorSetHash
+            ) != lastValidatorSetCheckpoint
         ) {
             revert SuppliedValidatorSetInvalid();
         }
 
         // Check that enough current validators have signed off on the data
         // root tuple root and nonce.
-        bytes32 c = domainSeparateDataRootTupleRoot(_newNonce, _dataRootTupleRoot);
-        checkValidatorSignatures(_currentValidatorSet, _sigs, c, currentPowerThreshold);
+        bytes32 c = domainSeparateDataRootTupleRoot(
+            _newNonce,
+            _dataRootTupleRoot
+        );
+        checkValidatorSignatures(
+            _currentValidatorSet,
+            _sigs,
+            c,
+            currentPowerThreshold
+        );
 
         // EFFECTS
 
@@ -344,12 +408,11 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
     }
 
     /// @dev see "./IDAOracle.sol"
-    function verifyAttestation(uint256 _tupleRootNonce, DataRootTuple memory _tuple, BinaryMerkleProof memory _proof)
-        external
-        view
-        override
-        returns (bool)
-    {
+    function verifyAttestation(
+        uint256 _tupleRootNonce,
+        DataRootTuple memory _tuple,
+        BinaryMerkleProof memory _proof
+    ) external view override returns (bool) {
         // Tuple must have been committed before.
         if (_tupleRootNonce > state_eventNonce) {
             return false;
@@ -359,7 +422,11 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
         bytes32 root = state_dataRootTupleRoots[_tupleRootNonce];
 
         // Verify the proof.
-        (bool isProofValid,) = BinaryMerkleTree.verify(root, _proof, abi.encode(_tuple));
+        (bool isProofValid, ) = BinaryMerkleTree.verify(
+            root,
+            _proof,
+            abi.encode(_tuple)
+        );
 
         return isProofValid;
     }

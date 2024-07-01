@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.19;
 
 import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 
@@ -80,15 +80,20 @@ library DAVerifier {
     /// @param _sharesProof The proof of the shares to the data root tuple root.
     /// @return `true` if the proof is valid, `false` otherwise.
     /// @return an error code if the proof is invalid, ErrorCodes.NoError otherwise.
-    function verifySharesToDataRootTupleRoot(IDAOracle _bridge, SharesProof memory _sharesProof)
-        internal
-        view
-        returns (bool, ErrorCodes)
-    {
+    function verifySharesToDataRootTupleRoot(
+        IDAOracle _bridge,
+        SharesProof memory _sharesProof
+    ) internal view returns (bool, ErrorCodes) {
         // checking that the data root was committed to by the Blobstream smart contract.
-        (bool success, ErrorCodes errorCode) = verifyMultiRowRootsToDataRootTupleRoot(
-            _bridge, _sharesProof.rowRoots, _sharesProof.rowProofs, _sharesProof.attestationProof
-        );
+        (
+            bool success,
+            ErrorCodes errorCode
+        ) = verifyMultiRowRootsToDataRootTupleRoot(
+                _bridge,
+                _sharesProof.rowRoots,
+                _sharesProof.rowProofs,
+                _sharesProof.attestationProof
+            );
         if (!success) {
             return (false, errorCode);
         }
@@ -124,7 +129,14 @@ library DAVerifier {
         bytes32 _root
     ) internal pure returns (bool, ErrorCodes) {
         // verifying the row root to data root tuple root proof.
-        (bool success, ErrorCodes errorCode) = verifyMultiRowRootsToDataRootTupleRootProof(_rowRoots, _rowProofs, _root);
+        (
+            bool success,
+            ErrorCodes errorCode
+        ) = verifyMultiRowRootsToDataRootTupleRootProof(
+                _rowRoots,
+                _rowProofs,
+                _root
+            );
         if (!success) {
             return (false, errorCode);
         }
@@ -136,7 +148,9 @@ library DAVerifier {
 
         uint256 numberOfSharesInProofs = 0;
         for (uint256 i = 0; i < _shareProofs.length; i++) {
-            numberOfSharesInProofs += _shareProofs[i].endKey - _shareProofs[i].beginKey;
+            numberOfSharesInProofs +=
+                _shareProofs[i].endKey -
+                _shareProofs[i].beginKey;
         }
 
         if (_data.length != numberOfSharesInProofs) {
@@ -145,12 +159,24 @@ library DAVerifier {
 
         uint256 cursor = 0;
         for (uint256 i = 0; i < _shareProofs.length; i++) {
-            uint256 sharesUsed = _shareProofs[i].endKey - _shareProofs[i].beginKey;
-            (bytes[] memory s, ErrorCodes err) = slice(_data, cursor, cursor + sharesUsed);
+            uint256 sharesUsed = _shareProofs[i].endKey -
+                _shareProofs[i].beginKey;
+            (bytes[] memory s, ErrorCodes err) = slice(
+                _data,
+                cursor,
+                cursor + sharesUsed
+            );
             if (err != ErrorCodes.NoError) {
                 return (false, err);
             }
-            if (!NamespaceMerkleTree.verifyMulti(_rowRoots[i], _shareProofs[i], _namespace, s)) {
+            if (
+                !NamespaceMerkleTree.verifyMulti(
+                    _rowRoots[i],
+                    _shareProofs[i],
+                    _namespace,
+                    s
+                )
+            ) {
                 return (false, ErrorCodes.InvalidSharesToRowsProof);
             }
             cursor += sharesUsed;
@@ -174,14 +200,22 @@ library DAVerifier {
         // checking that the data root was committed to by the Blobstream smart contract
         if (
             !_bridge.verifyAttestation(
-                _attestationProof.tupleRootNonce, _attestationProof.tuple, _attestationProof.proof
+                _attestationProof.tupleRootNonce,
+                _attestationProof.tuple,
+                _attestationProof.proof
             )
         ) {
-            return (false, ErrorCodes.InvalidDataRootTupleToDataRootTupleRootProof);
+            return (
+                false,
+                ErrorCodes.InvalidDataRootTupleToDataRootTupleRootProof
+            );
         }
 
-        (bool valid, ErrorCodes error) =
-            verifyRowRootToDataRootTupleRootProof(_rowRoot, _rowProof, _attestationProof.tuple.dataRoot);
+        (bool valid, ErrorCodes error) = verifyRowRootToDataRootTupleRootProof(
+            _rowRoot,
+            _rowProof,
+            _attestationProof.tuple.dataRoot
+        );
 
         return (valid, error);
     }
@@ -198,8 +232,12 @@ library DAVerifier {
         BinaryMerkleProof memory _rowProof,
         bytes32 _root
     ) internal pure returns (bool, ErrorCodes) {
-        bytes memory rowRoot = abi.encodePacked(_rowRoot.min.toBytes(), _rowRoot.max.toBytes(), _rowRoot.digest);
-        (bool valid,) = BinaryMerkleTree.verify(_root, _rowProof, rowRoot);
+        bytes memory rowRoot = abi.encodePacked(
+            _rowRoot.min.toBytes(),
+            _rowRoot.max.toBytes(),
+            _rowRoot.digest
+        );
+        (bool valid, ) = BinaryMerkleTree.verify(_root, _rowProof, rowRoot);
         if (!valid) {
             return (false, ErrorCodes.InvalidRowToDataRootProof);
         }
@@ -222,15 +260,26 @@ library DAVerifier {
         // checking that the data root was committed to by the Blobstream smart contract
         if (
             !_bridge.verifyAttestation(
-                _attestationProof.tupleRootNonce, _attestationProof.tuple, _attestationProof.proof
+                _attestationProof.tupleRootNonce,
+                _attestationProof.tuple,
+                _attestationProof.proof
             )
         ) {
-            return (false, ErrorCodes.InvalidDataRootTupleToDataRootTupleRootProof);
+            return (
+                false,
+                ErrorCodes.InvalidDataRootTupleToDataRootTupleRootProof
+            );
         }
 
         // checking that the rows roots commit to the data root.
-        (bool valid, ErrorCodes error) =
-            verifyMultiRowRootsToDataRootTupleRootProof(_rowRoots, _rowProofs, _attestationProof.tuple.dataRoot);
+        (
+            bool valid,
+            ErrorCodes error
+        ) = verifyMultiRowRootsToDataRootTupleRootProof(
+                _rowRoots,
+                _rowProofs,
+                _attestationProof.tuple.dataRoot
+            );
 
         return (valid, error);
     }
@@ -253,9 +302,16 @@ library DAVerifier {
         }
 
         for (uint256 i = 0; i < _rowProofs.length; i++) {
-            bytes memory rowRoot =
-                abi.encodePacked(_rowRoots[i].min.toBytes(), _rowRoots[i].max.toBytes(), _rowRoots[i].digest);
-            (bool valid,) = BinaryMerkleTree.verify(_root, _rowProofs[i], rowRoot);
+            bytes memory rowRoot = abi.encodePacked(
+                _rowRoots[i].min.toBytes(),
+                _rowRoots[i].max.toBytes(),
+                _rowRoots[i].digest
+            );
+            (bool valid, ) = BinaryMerkleTree.verify(
+                _root,
+                _rowProofs[i],
+                rowRoot
+            );
             if (!valid) {
                 return (false, ErrorCodes.InvalidRowsToDataRootProof);
             }
@@ -273,11 +329,9 @@ library DAVerifier {
     /// @param _proof The proof of the row/column root to the data root.
     /// @return The square size of the corresponding block.
     /// @return an error code if the _proof is invalid, Errors.NoError otherwise.
-    function computeSquareSizeFromRowProof(BinaryMerkleProof memory _proof)
-        internal
-        pure
-        returns (uint256, ErrorCodes)
-    {
+    function computeSquareSizeFromRowProof(
+        BinaryMerkleProof memory _proof
+    ) internal pure returns (uint256, ErrorCodes) {
         if (_proof.numLeaves % 4 != 0) {
             return (0, ErrorCodes.InvalidNumberOfLeavesInProof);
         }
@@ -294,7 +348,9 @@ library DAVerifier {
     /// Note: the minimum square size is 1. Thus, we don't expect the proof not to contain any side node.
     /// @param _proof The proof of the shares to the row/column root.
     /// @return The square size of the corresponding block.
-    function computeSquareSizeFromShareProof(NamespaceMerkleMultiproof memory _proof) internal pure returns (uint256) {
+    function computeSquareSizeFromShareProof(
+        NamespaceMerkleMultiproof memory _proof
+    ) internal pure returns (uint256) {
         uint256 extendedSquareRowSize = 2 ** _proof.sideNodes.length;
         // we divide the extended square row size by 2 because the square size is the
         // the size of the row of the original square size.
@@ -308,11 +364,11 @@ library DAVerifier {
     /// @param _begin The beginning of the range (inclusive).
     /// @param _end The ending of the range (exclusive).
     /// @return _ the sliced data.
-    function slice(bytes[] memory _data, uint256 _begin, uint256 _end)
-        internal
-        pure
-        returns (bytes[] memory, ErrorCodes)
-    {
+    function slice(
+        bytes[] memory _data,
+        uint256 _begin,
+        uint256 _end
+    ) internal pure returns (bytes[] memory, ErrorCodes) {
         if (_begin > _end) {
             return (_data, ErrorCodes.InvalidRange);
         }

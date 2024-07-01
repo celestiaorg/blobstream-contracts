@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.19;
 
 import "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 
@@ -13,13 +13,18 @@ import "ds-test/test.sol";
 interface CheatCodes {
     function addr(uint256 privateKey) external returns (address);
 
-    function sign(uint256 privateKey, bytes32 digest) external returns (uint8 v, bytes32 r, bytes32 s);
+    function sign(
+        uint256 privateKey,
+        bytes32 digest
+    ) external returns (uint8 v, bytes32 r, bytes32 s);
 }
 
 contract RelayerTest is DSTest {
     // Private keys used for test signatures.
-    uint256 constant testPriv1 = 0x64a1d6f0e760a8d62b4afdde4096f16f51b401eaaecc915740f71770ea76a8ad;
-    uint256 constant testPriv2 = 0x6e8bdfa979ab645b41c4d17cb1329b2a44684c82b61b1b060ea9b6e1c927a4f4;
+    uint256 constant testPriv1 =
+        0x64a1d6f0e760a8d62b4afdde4096f16f51b401eaaecc915740f71770ea76a8ad;
+    uint256 constant testPriv2 =
+        0x6e8bdfa979ab645b41c4d17cb1329b2a44684c82b61b1b060ea9b6e1c927a4f4;
 
     Blobstream bridge;
 
@@ -34,9 +39,17 @@ contract RelayerTest is DSTest {
 
         validators.push(Validator(cheats.addr(testPriv1), votingPower));
         bytes32 hash = computeValidatorSetHash(validators);
-        bytes32 validatorSetCheckpoint = domainSeparateValidatorSetHash(initialValsetNonce, (2 * votingPower) / 3, hash);
+        bytes32 validatorSetCheckpoint = domainSeparateValidatorSetHash(
+            initialValsetNonce,
+            (2 * votingPower) / 3,
+            hash
+        );
         bridge = new Blobstream();
-        bridge.initialize(initialValsetNonce, (2 * votingPower) / 3, validatorSetCheckpoint);
+        bridge.initialize(
+            initialValsetNonce,
+            (2 * votingPower) / 3,
+            validatorSetCheckpoint
+        );
     }
 
     function testUpdateValidatorSet() public {
@@ -51,7 +64,11 @@ contract RelayerTest is DSTest {
         votingPower += votingPower;
         uint256 newPowerThreshold = (2 * votingPower) / 3;
         bytes32 newVSHash = keccak256(abi.encode(validators));
-        bytes32 newCheckpoint = domainSeparateValidatorSetHash(newNonce, newPowerThreshold, newVSHash);
+        bytes32 newCheckpoint = domainSeparateValidatorSetHash(
+            newNonce,
+            newPowerThreshold,
+            newVSHash
+        );
 
         // Signature for the first validator set update.
         Signature[] memory sigs = new Signature[](1);
@@ -59,7 +76,14 @@ contract RelayerTest is DSTest {
         (uint8 v, bytes32 r, bytes32 s) = cheats.sign(testPriv1, digest_eip191);
         sigs[0] = Signature(v, r, s);
 
-        bridge.updateValidatorSet(newNonce, initialValsetNonce, newPowerThreshold, newVSHash, oldVS, sigs);
+        bridge.updateValidatorSet(
+            newNonce,
+            initialValsetNonce,
+            newPowerThreshold,
+            newVSHash,
+            oldVS,
+            sigs
+        );
 
         assertEq(bridge.state_eventNonce(), newNonce);
         assertEq(bridge.state_powerThreshold(), newPowerThreshold);
@@ -72,18 +96,29 @@ contract RelayerTest is DSTest {
         // 32 bytes, chosen at random.
         bytes32 newTupleRoot = 0x0de92bac0b356560d821f8e7b6f5c9fe4f3f88f6c822283efd7ab51ad56a640e;
 
-        bytes32 newDataRootTupleRoot = domainSeparateDataRootTupleRoot(nonce, newTupleRoot);
+        bytes32 newDataRootTupleRoot = domainSeparateDataRootTupleRoot(
+            nonce,
+            newTupleRoot
+        );
 
         // Signature for the update.
         Signature[] memory sigs = new Signature[](1);
-        bytes32 digest_eip191 = ECDSA.toEthSignedMessageHash(newDataRootTupleRoot);
+        bytes32 digest_eip191 = ECDSA.toEthSignedMessageHash(
+            newDataRootTupleRoot
+        );
         (uint8 v, bytes32 r, bytes32 s) = cheats.sign(testPriv1, digest_eip191);
         sigs[0] = Signature(v, r, s);
 
         Validator[] memory valSet = new Validator[](1);
         valSet[0] = Validator(cheats.addr(testPriv1), votingPower);
 
-        bridge.submitDataRootTupleRoot(nonce, initialValsetNonce, newTupleRoot, valSet, sigs);
+        bridge.submitDataRootTupleRoot(
+            nonce,
+            initialValsetNonce,
+            newTupleRoot,
+            valSet,
+            sigs
+        );
 
         assertEq(bridge.state_eventNonce(), nonce);
         assertEq(bridge.state_dataRootTupleRoots(nonce), newTupleRoot);
@@ -97,25 +132,47 @@ contract RelayerTest is DSTest {
         valSet[0] = Validator(cheats.addr(testPriv1), votingPower);
 
         bytes32 hash = computeValidatorSetHash(valSet);
-        bytes32 validatorSetCheckpoint = domainSeparateValidatorSetHash(initialValsetNonce, (2 * votingPower) / 3, hash);
+        bytes32 validatorSetCheckpoint = domainSeparateValidatorSetHash(
+            initialValsetNonce,
+            (2 * votingPower) / 3,
+            hash
+        );
         Blobstream newBridge = new Blobstream();
-        newBridge.initialize(targetNonce, (2 * votingPower) / 3, validatorSetCheckpoint);
+        newBridge.initialize(
+            targetNonce,
+            (2 * votingPower) / 3,
+            validatorSetCheckpoint
+        );
 
         // 32 bytes, chosen at random.
         bytes32 newTupleRoot = 0x0de92bac0b356560d821f8e7b6f5c9fe4f3f88f6c822283efd7ab51ad56a640e;
 
-        bytes32 newDataRootTupleRoot = domainSeparateDataRootTupleRoot(targetNonce + 1, newTupleRoot);
+        bytes32 newDataRootTupleRoot = domainSeparateDataRootTupleRoot(
+            targetNonce + 1,
+            newTupleRoot
+        );
 
         // Signature for the update.
         Signature[] memory sigs = new Signature[](1);
-        bytes32 digest_eip191 = ECDSA.toEthSignedMessageHash(newDataRootTupleRoot);
+        bytes32 digest_eip191 = ECDSA.toEthSignedMessageHash(
+            newDataRootTupleRoot
+        );
         (uint8 v, bytes32 r, bytes32 s) = cheats.sign(testPriv1, digest_eip191);
         sigs[0] = Signature(v, r, s);
 
-        newBridge.submitDataRootTupleRoot(targetNonce + 1, initialValsetNonce, newTupleRoot, valSet, sigs);
+        newBridge.submitDataRootTupleRoot(
+            targetNonce + 1,
+            initialValsetNonce,
+            newTupleRoot,
+            valSet,
+            sigs
+        );
 
         assertEq(newBridge.state_eventNonce(), targetNonce + 1);
-        assertEq(newBridge.state_dataRootTupleRoots(targetNonce + 1), newTupleRoot);
+        assertEq(
+            newBridge.state_dataRootTupleRoots(targetNonce + 1),
+            newTupleRoot
+        );
     }
 
     /*
@@ -141,25 +198,40 @@ contract RelayerTest is DSTest {
         uint256 height = 1;
         // the binary merkle proof of the data root to the data root tuple root.
         bytes32[] memory sideNodes = new bytes32[](2);
-        sideNodes[0] = 0x98ce42deef51d40269d542f5314bef2c7468d401ad5d85168bfab4c0108f75f7;
-        sideNodes[1] = 0x575664048c9e64260eca2304d177b11d1566d0c954f1417fc76a4f9f27350063;
+        sideNodes[
+            0
+        ] = 0x98ce42deef51d40269d542f5314bef2c7468d401ad5d85168bfab4c0108f75f7;
+        sideNodes[
+            1
+        ] = 0x575664048c9e64260eca2304d177b11d1566d0c954f1417fc76a4f9f27350063;
         BinaryMerkleProof memory newTupleProof;
         newTupleProof.sideNodes = sideNodes;
         newTupleProof.key = 1;
         newTupleProof.numLeaves = 4;
 
-        bytes32 newDataRootTupleRoot = domainSeparateDataRootTupleRoot(nonce, newTupleRoot);
+        bytes32 newDataRootTupleRoot = domainSeparateDataRootTupleRoot(
+            nonce,
+            newTupleRoot
+        );
 
         // Signature for the update.
         Signature[] memory sigs = new Signature[](1);
-        bytes32 digest_eip191 = ECDSA.toEthSignedMessageHash(newDataRootTupleRoot);
+        bytes32 digest_eip191 = ECDSA.toEthSignedMessageHash(
+            newDataRootTupleRoot
+        );
         (uint8 v, bytes32 r, bytes32 s) = cheats.sign(testPriv1, digest_eip191);
         sigs[0] = Signature(v, r, s);
 
         Validator[] memory valSet = new Validator[](1);
         valSet[0] = Validator(cheats.addr(testPriv1), votingPower);
 
-        bridge.submitDataRootTupleRoot(nonce, initialValsetNonce, newTupleRoot, valSet, sigs);
+        bridge.submitDataRootTupleRoot(
+            nonce,
+            initialValsetNonce,
+            newTupleRoot,
+            valSet,
+            sigs
+        );
 
         assertEq(bridge.state_eventNonce(), nonce);
         assertEq(bridge.state_dataRootTupleRoots(nonce), newTupleRoot);
@@ -173,27 +245,40 @@ contract RelayerTest is DSTest {
         assertTrue(committedTo);
     }
 
-    function computeValidatorSetHash(Validator[] memory _validators) private pure returns (bytes32) {
+    function computeValidatorSetHash(
+        Validator[] memory _validators
+    ) private pure returns (bytes32) {
         return keccak256(abi.encode(_validators));
     }
 
-    function domainSeparateValidatorSetHash(uint256 _nonce, uint256 _powerThreshold, bytes32 _validatorSetHash)
-        private
-        pure
-        returns (bytes32)
-    {
-        bytes32 c =
-            keccak256(abi.encode(VALIDATOR_SET_HASH_DOMAIN_SEPARATOR, _nonce, _powerThreshold, _validatorSetHash));
+    function domainSeparateValidatorSetHash(
+        uint256 _nonce,
+        uint256 _powerThreshold,
+        bytes32 _validatorSetHash
+    ) private pure returns (bytes32) {
+        bytes32 c = keccak256(
+            abi.encode(
+                VALIDATOR_SET_HASH_DOMAIN_SEPARATOR,
+                _nonce,
+                _powerThreshold,
+                _validatorSetHash
+            )
+        );
 
         return c;
     }
 
-    function domainSeparateDataRootTupleRoot(uint256 _nonce, bytes32 _dataRootTupleRoot)
-        private
-        pure
-        returns (bytes32)
-    {
-        bytes32 c = keccak256(abi.encode(DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR, _nonce, _dataRootTupleRoot));
+    function domainSeparateDataRootTupleRoot(
+        uint256 _nonce,
+        bytes32 _dataRootTupleRoot
+    ) private pure returns (bytes32) {
+        bytes32 c = keccak256(
+            abi.encode(
+                DATA_ROOT_TUPLE_ROOT_DOMAIN_SEPARATOR,
+                _nonce,
+                _dataRootTupleRoot
+            )
+        );
 
         return c;
     }

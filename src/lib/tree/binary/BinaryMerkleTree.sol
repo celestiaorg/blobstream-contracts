@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.22;
+pragma solidity ^0.8.19;
 
 import "../Constants.sol";
 import "../Utils.sol";
@@ -36,17 +36,20 @@ library BinaryMerkleTree {
     /// @param data The data of the leaf to verify.
     /// @return `true` is proof is valid, `false` otherwise.
     /// @dev proof.numLeaves is necessary to determine height of subtree containing the data to prove.
-    function verify(bytes32 root, BinaryMerkleProof memory proof, bytes memory data)
-        internal
-        pure
-        returns (bool, ErrorCodes)
-    {
+    function verify(
+        bytes32 root,
+        BinaryMerkleProof memory proof,
+        bytes memory data
+    ) internal pure returns (bool, ErrorCodes) {
         // Check proof is correct length for the key it is proving
         if (proof.numLeaves <= 1) {
             if (proof.sideNodes.length != 0) {
                 return (false, ErrorCodes.InvalidNumberOfSideNodes);
             }
-        } else if (proof.sideNodes.length != pathLengthFromKey(proof.key, proof.numLeaves)) {
+        } else if (
+            proof.sideNodes.length !=
+            pathLengthFromKey(proof.key, proof.numLeaves)
+        ) {
             return (false, ErrorCodes.InvalidNumberOfSideNodes);
         }
 
@@ -68,7 +71,12 @@ library BinaryMerkleTree {
             }
         }
 
-        (bytes32 computedHash, ErrorCodes error) = computeRootHash(proof.key, proof.numLeaves, digest, proof.sideNodes);
+        (bytes32 computedHash, ErrorCodes error) = computeRootHash(
+            proof.key,
+            proof.numLeaves,
+            digest,
+            proof.sideNodes
+        );
 
         if (error != ErrorCodes.NoError) {
             return (false, error);
@@ -80,11 +88,12 @@ library BinaryMerkleTree {
     /// @notice Use the leafHash and innerHashes to get the root merkle hash.
     /// If the length of the innerHashes slice isn't exactly correct, the result is nil.
     /// Recursive impl.
-    function computeRootHash(uint256 key, uint256 numLeaves, bytes32 leafHash, bytes32[] memory sideNodes)
-        private
-        pure
-        returns (bytes32, ErrorCodes)
-    {
+    function computeRootHash(
+        uint256 key,
+        uint256 numLeaves,
+        bytes32 leafHash,
+        bytes32[] memory sideNodes
+    ) private pure returns (bytes32, ErrorCodes) {
         if (numLeaves == 0) {
             return (leafHash, ErrorCodes.InvalidNumberOfLeavesInProof);
         }
@@ -98,22 +107,42 @@ library BinaryMerkleTree {
             return (leafHash, ErrorCodes.ExpectedAtLeastOneInnerHash);
         }
         uint256 numLeft = _getSplitPoint(numLeaves);
-        bytes32[] memory sideNodesLeft = slice(sideNodes, 0, sideNodes.length - 1);
+        bytes32[] memory sideNodesLeft = slice(
+            sideNodes,
+            0,
+            sideNodes.length - 1
+        );
         ErrorCodes error;
         if (key < numLeft) {
             bytes32 leftHash;
-            (leftHash, error) = computeRootHash(key, numLeft, leafHash, sideNodesLeft);
+            (leftHash, error) = computeRootHash(
+                key,
+                numLeft,
+                leafHash,
+                sideNodesLeft
+            );
             if (error != ErrorCodes.NoError) {
                 return (leafHash, error);
             }
-            return (nodeDigest(leftHash, sideNodes[sideNodes.length - 1]), ErrorCodes.NoError);
+            return (
+                nodeDigest(leftHash, sideNodes[sideNodes.length - 1]),
+                ErrorCodes.NoError
+            );
         }
         bytes32 rightHash;
-        (rightHash, error) = computeRootHash(key - numLeft, numLeaves - numLeft, leafHash, sideNodesLeft);
+        (rightHash, error) = computeRootHash(
+            key - numLeft,
+            numLeaves - numLeft,
+            leafHash,
+            sideNodesLeft
+        );
         if (error != ErrorCodes.NoError) {
             return (leafHash, error);
         }
-        return (nodeDigest(sideNodes[sideNodes.length - 1], rightHash), ErrorCodes.NoError);
+        return (
+            nodeDigest(sideNodes[sideNodes.length - 1], rightHash),
+            ErrorCodes.NoError
+        );
     }
 
     /// @notice creates a slice of bytes32 from the data slice of bytes32 containing the elements
@@ -123,7 +152,11 @@ library BinaryMerkleTree {
     /// @param _begin The beginning of the range (inclusive).
     /// @param _end The ending of the range (exclusive).
     /// @return _ the sliced data.
-    function slice(bytes32[] memory _data, uint256 _begin, uint256 _end) internal pure returns (bytes32[] memory) {
+    function slice(
+        bytes32[] memory _data,
+        uint256 _begin,
+        uint256 _end
+    ) internal pure returns (bytes32[] memory) {
         if (_begin > _end) {
             revert("Invalid range: _begin is greater than _end");
         }
