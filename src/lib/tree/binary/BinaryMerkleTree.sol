@@ -110,7 +110,13 @@ library BinaryMerkleTree {
             proofRangeSubtreeEstimate = 1;
         }
 
-        return false;
+        (bytes32 rootHash, uint256 proofHead,,) =
+            _computeRootMulti(proof, leafNodes, 0, proofRangeSubtreeEstimate, 0, 0);
+        for (uint256 i = proofHead; i < proof.sideNodes.length; ++i) {
+            rootHash = nodeDigest(rootHash, proof.sideNodes[i]);
+        }
+
+        return (rootHash == root);
     }
 
     function _computeRootMulti(
