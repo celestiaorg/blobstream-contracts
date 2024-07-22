@@ -78,11 +78,11 @@ library BinaryMerkleTree {
         return (computedHash == root, ErrorCodes.NoError);
     }
 
-    function verifyMulti(
-        bytes32 root,
-        BinaryMerkleMultiproof memory proof, /* maybe calldata */
-        bytes[] memory data
-    ) internal pure returns (bool) {
+    function verifyMulti(bytes32 root, BinaryMerkleMultiproof memory proof, /* maybe calldata */ bytes[] memory data)
+        internal
+        pure
+        returns (bool)
+    {
         bytes32[] memory nodes = new bytes32[](data.length);
         for (uint256 i = 0; i < data.length; i++) {
             nodes[i] = leafDigest(data[i]);
@@ -91,11 +91,11 @@ library BinaryMerkleTree {
         return verifyMultiHashes(root, proof, nodes);
     }
 
-    function verifyMultiHashes(
-        bytes32 root,
-        BinaryMerkleMultiproof memory proof,
-        bytes32[] memory leafNodes
-    ) internal pure returns (bool) {
+    function verifyMultiHashes(bytes32 root, BinaryMerkleMultiproof memory proof, bytes32[] memory leafNodes)
+        internal
+        pure
+        returns (bool)
+    {
         uint256 leafIndex = 0;
         bytes32[] memory leftSubtrees = new bytes32[](proof.sideNodes.length);
 
@@ -162,7 +162,6 @@ library BinaryMerkleTree {
         }
         bytes32 hash = nodeDigest(left, right);
         return (hash, newHeadProof, newHeadLeaves, false);
-
     }
 
     function _popProofIfNonEmpty(bytes32[] memory nodes, uint256 headProof, uint256 end, uint256 headLeaves)
