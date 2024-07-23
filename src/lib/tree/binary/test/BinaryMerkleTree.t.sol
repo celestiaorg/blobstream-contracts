@@ -335,6 +335,7 @@ contract BinaryMerkleProofTest is DSTest {
         BinaryMerkleTree.slice(data, 2, 5);
     }
 
+    // header.dat, blob.dat, and proofs.json test vectors included in ../../test/ and serialized to hex bytes using Rust
     // The hard-coded serialized proofs and data were generated in Rust, with this code
     // https://github.com/S1nus/hyperchain-da/blob/main/src/clients/celestia/evm_types.rs#L132
     function testMultiproof() public {
