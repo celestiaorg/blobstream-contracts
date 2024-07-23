@@ -5,8 +5,8 @@ pragma solidity ^0.8.22;
 struct BinaryMerkleMultiproof {
     // List of side nodes to verify and calculate tree.
     bytes32[] sideNodes;
-    // The beginning key of the leaves to verify.
+    // The (included) beginning key of the leaves to verify.
     uint256 beginKey;
-    // The ending key of the leaves to verify.
+    // The (excluded) ending key of the leaves to verify.
     uint256 endKey;
 }
