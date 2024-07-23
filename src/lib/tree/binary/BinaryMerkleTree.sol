@@ -78,7 +78,7 @@ library BinaryMerkleTree {
         return (computedHash == root, ErrorCodes.NoError);
     }
 
-    function verifyMulti(bytes32 root, BinaryMerkleMultiproof memory proof, /* maybe calldata */ bytes[] memory data)
+    function verifyMulti(bytes32 root, BinaryMerkleMultiproof memory proof, bytes[] memory data)
         internal
         pure
         returns (bool)
