@@ -6,6 +6,7 @@ import "../Utils.sol";
 import "./TreeHasher.sol";
 import "./BinaryMerkleProof.sol";
 import "./BinaryMerkleMultiproof.sol";
+import "../namespace/NamespaceNode.sol";
 
 /// @title Binary Merkle Tree.
 library BinaryMerkleTree {
@@ -91,6 +92,24 @@ library BinaryMerkleTree {
         return verifyMultiHashes(root, proof, nodes);
     }
 
+    /*
+        This helps with gas efficiency so we can avoid unnecessary copying and looping through the NamespaceNodes
+        when we go to verify the row inclusion multiproof
+    */
+    function verifyMultiNamespaced(bytes32 root, BinaryMerkleMultiproof memory proof, NamespaceNode[] memory data)
+        internal
+        pure
+        returns (bool)
+    {
+        bytes32[] memory nodes = new bytes32[](data.length);
+        for (uint256 i = 0; i < data.length; i++) {
+            // the bytes.concat(...) converts a bytes32 into a bytes
+            nodes[i] = leafDigest(bytes.concat(data[i].digest));
+        }
+
+        return verifyMultiHashes(root, proof, nodes);
+    }
+
     function verifyMultiHashes(bytes32 root, BinaryMerkleMultiproof memory proof, bytes32[] memory leafNodes)
         internal
         pure
@@ -100,7 +119,7 @@ library BinaryMerkleTree {
         bytes32[] memory leftSubtrees = new bytes32[](proof.sideNodes.length);
 
         for (uint256 i = 0; leafIndex != proof.beginKey && i < proof.sideNodes.length; ++i) {
-            uint256 subtreeSize = _nextSubtreeSize(leafIndex, proof.beginKey);
+            uint256 subtreeSize = nextSubtreeSize(leafIndex, proof.beginKey);
             leftSubtrees[i] = proof.sideNodes[i];
             leafIndex += subtreeSize;
         }
