@@ -119,7 +119,7 @@ library BinaryMerkleTree {
         bytes32[] memory leftSubtrees = new bytes32[](proof.sideNodes.length);
 
         for (uint256 i = 0; leafIndex != proof.beginKey && i < proof.sideNodes.length; ++i) {
-            uint256 subtreeSize = nextSubtreeSize(leafIndex, proof.beginKey);
+            uint256 subtreeSize = _nextSubtreeSize(leafIndex, proof.beginKey);
             leftSubtrees[i] = proof.sideNodes[i];
             leafIndex += subtreeSize;
         }
