@@ -22,7 +22,7 @@ function div_ceil(uint256 x, uint256 y) pure returns (uint256 z) {
 }
 
 function num_shares(uint256 blobSize) pure returns (uint256) {
-    return div_ceil((Math.max(blobSize, 478) - 478), 478) + 1;
+    return div_ceil((Math.max(blobSize, 478) - 478), 482) + 1;
 }
 
 function copyNamespace(bytes memory share, bytes29 namespaceBytes) pure {
