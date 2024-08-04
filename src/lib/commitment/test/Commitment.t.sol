@@ -15,7 +15,7 @@ contract CommitmentTest is DSTest {
         string shares;
     }
 
-    /*function fromHexChar(uint8 c) public pure returns (uint8) {
+    function fromHexChar(uint8 c) public pure returns (uint8) {
         if (bytes1(c) >= bytes1('0') && bytes1(c) <= bytes1('9')) {
             return c - uint8(bytes1('0'));
         }
@@ -36,29 +36,36 @@ contract CommitmentTest is DSTest {
             r[i] = bytes1(fromHexChar(uint8(ss[2*i])) * 16 + fromHexChar(uint8(ss[2*i+1])));
         }
         return r;
-    }*/
+    }
 
-
+    function compareStrings(string memory a, string memory b) public pure returns (bool) {
+        return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
+    }
 
     function testFirstVec() external {
-        bytes29 nsString = hex"0000000000000000000000000000000000000090e3af22120ec6299e05";
-        Namespace memory ns = toNamespace(nsString);
-        bytes memory data = hex"00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
-        bytes[] memory shares = bytesToShares(data, ns);
-        console.log("Got:");
-        console.log(bytesToHexString(shares[0]));
-        bytes memory expected = hex"0000000000000000000000000000000000000090e3af22120ec6299e0501000001de00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
-        console.log("Expected:");
-        console.log(bytesToHexString(expected));
-        /*string memory path = "./src/lib/commitment/test/testVectors.json";
+
+        // test vectors were generated here: https://github.com/S1nus/share-test-vec-gen
+        string memory path = "./src/lib/commitment/test/testVectors.json";
         string memory jsonData = vm.readFile(path);
         bytes memory vecsData = vm.parseJson(jsonData);
         TestVector[] memory vecs = abi.decode(vecsData, (TestVector[]));
-        console.log(vecs[0].namespace);
-        Namespace memory namespace = toNamespace(bytes29(fromHex(vecs[0].namespace)));
-        console.log(bytesToHexString(abi.encodePacked(namespace.toBytes())));
-        bytes memory data = fromHex(vecs[0].data);
-        bytes memory shares = bytesToShares(data, namespace)[0];
-        console.log(bytesToHexString(shares));*/
+
+        for (uint i = 0; i < vecs.length; i++) {
+            bytes29 nsString = bytes29(fromHex(vecs[i].namespace));
+            Namespace memory ns = toNamespace(nsString);
+            bytes memory data = fromHex(vecs[i].data);
+            bytes[] memory shares = bytesToShares(data, ns);
+            string memory out = "";
+            for (uint j = 0; j < shares.length; j++) {
+                out = string.concat(out, bytesToHexString(shares[j]));
+            }
+            //assertEq(out, vecs[i].shares);
+            if (compareStrings(out, vecs[i].shares) == false) {
+                console.log("Failed on test vector ", i);
+                console.log("Expected: ", vecs[i].shares);
+                console.log("Got: ", out);
+                return;
+            }
+        }
     }
 }

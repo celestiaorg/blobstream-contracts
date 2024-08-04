@@ -37,7 +37,9 @@ function writeInfoByteV0(bytes memory share, bool startingSequence) pure {
 }
 
 function writeSequenceLength(bytes memory share, uint32 sequenceLength) pure {
-    bytes4 sequenceLengthBigEndianBytes = bytes4(abi.encodePacked(reverse(sequenceLength)));
+    // Removed the "reverse", because it didn't work- apparently it's already big-endian?
+    //bytes4 sequenceLengthBigEndianBytes = bytes4(abi.encodePacked(reverse(sequenceLength)));
+    bytes4 sequenceLengthBigEndianBytes = bytes4(abi.encodePacked(sequenceLength));
     share[30] = sequenceLengthBigEndianBytes[0];
     share[31] = sequenceLengthBigEndianBytes[1];
     share[32] = sequenceLengthBigEndianBytes[2];
@@ -46,7 +48,11 @@ function writeSequenceLength(bytes memory share, uint32 sequenceLength) pure {
 
 function copyBytes(bytes memory buffer, uint32 cursor, bytes memory data, uint32 length) pure {
     while (cursor < length) {
-        buffer[cursor] = data[cursor];
+        if (cursor < data.length) {
+            buffer[cursor] = data[cursor];
+        } else {
+            buffer[cursor] = 0;
+        }
         cursor++;
     }
 }
