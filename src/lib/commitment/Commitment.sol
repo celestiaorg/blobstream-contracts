@@ -3,6 +3,7 @@ pragma solidity ^0.8.22;
 
 import {Namespace} from "../tree/Types.sol";
 import "openzeppelin-contracts/contracts/utils/math/Math.sol";
+import "forge-std/console.sol";
 
 // Turn little-endian into big-endian
 // Source: https://ethereum.stackexchange.com/a/83627
@@ -25,7 +26,7 @@ function num_shares(uint256 blobSize) pure returns (uint256) {
     return div_ceil((Math.max(blobSize, 478) - 478), 482) + 1;
 }
 
-function copyNamespace(bytes memory share, bytes29 namespaceBytes) pure {
+function copyNamespace(bytes memory share, bytes29 namespaceBytes) {
     for (uint256 i = 0; i < namespaceBytes.length; i++) {
         share[i] = namespaceBytes[i];
     }
@@ -51,10 +52,13 @@ function copyBytes(bytes memory buffer, uint32 cursor, bytes memory data, uint32
 }
 
 // Share Version 0
-function bytesToShares(bytes calldata blobData, Namespace calldata namespace) returns (bytes[] memory shares) {
+function bytesToShares(bytes memory blobData, Namespace memory namespace) returns (bytes[] memory shares) {
 
     // Allocate memory for the shares
     bytes[] memory _shares = new bytes[](num_shares(blobData.length));
+    for (uint256 i = 0; i < _shares.length; i++) {
+        _shares[i] = new bytes(512);
+    }
     // Get the namespace bytes
     bytes29 namespaceBytes = namespace.toBytes();
 
@@ -65,14 +69,16 @@ function bytesToShares(bytes calldata blobData, Namespace calldata namespace) re
     uint32 cursor = 0;
     copyBytes(_shares[0], cursor, blobData, uint32(478)); //only 478 bytes, because 4 bytes are used for the sequence length
 
-    // The remaining shares are all the same
-    for (uint256 i = 1; i < _shares.length; i++) {
-        // Copy the namespace
-        copyNamespace(_shares[i], namespaceBytes);
-        // Write the info byte
-        writeInfoByteV0(_shares[i], false);
-        // Copy the data
-        copyBytes(_shares[i], cursor, blobData, uint32(482));
+    if (shares.length != 1) {
+        // The remaining shares are all the same
+        for (uint256 i = 1; i < _shares.length; i++) {
+            // Copy the namespace
+            copyNamespace(_shares[i], namespaceBytes);
+            // Write the info byte
+            writeInfoByteV0(_shares[i], false);
+            // Copy the data
+            copyBytes(_shares[i], cursor, blobData, uint32(482)); // copy the full 482 bytes
+        }
     }
 
     shares = _shares;
