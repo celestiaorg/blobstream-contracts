@@ -33,7 +33,7 @@ function copyNamespace(bytes memory share, bytes29 namespaceBytes) {
 }
 
 function writeInfoByteV0(bytes memory share, bool startingSequence) pure {
-    share[29] = bytes1(0 | (startingSequence ? 1 : 0));
+    share[29] = bytes1(startingSequence ? 1 : 0);
 }
 
 function writeSequenceLength(bytes memory share, uint32 sequenceLength) pure {
@@ -46,15 +46,19 @@ function writeSequenceLength(bytes memory share, uint32 sequenceLength) pure {
     share[33] = sequenceLengthBigEndianBytes[3];
 }
 
-function copyBytes(bytes memory buffer, uint32 cursor, bytes memory data, uint32 length) pure {
-    while (cursor < length) {
+function copyBytes(bytes memory buffer, uint32 cursor, bytes memory data, uint32 length) returns (uint32) {
+
+    uint256 start = buffer.length - length;
+    for (uint256 i = start; i < buffer.length; i++) {
         if (cursor < data.length) {
-            buffer[cursor] = data[cursor];
-        } else {
-            buffer[cursor] = 0;
+            buffer[i] = data[cursor];
+            cursor++;
         }
-        cursor++;
+        else {
+            buffer[i] = 0;
+        }
     }
+    return cursor;
 }
 
 function bytesToHexString(bytes memory buffer) pure returns (string memory) {
@@ -74,7 +78,6 @@ function bytesToHexString(bytes memory buffer) pure returns (string memory) {
 
 // Share Version 0
 function bytesToShares(bytes memory blobData, Namespace memory namespace) returns (bytes[] memory shares) {
-
     // Allocate memory for the shares
     uint256 numShares = num_shares(blobData.length); 
     bytes[] memory _shares = new bytes[](numShares);
@@ -88,8 +91,8 @@ function bytesToShares(bytes memory blobData, Namespace memory namespace) return
     copyNamespace(_shares[0], namespaceBytes);
     writeInfoByteV0(_shares[0], true);
     writeSequenceLength(_shares[0], uint32(blobData.length));
-    uint32 cursor = 34;
-    copyBytes(_shares[0], cursor, blobData, uint32(478)); //only 478 bytes, because 4 bytes are used for the sequence length
+    uint32 cursor = 0;
+    cursor = copyBytes(_shares[0], cursor, blobData, uint32(478)); //only 478 bytes, because 4 bytes are used for the sequence length
 
     if (shares.length != 1) {
         // The remaining shares are all the same
@@ -99,7 +102,7 @@ function bytesToShares(bytes memory blobData, Namespace memory namespace) return
             // Write the info byte
             writeInfoByteV0(_shares[i], false);
             // Copy the data
-            copyBytes(_shares[i], cursor, blobData, uint32(482)); // copy the full 482 bytes
+            cursor = copyBytes(_shares[i], cursor, blobData, uint32(482)); // copy the full 482 bytes
         }
     }
 

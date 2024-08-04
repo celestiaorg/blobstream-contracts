@@ -62,8 +62,8 @@ contract CommitmentTest is DSTest {
             //assertEq(out, vecs[i].shares);
             if (compareStrings(out, vecs[i].shares) == false) {
                 console.log("Failed on test vector ", i);
-                console.log("Expected: ", vecs[i].shares);
-                console.log("Got: ", out);
+                console.log(vecs[i].shares);
+                console.log(out);
                 return;
             }
         }
