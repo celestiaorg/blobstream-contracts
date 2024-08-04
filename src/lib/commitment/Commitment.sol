@@ -51,11 +51,27 @@ function copyBytes(bytes memory buffer, uint32 cursor, bytes memory data, uint32
     }
 }
 
+function bytesToHexString(bytes memory buffer) pure returns (string memory) {
+
+    // Fixed buffer size for hexadecimal convertion
+    bytes memory converted = new bytes(buffer.length * 2);
+
+    bytes memory _base = "0123456789abcdef";
+
+    for (uint256 i = 0; i < buffer.length; i++) {
+        converted[i * 2] = _base[uint8(buffer[i]) / _base.length];
+        converted[i * 2 + 1] = _base[uint8(buffer[i]) % _base.length];
+    }
+
+    return string(abi.encodePacked(converted));
+}
+
 // Share Version 0
 function bytesToShares(bytes memory blobData, Namespace memory namespace) returns (bytes[] memory shares) {
 
     // Allocate memory for the shares
-    bytes[] memory _shares = new bytes[](num_shares(blobData.length));
+    uint256 numShares = num_shares(blobData.length); 
+    bytes[] memory _shares = new bytes[](numShares);
     for (uint256 i = 0; i < _shares.length; i++) {
         _shares[i] = new bytes(512);
     }
@@ -66,7 +82,7 @@ function bytesToShares(bytes memory blobData, Namespace memory namespace) return
     copyNamespace(_shares[0], namespaceBytes);
     writeInfoByteV0(_shares[0], true);
     writeSequenceLength(_shares[0], uint32(blobData.length));
-    uint32 cursor = 0;
+    uint32 cursor = 34;
     copyBytes(_shares[0], cursor, blobData, uint32(478)); //only 478 bytes, because 4 bytes are used for the sequence length
 
     if (shares.length != 1) {
