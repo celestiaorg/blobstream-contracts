@@ -3,7 +3,7 @@ pragma solidity ^0.8.22;
 import "ds-test/test.sol";
 import "forge-std/Vm.sol";
 import "forge-std/console.sol";
-import {bytesToShares, bytesToHexString} from "../Commitment.sol";
+import {bytesToSharesV0, bytesToHexString} from "../Commitment.sol";
 import {toNamespace, Namespace} from "../../tree/Types.sol";
 
 contract CommitmentTest is DSTest {
@@ -42,7 +42,7 @@ contract CommitmentTest is DSTest {
         return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
     }
 
-    function testFirstVec() external {
+    function testBytesToSharesV0() view external {
 
         // test vectors were generated here: https://github.com/S1nus/share-test-vec-gen
         string memory path = "./src/lib/commitment/test/testVectors.json";
@@ -54,18 +54,14 @@ contract CommitmentTest is DSTest {
             bytes29 nsString = bytes29(fromHex(vecs[i].namespace));
             Namespace memory ns = toNamespace(nsString);
             bytes memory data = fromHex(vecs[i].data);
-            bytes[] memory shares = bytesToShares(data, ns);
+            (bytes[] memory shares, bool err) = bytesToSharesV0(data, ns);
             string memory out = "";
             for (uint j = 0; j < shares.length; j++) {
                 out = string.concat(out, bytesToHexString(shares[j]));
             }
-            //assertEq(out, vecs[i].shares);
-            if (compareStrings(out, vecs[i].shares) == false) {
-                console.log("Failed on test vector ", i);
-                console.log(vecs[i].shares);
-                console.log(out);
-                return;
-            }
+            // none of the test vectors should cause an error
+            assert(!err);
+            assert(compareStrings(out, vecs[i].shares));
         }
     }
 }

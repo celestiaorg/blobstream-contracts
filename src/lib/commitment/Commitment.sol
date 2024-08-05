@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import {Namespace} from "../tree/Types.sol";
+import {Namespace, isReservedNamespace} from "../tree/Types.sol";
 import "openzeppelin-contracts/contracts/utils/math/Math.sol";
 import "forge-std/console.sol";
 
@@ -26,7 +26,7 @@ function num_shares(uint256 blobSize) pure returns (uint256) {
     return div_ceil((Math.max(blobSize, 478) - 478), 482) + 1;
 }
 
-function copyNamespace(bytes memory share, bytes29 namespaceBytes) {
+function copyNamespace(bytes memory share, bytes29 namespaceBytes) pure {
     for (uint256 i = 0; i < namespaceBytes.length; i++) {
         share[i] = namespaceBytes[i];
     }
@@ -46,7 +46,7 @@ function writeSequenceLength(bytes memory share, uint32 sequenceLength) pure {
     share[33] = sequenceLengthBigEndianBytes[3];
 }
 
-function copyBytes(bytes memory buffer, uint32 cursor, bytes memory data, uint32 length) returns (uint32) {
+function copyBytes(bytes memory buffer, uint32 cursor, bytes memory data, uint32 length) pure returns (uint32) {
 
     uint256 start = buffer.length - length;
     for (uint256 i = start; i < buffer.length; i++) {
@@ -77,7 +77,13 @@ function bytesToHexString(bytes memory buffer) pure returns (string memory) {
 }
 
 // Share Version 0
-function bytesToShares(bytes memory blobData, Namespace memory namespace) returns (bytes[] memory shares) {
+function bytesToSharesV0(bytes memory blobData, Namespace memory namespace) pure returns (bytes[] memory shares, bool err) {
+    if (namespace.version != 0) {
+        return (new bytes[](0), true);
+    }
+    if (isReservedNamespace(namespace)) {
+        return (new bytes[](0), true);
+    }
     // Allocate memory for the shares
     uint256 numShares = num_shares(blobData.length); 
     bytes[] memory _shares = new bytes[](numShares);
@@ -107,4 +113,5 @@ function bytesToShares(bytes memory blobData, Namespace memory namespace) return
     }
 
     shares = _shares;
+    err = false;
 }
