@@ -5,25 +5,12 @@ import {Namespace, isReservedNamespace} from "../tree/Types.sol";
 import "openzeppelin-contracts/contracts/utils/math/Math.sol";
 import "forge-std/console.sol";
 
-// Turn little-endian into big-endian
-// Source: https://ethereum.stackexchange.com/a/83627
-function reverse(uint32 input) pure returns (uint32 v) {
-    v = input;
-
-    // swap bytes
-    v = ((v & 0xFF00FF00) >> 8) |
-        ((v & 0x00FF00FF) << 8);
-
-    // swap 2-byte long pairs
-    v = (v >> 16) | (v << 16);
-}
-
-function div_ceil(uint256 x, uint256 y) pure returns (uint256 z) {
+function divCeil(uint256 x, uint256 y) pure returns (uint256 z) {
     z = x / y + (x % y == 0 ? 0 : 1);
 }
 
 function num_shares(uint256 blobSize) pure returns (uint256) {
-    return div_ceil((Math.max(blobSize, 478) - 478), 482) + 1;
+    return divCeil((Math.max(blobSize, 478) - 478), 482) + 1;
 }
 
 function copyNamespace(bytes memory share, bytes29 namespaceBytes) pure {
@@ -37,7 +24,7 @@ function writeInfoByteV0(bytes memory share, bool startingSequence) pure {
 }
 
 function writeSequenceLength(bytes memory share, uint32 sequenceLength) pure {
-    // Removed the "reverse", because it didn't work- apparently it's already big-endian?
+    // Removed the "reverse", because it didn't work- maybe it's already big-endian?
     //bytes4 sequenceLengthBigEndianBytes = bytes4(abi.encodePacked(reverse(sequenceLength)));
     bytes4 sequenceLengthBigEndianBytes = bytes4(abi.encodePacked(sequenceLength));
     share[30] = sequenceLengthBigEndianBytes[0];
