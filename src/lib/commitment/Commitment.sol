@@ -3,6 +3,7 @@ pragma solidity ^0.8.22;
 
 import {Namespace, isReservedNamespace} from "../tree/Types.sol";
 import "openzeppelin-contracts/contracts/utils/math/Math.sol";
+import "../../../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
 import "forge-std/console.sol";
 
 uint256 constant SUBTREE_ROOT_THRESHOLD = 64;
@@ -111,6 +112,10 @@ function roundUpPowerOfTwo(uint256 x) pure returns (uint256) {
         result *= 2;
     }
     return result;
+}
+
+function blobMinSquareSize(uint256 shareCount) pure returns (uint256) {
+    return roundUpPowerOfTwo(Math.sqrt(shareCount, Math.Rounding.Ceil));
 }
 
 function subtreeWidth(uint256 shareCount, uint256 subtreeRootThreshold) pure returns (uint256) {
