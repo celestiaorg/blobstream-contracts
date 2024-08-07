@@ -3,7 +3,7 @@ pragma solidity ^0.8.22;
 import "ds-test/test.sol";
 import "forge-std/Vm.sol";
 import "forge-std/console.sol";
-import {bytesToSharesV0, bytesToHexString} from "../Commitment.sol";
+import {_bytesToSharesV0, _bytesToHexString} from "../Commitment.sol";
 import {toNamespace, Namespace} from "../../tree/Types.sol";
 
 contract CommitmentTest is DSTest {
@@ -54,10 +54,10 @@ contract CommitmentTest is DSTest {
             bytes29 nsString = bytes29(fromHex(vecs[i].namespace));
             Namespace memory ns = toNamespace(nsString);
             bytes memory data = fromHex(vecs[i].data);
-            (bytes[] memory shares, bool err) = bytesToSharesV0(data, ns);
+            (bytes[] memory shares, bool err) = _bytesToSharesV0(data, ns);
             string memory out = "";
             for (uint j = 0; j < shares.length; j++) {
-                out = string.concat(out, bytesToHexString(shares[j]));
+                out = string.concat(out, _bytesToHexString(shares[j]));
             }
             // none of the test vectors should cause an error
             assert(!err);

@@ -2,31 +2,30 @@
 pragma solidity ^0.8.22;
 
 import {Namespace, isReservedNamespace} from "../tree/Types.sol";
-import "openzeppelin-contracts/contracts/utils/math/Math.sol";
-import "../../../lib/openzeppelin-contracts/contracts/utils/math/Math.sol";
+import "../../../lib/openzeppelin-contracts-upgradeable/contracts/utils/math/MathUpgradeable.sol";
 import "forge-std/console.sol";
 
 uint256 constant SUBTREE_ROOT_THRESHOLD = 64;
 
-function divCeil(uint256 x, uint256 y) pure returns (uint256 z) {
+function _divCeil(uint256 x, uint256 y) pure returns (uint256 z) {
     z = x / y + (x % y == 0 ? 0 : 1);
 }
 
-function num_shares(uint256 blobSize) pure returns (uint256) {
-    return divCeil((Math.max(blobSize, 478) - 478), 482) + 1;
+function _numShares(uint256 blobSize) pure returns (uint256) {
+    return _divCeil((MathUpgradeable.max(blobSize, 478) - 478), 482) + 1;
 }
 
-function copyNamespace(bytes memory share, bytes29 namespaceBytes) pure {
+function _copyNamespace(bytes memory share, bytes29 namespaceBytes) pure {
     for (uint256 i = 0; i < namespaceBytes.length; i++) {
         share[i] = namespaceBytes[i];
     }
 }
 
-function writeInfoByteV0(bytes memory share, bool startingSequence) pure {
+function _writeInfoByteV0(bytes memory share, bool startingSequence) pure {
     share[29] = bytes1(startingSequence ? 1 : 0);
 }
 
-function writeSequenceLength(bytes memory share, uint32 sequenceLength) pure {
+function _writeSequenceLength(bytes memory share, uint32 sequenceLength) pure {
     // Removed the "reverse", because it didn't work- maybe it's already big-endian?
     //bytes4 sequenceLengthBigEndianBytes = bytes4(abi.encodePacked(reverse(sequenceLength)));
     bytes4 sequenceLengthBigEndianBytes = bytes4(abi.encodePacked(sequenceLength));
@@ -36,7 +35,7 @@ function writeSequenceLength(bytes memory share, uint32 sequenceLength) pure {
     share[33] = sequenceLengthBigEndianBytes[3];
 }
 
-function copyBytes(bytes memory buffer, uint32 cursor, bytes memory data, uint32 length) pure returns (uint32) {
+function _copyBytes(bytes memory buffer, uint32 cursor, bytes memory data, uint32 length) pure returns (uint32) {
 
     uint256 start = buffer.length - length;
     for (uint256 i = start; i < buffer.length; i++) {
@@ -51,7 +50,7 @@ function copyBytes(bytes memory buffer, uint32 cursor, bytes memory data, uint32
     return cursor;
 }
 
-function bytesToHexString(bytes memory buffer) pure returns (string memory) {
+function _bytesToHexString(bytes memory buffer) pure returns (string memory) {
 
     // Fixed buffer size for hexadecimal convertion
     bytes memory converted = new bytes(buffer.length * 2);
@@ -67,7 +66,7 @@ function bytesToHexString(bytes memory buffer) pure returns (string memory) {
 }
 
 // Share Version 0
-function bytesToSharesV0(bytes memory blobData, Namespace memory namespace) pure returns (bytes[] memory shares, bool err) {
+function _bytesToSharesV0(bytes memory blobData, Namespace memory namespace) pure returns (bytes[] memory shares, bool err) {
     if (namespace.version != 0) {
         return (new bytes[](0), true);
     }
@@ -75,7 +74,7 @@ function bytesToSharesV0(bytes memory blobData, Namespace memory namespace) pure
         return (new bytes[](0), true);
     }
     // Allocate memory for the shares
-    uint256 numShares = num_shares(blobData.length); 
+    uint256 numShares = _numShares(blobData.length); 
     bytes[] memory _shares = new bytes[](numShares);
     for (uint256 i = 0; i < _shares.length; i++) {
         _shares[i] = new bytes(512);
@@ -84,21 +83,21 @@ function bytesToSharesV0(bytes memory blobData, Namespace memory namespace) pure
     bytes29 namespaceBytes = namespace.toBytes();
 
     // The first share is special, because it has startingSequence set to true and the 4-byte sequence length
-    copyNamespace(_shares[0], namespaceBytes);
-    writeInfoByteV0(_shares[0], true);
-    writeSequenceLength(_shares[0], uint32(blobData.length));
+    _copyNamespace(_shares[0], namespaceBytes);
+    _writeInfoByteV0(_shares[0], true);
+    _writeSequenceLength(_shares[0], uint32(blobData.length));
     uint32 cursor = 0;
-    cursor = copyBytes(_shares[0], cursor, blobData, uint32(478)); //only 478 bytes, because 4 bytes are used for the sequence length
+    cursor = _copyBytes(_shares[0], cursor, blobData, uint32(478)); //only 478 bytes, because 4 bytes are used for the sequence length
 
     if (shares.length != 1) {
         // The remaining shares are all the same
         for (uint256 i = 1; i < _shares.length; i++) {
             // Copy the namespace
-            copyNamespace(_shares[i], namespaceBytes);
+            _copyNamespace(_shares[i], namespaceBytes);
             // Write the info byte
-            writeInfoByteV0(_shares[i], false);
+            _writeInfoByteV0(_shares[i], false);
             // Copy the data
-            cursor = copyBytes(_shares[i], cursor, blobData, uint32(482)); // copy the full 482 bytes
+            cursor = _copyBytes(_shares[i], cursor, blobData, uint32(482)); // copy the full 482 bytes
         }
     }
 
@@ -106,7 +105,15 @@ function bytesToSharesV0(bytes memory blobData, Namespace memory namespace) pure
     err = false;
 }
 
-function roundUpPowerOfTwo(uint256 x) pure returns (uint256) {
+function _roundDownPowerOfTwo(uint256 x) pure returns (uint256) {
+    uint256 result = 1;
+    while (result * 2 <= x) {
+        result *= 2;
+    }
+    return result;
+}
+
+function _roundUpPowerOfTwo(uint256 x) pure returns (uint256) {
     uint256 result = 1;
     while (result < x) {
         result *= 2;
@@ -114,21 +121,42 @@ function roundUpPowerOfTwo(uint256 x) pure returns (uint256) {
     return result;
 }
 
-function blobMinSquareSize(uint256 shareCount) pure returns (uint256) {
-    return roundUpPowerOfTwo(Math.sqrt(shareCount, Math.Rounding.Ceil));
+function _blobMinSquareSize(uint256 shareCount) pure returns (uint256) {
+    return _roundUpPowerOfTwo(MathUpgradeable.sqrt(shareCount, MathUpgradeable.Rounding.Ceil));
 }
 
-function subtreeWidth(uint256 shareCount, uint256 subtreeRootThreshold) pure returns (uint256) {
-    uint256 s = shareCount / SUBTREE_ROOT_THRESHOLD;
+function _subtreeWidth(uint256 shareCount, uint256 subtreeRootThreshold) pure returns (uint256) {
+    uint256 s = shareCount / subtreeRootThreshold;
     if (s != 0) {
         s++;
     }
-    s = roundUpPowerOfTwo(s);
-    return Math.min(s, blobMinSquareSize(shareCount));
+    s = _roundUpPowerOfTwo(s);
+    return MathUpgradeable.min(s, _blobMinSquareSize(shareCount));
 }
 
-function createCommitment(bytes[] memory shares) pure returns (bytes32 commitment) {
+function _merkleMountainRangeSizes(uint256 totalSize, maxTreeSize) pure returns (uint256[] memory) {
+    uint256[] treeSizes = new uint256[](0);
+    while (totalSize != 0) {
+        if (totalSize >= maxTreeSize) {
+            treeSizes.push(maxTreeSize);
+            totalSize -= maxTreeSize;
+        }
+        else {
+            uint256 treeSize = _roundDownPowerOfTwo(totalSize);
+            treeSizes.push(treeSize);
+            totalSize -= treeSize;
+        }
+    }
+    return treeSizes;
+}
 
-    // this is not it lol
-    return keccak256(abi.encode(shares));
+function _createCommitment(bytes[] memory shares) pure returns (bytes32 commitment) {
+    uint256 subtreeWidth = _subtreeWidth(shares.length, SUBTREE_ROOT_THRESHOLD);
+    uint256[] treeSizes = _merkleMountainRangeSizes(shares.length, subtreeWidth);
+    bytes[][][] leafSets = new bytes[][][](treeSizes.length);
+    uint256 cursor = 0;
+    for (uint256 i = 0; i < treeSizes.length; i++) {
+        leafSets[i] = new bytes[][](treeSizes[i]);
+
+    }
 }
