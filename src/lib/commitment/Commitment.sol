@@ -5,6 +5,8 @@ import {Namespace, isReservedNamespace} from "../tree/Types.sol";
 import "openzeppelin-contracts/contracts/utils/math/Math.sol";
 import "forge-std/console.sol";
 
+uint256 constant SUBTREE_ROOT_THRESHOLD = 64;
+
 function divCeil(uint256 x, uint256 y) pure returns (uint256 z) {
     z = x / y + (x % y == 0 ? 0 : 1);
 }
@@ -101,4 +103,27 @@ function bytesToSharesV0(bytes memory blobData, Namespace memory namespace) pure
 
     shares = _shares;
     err = false;
+}
+
+function roundUpPowerOfTwo(uint256 x) pure returns (uint256) {
+    uint256 result = 1;
+    while (result < x) {
+        result *= 2;
+    }
+    return result;
+}
+
+function subtreeWidth(uint256 shareCount, uint256 subtreeRootThreshold) pure returns (uint256) {
+    uint256 s = shareCount / SUBTREE_ROOT_THRESHOLD;
+    if (s != 0) {
+        s++;
+    }
+    s = roundUpPowerOfTwo(s);
+    return Math.min(s, blobMinSquareSize(shareCount));
+}
+
+function createCommitment(bytes[] memory shares) pure returns (bytes32 commitment) {
+
+    // this is not it lol
+    return keccak256(abi.encode(shares));
 }

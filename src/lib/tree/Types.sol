@@ -30,7 +30,6 @@ function toBytes(Namespace memory n) pure returns (bytes29) {
 
 function isReservedNamespace(Namespace memory n) pure returns (bool) {
     bytes29 upper = hex"00000000000000000000000000000000000000000000000000000000FF";
-    // we already restrict the version to 0, so this check might be unnecessary
     bytes29 lower = hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00";
     return n.toBytes() < upper || n.toBytes() > lower;
 }
