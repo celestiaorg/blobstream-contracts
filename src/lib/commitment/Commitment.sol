@@ -2,6 +2,9 @@
 pragma solidity ^0.8.22;
 
 import {Namespace, isReservedNamespace} from "../tree/Types.sol";
+import "../tree/namespace/NamespaceMerkleTree.sol";
+import "../tree/namespace/NamespaceNode.sol";
+import "../tree/namespace/NamespaceMerkleMultiproof.sol";
 import "../../../lib/openzeppelin-contracts-upgradeable/contracts/utils/math/MathUpgradeable.sol";
 import "forge-std/console.sol";
 
@@ -134,29 +137,64 @@ function _subtreeWidth(uint256 shareCount, uint256 subtreeRootThreshold) pure re
     return MathUpgradeable.min(s, _blobMinSquareSize(shareCount));
 }
 
-function _merkleMountainRangeSizes(uint256 totalSize, maxTreeSize) pure returns (uint256[] memory) {
-    uint256[] treeSizes = new uint256[](0);
+function _merkleMountainRangeSizes(uint256 totalSize, uint256 maxTreeSize) pure returns (uint256[] memory) {
+    // Overestimate size of array
+    // This is a workaround because Solidity doesn't support dynamic memory arrays like Go or Rust
+    uint256 bigTrees = totalSize / maxTreeSize;
+    uint256 leftovers = totalSize % maxTreeSize;
+    uint256 numTrees;
+    if (leftovers == 0) {
+        numTrees = bigTrees;
+    }
+    else {
+        numTrees = bigTrees + MathUpgradeable.log2(leftovers) + (leftovers%2);
+    }
+    uint256[] memory treeSizes = new uint256[](numTrees);
+    uint256 count = 0;
     while (totalSize != 0) {
         if (totalSize >= maxTreeSize) {
-            treeSizes.push(maxTreeSize);
+            treeSizes[count] = maxTreeSize;
             totalSize -= maxTreeSize;
         }
         else {
             uint256 treeSize = _roundDownPowerOfTwo(totalSize);
-            treeSizes.push(treeSize);
+            treeSizes[count] = treeSize;
             totalSize -= treeSize;
         }
+        count++;
     }
     return treeSizes;
 }
 
-function _createCommitment(bytes[] memory shares) pure returns (bytes32 commitment) {
+function _createCommitment(bytes[] memory shares, Namespace memory namespace) pure returns (bytes32 commitment) {
     uint256 subtreeWidth = _subtreeWidth(shares.length, SUBTREE_ROOT_THRESHOLD);
-    uint256[] treeSizes = _merkleMountainRangeSizes(shares.length, subtreeWidth);
-    bytes[][][] leafSets = new bytes[][][](treeSizes.length);
+    uint256[] memory treeSizes = _merkleMountainRangeSizes(shares.length, subtreeWidth);
+    bytes[][] memory leafSets = new bytes[][](treeSizes.length);
     uint256 cursor = 0;
+    // So much copying...
+    // This could likely be optimized, but I'm not an EVM expert
+    // Let's see if the gas is too high, optimize later.
+    // Stop when we hit 0, the delimeter indicating the end of the array
     for (uint256 i = 0; i < treeSizes.length; i++) {
-        leafSets[i] = new bytes[][](treeSizes[i]);
+        leafSets[i] = new bytes[](treeSizes[i]);
+        for (uint256 j = 0; j < treeSizes[i]; j++) {
+            leafSets[i][j] = new bytes(512);
+            // copy the share
+            for (uint256 k = 0; k < 512; k++) {
+                leafSets[i][j][k] = shares[cursor][k];
+                cursor++;
+            }
+        }
+    }
 
+    NamespaceNode[] memory subtreeRoots = new NamespaceNode[](leafSets.length);
+    // Fore each leafSet, compute the root using _computeRoot. Pass a null value for the "proof" parameter
+    for (uint256 i = 0; i < leafSets.length; i++) {
+        NamespaceMerkleMultiproof memory nullproof = NamespaceMerkleMultiproof(0, 0, new NamespaceNode[](0));
+        NamespaceNode[] memory leafNamespaceNodes = new NamespaceNode[](leafSets[i].length);
+        for (uint256 j = 0; j < leafSets[i].length; j++) {
+            leafNamespaceNodes[j] = NamespaceNode(namespace, namespace, bytes32(leafSets[i][j]));
+        }
+        (subtreeRoots[i],,,) = NamespaceMerkleTree._computeRoot(nullproof, leafNamespaceNodes, 0, leafNamespaceNodes.length, 0, 0);
     }
 }
