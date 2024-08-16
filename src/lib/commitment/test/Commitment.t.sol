@@ -3,7 +3,7 @@ pragma solidity ^0.8.22;
 import "ds-test/test.sol";
 import "forge-std/Vm.sol";
 import "forge-std/console.sol";
-import {_bytesToSharesV0, _bytesToHexString} from "../Commitment.sol";
+import {_bytesToSharesV0, _createCommitment, _bytesToHexString} from "../Commitment.sol";
 import {toNamespace, Namespace} from "../../tree/Types.sol";
 
 contract CommitmentTest is DSTest {
@@ -63,5 +63,18 @@ contract CommitmentTest is DSTest {
             assert(!err);
             assert(compareStrings(out, vecs[i].shares));
         }
+    }
+
+    function testCreateCommitmentV0() view external {
+        string memory path = "./src/lib/commitment/test/testVectors.json";
+        string memory jsonData = vm.readFile(path);
+        bytes memory vecsData = vm.parseJson(jsonData);
+        TestVector[] memory vecs = abi.decode(vecsData, (TestVector[]));
+
+        bytes29 nsString = bytes29(fromHex(vecs[0].namespace));
+        Namespace memory ns = toNamespace(nsString);
+        bytes memory data = fromHex(vecs[0].data);
+        (bytes[] memory shares, bool err) = _bytesToSharesV0(data, ns);
+        bytes32 commitment = _createCommitment(shares, ns);
     }
 }

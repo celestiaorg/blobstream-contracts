@@ -3,6 +3,8 @@ pragma solidity ^0.8.22;
 
 import {Namespace, isReservedNamespace} from "../tree/Types.sol";
 import "../tree/namespace/NamespaceMerkleTree.sol";
+import "../tree/binary/BinaryMerkleTree.sol";
+import "../tree/binary/BinaryMerkleMultiproof.sol";
 import "../tree/namespace/NamespaceNode.sol";
 import "../tree/namespace/NamespaceMerkleMultiproof.sol";
 import "../../../lib/openzeppelin-contracts-upgradeable/contracts/utils/math/MathUpgradeable.sol";
@@ -166,7 +168,7 @@ function _merkleMountainRangeSizes(uint256 totalSize, uint256 maxTreeSize) pure 
     return treeSizes;
 }
 
-function _createCommitment(bytes[] memory shares, Namespace memory namespace) pure returns (bytes32 commitment) {
+function _createCommitment(bytes[] memory shares, Namespace memory namespace) view returns (bytes32 commitment) {
     uint256 subtreeWidth = _subtreeWidth(shares.length, SUBTREE_ROOT_THRESHOLD);
     uint256[] memory treeSizes = _merkleMountainRangeSizes(shares.length, subtreeWidth);
     bytes[][] memory leafSets = new bytes[][](treeSizes.length);
@@ -180,21 +182,39 @@ function _createCommitment(bytes[] memory shares, Namespace memory namespace) pu
         for (uint256 j = 0; j < treeSizes[i]; j++) {
             leafSets[i][j] = new bytes(512);
             // copy the share
-            for (uint256 k = 0; k < 512; k++) {
-                leafSets[i][j][k] = shares[cursor][k];
-                cursor++;
+            console.log("share length ", shares.length);
+            while (cursor < shares.length) {
+                console.log("cursor: ", cursor);
+                console.log("shares[",cursor,"] length", shares[cursor].length);
+                for (uint256 k = 0; k < 512; k++) {
+                    if (shares[cursor].length > k) {
+                        console.log("all clear");
+                        leafSets[i][j][k] = shares[cursor][k];
+                        cursor++;
+                    } else {
+                        console.log("kiling myself");
+                    }
+                }
             }
         }
     }
 
-    NamespaceNode[] memory subtreeRoots = new NamespaceNode[](leafSets.length);
+    // set commitment to a zero array
+    commitment = bytes32(0);
+
+    //NamespaceNode[] memory subtreeRoots = new NamespaceNode[](leafSets.length);
+    /*bytes32[] memory subtreeRoots = new bytes32[](leafSets.length);
     // Fore each leafSet, compute the root using _computeRoot. Pass a null value for the "proof" parameter
+    NamespaceMerkleMultiproof memory nullproof = NamespaceMerkleMultiproof(0, 0, new NamespaceNode[](0));
     for (uint256 i = 0; i < leafSets.length; i++) {
-        NamespaceMerkleMultiproof memory nullproof = NamespaceMerkleMultiproof(0, 0, new NamespaceNode[](0));
         NamespaceNode[] memory leafNamespaceNodes = new NamespaceNode[](leafSets[i].length);
         for (uint256 j = 0; j < leafSets[i].length; j++) {
             leafNamespaceNodes[j] = NamespaceNode(namespace, namespace, bytes32(leafSets[i][j]));
         }
-        (subtreeRoots[i],,,) = NamespaceMerkleTree._computeRoot(nullproof, leafNamespaceNodes, 0, leafNamespaceNodes.length, 0, 0);
+        (NamespaceNode memory root,,,) = NamespaceMerkleTree._computeRoot(nullproof, leafNamespaceNodes, 0, leafNamespaceNodes.length, 0, 0);
+        subtreeRoots[i] = root.digest;
     }
+    BinaryMerkleMultiproof memory nullBinaryProof = BinaryMerkleMultiproof(new bytes32[](0), 0, 0);
+    (bytes32 binaryTreeRoot,,,) = BinaryMerkleTree._computeRootMulti(nullBinaryProof, subtreeRoots, 0, subtreeRoots.length, 0, 0);
+    commitment = binaryTreeRoot;*/
 }
