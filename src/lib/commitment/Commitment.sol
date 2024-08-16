@@ -182,18 +182,11 @@ function _createCommitment(bytes[] memory shares, Namespace memory namespace) vi
         for (uint256 j = 0; j < treeSizes[i]; j++) {
             leafSets[i][j] = new bytes(512);
             // copy the share
-            console.log("share length ", shares.length);
             while (cursor < shares.length) {
-                console.log("cursor: ", cursor);
-                console.log("shares[",cursor,"] length", shares[cursor].length);
                 for (uint256 k = 0; k < 512; k++) {
-                    if (shares[cursor].length > k) {
-                        console.log("all clear");
-                        leafSets[i][j][k] = shares[cursor][k];
-                        cursor++;
-                    } else {
-                        console.log("kiling myself");
-                    }
+                    console.log("all clear");
+                    leafSets[i][j][k] = shares[cursor][k];
+                    cursor++;
                 }
             }
         }
