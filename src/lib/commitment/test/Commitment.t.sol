@@ -5,6 +5,8 @@ import "forge-std/Vm.sol";
 import "forge-std/console.sol";
 import {_bytesToSharesV0, _createCommitment, _bytesToHexString} from "../Commitment.sol";
 import {toNamespace, Namespace} from "../../tree/Types.sol";
+import "../../tree/namespace/NamespaceMerkleTree.sol";
+import "../../tree/namespace/NamespaceMerkleMultiproof.sol";
 
 contract CommitmentTest is DSTest {
     Vm private constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
@@ -75,6 +77,17 @@ contract CommitmentTest is DSTest {
         Namespace memory ns = toNamespace(nsString);
         bytes memory data = fromHex(vecs[0].data);
         (bytes[] memory shares, bool err) = _bytesToSharesV0(data, ns);
-        bytes32 commitment = _createCommitment(shares, ns);
+        /*bytes32 commitment = _createCommitment(shares, ns);
+        console.log(_bytesToHexString(abi.encodePacked(commitment)));*/
+
+        bytes32 dummy = hex"000000000000000000000000000000000000005cfe5e6a0c8e6402fd5e010000";
+        NamespaceNode memory node = NamespaceNode(ns, ns, dummy);
+        NamespaceNode[] memory nodes = new NamespaceNode[](1);
+        nodes[0] = node;
+        NamespaceMerkleMultiproof memory nullproof = NamespaceMerkleMultiproof(0, 0, new NamespaceNode[](0));
+        (NamespaceNode memory root,,,) = NamespaceMerkleTree._computeRoot(nullproof, nodes, 0, 1, 0, 0);
+        console.log(_bytesToHexString(abi.encodePacked(root.digest)));
+        //for (uint i = 0; i < vecs.length; i++) {
+        //}
     }
 }

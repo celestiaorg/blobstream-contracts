@@ -182,21 +182,15 @@ function _createCommitment(bytes[] memory shares, Namespace memory namespace) vi
         for (uint256 j = 0; j < treeSizes[i]; j++) {
             leafSets[i][j] = new bytes(512);
             // copy the share
-            while (cursor < shares.length) {
-                for (uint256 k = 0; k < 512; k++) {
-                    console.log("all clear");
-                    leafSets[i][j][k] = shares[cursor][k];
-                    cursor++;
-                }
+            for (uint256 k = 0; k < 512; k++) {
+                leafSets[i][j][k] = shares[cursor][k];
             }
+            cursor += treeSizes[i];
         }
     }
 
-    // set commitment to a zero array
-    commitment = bytes32(0);
-
     //NamespaceNode[] memory subtreeRoots = new NamespaceNode[](leafSets.length);
-    /*bytes32[] memory subtreeRoots = new bytes32[](leafSets.length);
+    bytes32[] memory subtreeRoots = new bytes32[](leafSets.length);
     // Fore each leafSet, compute the root using _computeRoot. Pass a null value for the "proof" parameter
     NamespaceMerkleMultiproof memory nullproof = NamespaceMerkleMultiproof(0, 0, new NamespaceNode[](0));
     for (uint256 i = 0; i < leafSets.length; i++) {
@@ -204,10 +198,12 @@ function _createCommitment(bytes[] memory shares, Namespace memory namespace) vi
         for (uint256 j = 0; j < leafSets[i].length; j++) {
             leafNamespaceNodes[j] = NamespaceNode(namespace, namespace, bytes32(leafSets[i][j]));
         }
+        console.log("first node: %s", _bytesToHexString(abi.encodePacked(leafNamespaceNodes[0].digest)));
         (NamespaceNode memory root,,,) = NamespaceMerkleTree._computeRoot(nullproof, leafNamespaceNodes, 0, leafNamespaceNodes.length, 0, 0);
         subtreeRoots[i] = root.digest;
+        console.log(_bytesToHexString(abi.encodePacked(root.digest)));
     }
     BinaryMerkleMultiproof memory nullBinaryProof = BinaryMerkleMultiproof(new bytes32[](0), 0, 0);
     (bytes32 binaryTreeRoot,,,) = BinaryMerkleTree._computeRootMulti(nullBinaryProof, subtreeRoots, 0, subtreeRoots.length, 0, 0);
-    commitment = binaryTreeRoot;*/
+    commitment = binaryTreeRoot;
 }
