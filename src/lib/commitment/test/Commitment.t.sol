@@ -77,16 +77,18 @@ contract CommitmentTest is DSTest {
         Namespace memory ns = toNamespace(nsString);
         bytes memory data = fromHex(vecs[0].data);
         (bytes[] memory shares, bool err) = _bytesToSharesV0(data, ns);
-        /*bytes32 commitment = _createCommitment(shares, ns);
-        console.log(_bytesToHexString(abi.encodePacked(commitment)));*/
+        bytes32 commitment = _createCommitment(shares, ns);
+        console.log(_bytesToHexString(abi.encodePacked(commitment)));
 
-        bytes32 dummy = hex"000000000000000000000000000000000000005cfe5e6a0c8e6402fd5e010000";
+        /*bytes32 dummy = hex"000000000000000000000000000000000000005cfe5e6a0c8e6402fd5e010000";
         NamespaceNode memory node = NamespaceNode(ns, ns, dummy);
         NamespaceNode[] memory nodes = new NamespaceNode[](1);
         nodes[0] = node;
         NamespaceMerkleMultiproof memory nullproof = NamespaceMerkleMultiproof(0, 0, new NamespaceNode[](0));
-        (NamespaceNode memory root,,,) = NamespaceMerkleTree._computeRoot(nullproof, nodes, 0, 1, 0, 0);
-        console.log(_bytesToHexString(abi.encodePacked(root.digest)));
+        NamespaceMerkleMultiproof memory populatedProof = NamespaceMerkleMultiproof(0, 1, nodes);
+        (NamespaceNode memory root,,,) = NamespaceMerkleTree._computeRoot(populatedProof, nodes, 0, 1, 0, 0);
+        console.log(_bytesToHexString(abi.encodePacked(node.digest)));
+        console.log(_bytesToHexString(abi.encodePacked(root.digest)));*/
         //for (uint i = 0; i < vecs.length; i++) {
         //}
     }

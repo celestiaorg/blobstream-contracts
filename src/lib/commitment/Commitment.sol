@@ -192,18 +192,20 @@ function _createCommitment(bytes[] memory shares, Namespace memory namespace) vi
     //NamespaceNode[] memory subtreeRoots = new NamespaceNode[](leafSets.length);
     bytes32[] memory subtreeRoots = new bytes32[](leafSets.length);
     // Fore each leafSet, compute the root using _computeRoot. Pass a null value for the "proof" parameter
-    NamespaceMerkleMultiproof memory nullproof = NamespaceMerkleMultiproof(0, 0, new NamespaceNode[](0));
+    //NamespaceMerkleMultiproof memory nullproof = NamespaceMerkleMultiproof(0, 0, new NamespaceNode[](0));
     for (uint256 i = 0; i < leafSets.length; i++) {
         NamespaceNode[] memory leafNamespaceNodes = new NamespaceNode[](leafSets[i].length);
         for (uint256 j = 0; j < leafSets[i].length; j++) {
             leafNamespaceNodes[j] = NamespaceNode(namespace, namespace, bytes32(leafSets[i][j]));
         }
         console.log("first node: %s", _bytesToHexString(abi.encodePacked(leafNamespaceNodes[0].digest)));
-        (NamespaceNode memory root,,,) = NamespaceMerkleTree._computeRoot(nullproof, leafNamespaceNodes, 0, leafNamespaceNodes.length, 0, 0);
+        NamespaceMerkleMultiproof memory populatedProof = NamespaceMerkleMultiproof(0, leafSets[i].length, leafNamespaceNodes);
+        (NamespaceNode memory root,,,) = NamespaceMerkleTree._computeRoot(populatedProof, leafNamespaceNodes, 0, leafNamespaceNodes.length, 0, 0);
         subtreeRoots[i] = root.digest;
-        console.log(_bytesToHexString(abi.encodePacked(root.digest)));
+        console.log("subtree root ", _bytesToHexString(abi.encodePacked(root.digest)));
     }
     BinaryMerkleMultiproof memory nullBinaryProof = BinaryMerkleMultiproof(new bytes32[](0), 0, 0);
-    (bytes32 binaryTreeRoot,,,) = BinaryMerkleTree._computeRootMulti(nullBinaryProof, subtreeRoots, 0, subtreeRoots.length, 0, 0);
+    BinaryMerkleMultiproof memory populatedBinaryProof = BinaryMerkleMultiproof(subtreeRoots, 0, subtreeRoots.length);
+    (bytes32 binaryTreeRoot,,,) = BinaryMerkleTree._computeRootMulti(populatedBinaryProof, subtreeRoots, 0, subtreeRoots.length, 0, 0);
     commitment = binaryTreeRoot;
 }
