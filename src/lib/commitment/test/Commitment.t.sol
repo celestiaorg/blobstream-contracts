@@ -48,7 +48,7 @@ contract CommitmentTest is DSTest {
     function testBytesToSharesV0() view external {
 
         // test vectors were generated here: https://github.com/S1nus/share-test-vec-gen
-        string memory path = "./src/lib/commitment/test/newTestVectors.json";
+        string memory path = "./src/lib/commitment/test/testVectors.json";
         string memory jsonData = vm.readFile(path);
         bytes memory vecsData = vm.parseJson(jsonData);
         TestVector[] memory vecs = abi.decode(vecsData, (TestVector[]));
@@ -83,7 +83,10 @@ contract CommitmentTest is DSTest {
         bytes memory data = fromHex(vecs[0].data);
         (bytes[] memory shares, bool err) = _bytesToSharesV0(data, ns);
         bytes32 commitment = _createCommitment(shares, ns);
+        console.log("Got:");
         console.log(_bytesToHexString(abi.encodePacked(commitment)));
+        console.log("Expected:");
+        console.log(vecs[0].commitment);
 
         /*bytes32 dummy = hex"000000000000000000000000000000000000005cfe5e6a0c8e6402fd5e010000";
         NamespaceNode memory node = NamespaceNode(ns, ns, dummy);
