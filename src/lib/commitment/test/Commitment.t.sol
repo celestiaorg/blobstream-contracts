@@ -12,6 +12,7 @@ contract CommitmentTest is DSTest {
     Vm private constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
     struct TestVector {
+        string commitment;
         string data;
         string namespace;
         string shares;
@@ -47,7 +48,7 @@ contract CommitmentTest is DSTest {
     function testBytesToSharesV0() view external {
 
         // test vectors were generated here: https://github.com/S1nus/share-test-vec-gen
-        string memory path = "./src/lib/commitment/test/testVectors.json";
+        string memory path = "./src/lib/commitment/test/newTestVectors.json";
         string memory jsonData = vm.readFile(path);
         bytes memory vecsData = vm.parseJson(jsonData);
         TestVector[] memory vecs = abi.decode(vecsData, (TestVector[]));
