@@ -8,6 +8,7 @@ import "../tree/binary/BinaryMerkleMultiproof.sol";
 import "../tree/namespace/NamespaceNode.sol";
 import "../tree/namespace/NamespaceMerkleMultiproof.sol";
 import {leafDigest} from "../tree/namespace/TreeHasher.sol";
+import {leafDigest as bLeafDigest} from "../tree/binary/TreeHasher.sol";
 import "../../../lib/openzeppelin-contracts-upgradeable/contracts/utils/math/MathUpgradeable.sol";
 import "forge-std/console.sol";
 
@@ -203,11 +204,11 @@ function _createCommitment(bytes[] memory shares, Namespace memory namespace) vi
         //NamespaceMerkleMultiproof memory populatedProof = NamespaceMerkleMultiproof(0, leafSets[i].length, leafNamespaceNodes);
         NamespaceMerkleMultiproof memory populatedProof = NamespaceMerkleMultiproof(0, leafSets[i].length, new NamespaceNode[](0));
         (NamespaceNode memory root,,,) = NamespaceMerkleTree._computeRoot(populatedProof, leafNamespaceNodes, 0, leafNamespaceNodes.length, 0, 0);
-        subtreeRoots[i] = root.digest;
+        subtreeRoots[i] = bLeafDigest(bytes(abi.encodePacked(root.digest)));
         console.log("subtree root ", _bytesToHexString(abi.encodePacked(root.digest)));
     }
     //BinaryMerkleMultiproof memory nullBinaryProof = BinaryMerkleMultiproof(new bytes32[](0), 0, 0);
-    BinaryMerkleMultiproof memory populatedBinaryProof = BinaryMerkleMultiproof(subtreeRoots, 0, subtreeRoots.length);
+    BinaryMerkleMultiproof memory populatedBinaryProof = BinaryMerkleMultiproof(new bytes32[](0), 0, subtreeRoots.length);
     (bytes32 binaryTreeRoot,,,) = BinaryMerkleTree._computeRootMulti(populatedBinaryProof, subtreeRoots, 0, subtreeRoots.length, 0, 0);
     commitment = binaryTreeRoot;
 }
