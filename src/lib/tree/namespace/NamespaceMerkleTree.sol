@@ -250,6 +250,26 @@ library NamespaceMerkleTree {
         return (hash, newHeadProof, newHeadLeaves, false);
     }
 
+    /*function _computeTreeRoot(
+        NamespaceNode[] memory leafNodes,
+        uint256 start,
+        uint256 end
+    ) public pure returns (NamespaceNode memory, bool err) {
+        if (end-start == 0) {
+
+        } 
+        else if (end-start == 1) {
+
+        }
+        else {
+            uint256 k = _getSplitPoint(end - start);
+            // TODO: error handling
+            (NamespaceNode memory left,) = _computeTreeRoot(leafNodes, start, start + k);
+            (NamespaceNode memory right,) = _computeTreeRoot(leafNodes, start + k, end);
+            return (nodeDigest(left, right), false);
+        }
+    }*/
+
     /// @notice Pop from the leaf nodes array slice if it's not empty.
     /// @param nodes Entire leaf nodes array.
     /// @param headLeaves Head of leaf nodes array slice.
