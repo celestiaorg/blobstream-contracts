@@ -182,10 +182,17 @@ function _createCommitment(bytes[] memory shares, Namespace memory namespace) vi
     for (uint256 i = 0; i < treeSizes.length; i++) {
         leafSets[i] = new bytes[](treeSizes[i]);
         for (uint256 j = 0; j < treeSizes[i]; j++) {
-            leafSets[i][j] = new bytes(512);
+            //leafSets[i][j] = new bytes(512);
+            // Try with 512 + 29, prefixing with the 29 byte namespace
+            leafSets[i][j] = new bytes(541);
             // copy the share
             for (uint256 k = 0; k < 512; k++) {
                 leafSets[i][j][k] = shares[cursor][k];
+            }
+            // copy the namespace bytes
+            for (uint256 k = 512; k < 541; k++) {
+                console.log("namespace byte %d: %s", k, _bytesToHexString(abi.encodePacked(namespace.toBytes()[k-512])));
+                leafSets[i][j][k] = namespace.toBytes()[k-512];
             }
             cursor += treeSizes[i];
         }
@@ -201,14 +208,14 @@ function _createCommitment(bytes[] memory shares, Namespace memory namespace) vi
             leafNamespaceNodes[j] = leafDigest(namespace, leafSets[i][j]);
         }
         console.log("first node: %s", _bytesToHexString(abi.encodePacked(leafNamespaceNodes[0].digest)));
-        //NamespaceMerkleMultiproof memory populatedProof = NamespaceMerkleMultiproof(0, leafSets[i].length, leafNamespaceNodes);
-        NamespaceMerkleMultiproof memory populatedProof = NamespaceMerkleMultiproof(0, leafSets[i].length, new NamespaceNode[](0));
-        (NamespaceNode memory root,,,) = NamespaceMerkleTree._computeRoot(populatedProof, leafNamespaceNodes, 0, leafNamespaceNodes.length, 0, 0);
+        NamespaceMerkleMultiproof memory emptyProof = NamespaceMerkleMultiproof(0, leafSets[i].length, new NamespaceNode[](0));
+        (NamespaceNode memory root,,,) = NamespaceMerkleTree._computeRoot(emptyProof, leafNamespaceNodes, 0, leafNamespaceNodes.length, 0, 0);
         subtreeRoots[i] = bLeafDigest(bytes(abi.encodePacked(root.digest)));
-        console.log("subtree root ", _bytesToHexString(abi.encodePacked(root.digest)));
+        console.log("root digest ", _bytesToHexString(abi.encodePacked(root.digest)));
+        console.log("subtree root ", _bytesToHexString(abi.encodePacked(subtreeRoots[i])));
     }
     //BinaryMerkleMultiproof memory nullBinaryProof = BinaryMerkleMultiproof(new bytes32[](0), 0, 0);
-    BinaryMerkleMultiproof memory populatedBinaryProof = BinaryMerkleMultiproof(new bytes32[](0), 0, subtreeRoots.length);
-    (bytes32 binaryTreeRoot,,,) = BinaryMerkleTree._computeRootMulti(populatedBinaryProof, subtreeRoots, 0, subtreeRoots.length, 0, 0);
+    BinaryMerkleMultiproof memory emptyBinaryProof = BinaryMerkleMultiproof(new bytes32[](0), 0, subtreeRoots.length);
+    (bytes32 binaryTreeRoot,,,) = BinaryMerkleTree._computeRootMulti(emptyBinaryProof, subtreeRoots, 0, subtreeRoots.length, 0, 0);
     commitment = binaryTreeRoot;
 }
