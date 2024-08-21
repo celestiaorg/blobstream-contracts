@@ -82,6 +82,7 @@ library DAVerifier {
     /// @return an error code if the proof is invalid, ErrorCodes.NoError otherwise.
     function verifySharesToDataRootTupleRoot(IDAOracle _bridge, SharesProof memory _sharesProof)
         internal
+        view
         returns (bool, ErrorCodes)
     {
         // checking that the data root was committed to by the Blobstream smart contract.
@@ -121,7 +122,7 @@ library DAVerifier {
         NamespaceNode[] memory _rowRoots,
         BinaryMerkleProof[] memory _rowProofs,
         bytes32 _root
-    ) internal returns (bool, ErrorCodes) {
+    ) internal pure returns (bool, ErrorCodes) {
         // verifying the row root to data root tuple root proof.
         (bool success, ErrorCodes errorCode) = verifyMultiRowRootsToDataRootTupleRootProof(_rowRoots, _rowProofs, _root);
         if (!success) {

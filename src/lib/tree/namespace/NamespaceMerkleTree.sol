@@ -148,7 +148,7 @@ library NamespaceMerkleTree {
         NamespaceMerkleMultiproof memory proof,
         Namespace memory namespace,
         bytes[] memory data
-    ) internal returns (bool) {
+    ) internal pure returns (bool) {
         // Hash all the leaves to get leaf nodes.
         NamespaceNode[] memory nodes = new NamespaceNode[](data.length);
         for (uint256 i = 0; i < data.length; ++i) {
@@ -168,7 +168,7 @@ library NamespaceMerkleTree {
         NamespaceNode memory root,
         NamespaceMerkleMultiproof memory proof,
         NamespaceNode[] memory leafNodes
-    ) internal returns (bool) {
+    ) internal pure returns (bool) {
         uint256 leafIndex = 0;
         NamespaceNode[] memory leftSubtrees = new NamespaceNode[](proof.sideNodes.length);
 
@@ -212,7 +212,7 @@ library NamespaceMerkleTree {
         uint256 end,
         uint256 headProof,
         uint256 headLeaves
-    ) public returns (NamespaceNode memory, uint256, uint256, bool) {
+    ) public pure returns (NamespaceNode memory, uint256, uint256, bool) {
         // reached a leaf
         if (end - begin == 1) {
             // if current range overlaps with proof range, pop and return a leaf
@@ -249,26 +249,6 @@ library NamespaceMerkleTree {
         NamespaceNode memory hash = nodeDigest(left, right);
         return (hash, newHeadProof, newHeadLeaves, false);
     }
-
-    /*function _computeTreeRoot(
-        NamespaceNode[] memory leafNodes,
-        uint256 start,
-        uint256 end
-    ) public pure returns (NamespaceNode memory, bool err) {
-        if (end-start == 0) {
-
-        } 
-        else if (end-start == 1) {
-
-        }
-        else {
-            uint256 k = _getSplitPoint(end - start);
-            // TODO: error handling
-            (NamespaceNode memory left,) = _computeTreeRoot(leafNodes, start, start + k);
-            (NamespaceNode memory right,) = _computeTreeRoot(leafNodes, start + k, end);
-            return (nodeDigest(left, right), false);
-        }
-    }*/
 
     /// @notice Pop from the leaf nodes array slice if it's not empty.
     /// @param nodes Entire leaf nodes array.

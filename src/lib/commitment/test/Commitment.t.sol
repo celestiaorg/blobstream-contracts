@@ -68,6 +68,7 @@ contract CommitmentTest is DSTest {
             if (!compareStrings(out, vecs[i].shares)) {
                 console.log("expected: ", vecs[i].shares);
                 console.log("got: ", out);
+                revert();
             }
         }
     }
@@ -79,31 +80,19 @@ contract CommitmentTest is DSTest {
         TestVector[] memory vecs = abi.decode(vecsData, (TestVector[]));
 
 
-        //for (uint i = 0; i < vecs.length; i++) {
-            bytes29 nsString = bytes29(fromHex(vecs[0].namespace));
+        for (uint i = 0; i < vecs.length; i++) {
+            bytes29 nsString = bytes29(fromHex(vecs[i].namespace));
             Namespace memory ns = toNamespace(nsString);
-            bytes memory data = fromHex(vecs[0].data);
+            bytes memory data = fromHex(vecs[i].data);
             (bytes[] memory shares, bool err) = _bytesToSharesV0(data, ns);
             bytes32 commitment = _createCommitment(shares, ns);
-            if (!compareStrings(_bytesToHexString(abi.encodePacked(commitment)), vecs[0].commitment)) {
-                console.log("Commitment mismatch for vector ", 0);
-                console.log("expected: ", vecs[0].commitment);
+            if (!compareStrings(_bytesToHexString(abi.encodePacked(commitment)), vecs[i].commitment)) {
+                console.log("Commitment mismatch for vector ", i);
+                console.log("expected: ", vecs[i].commitment);
                 console.log("got: ", _bytesToHexString(abi.encodePacked(commitment)));
-                return;
+                revert();
             }
-        //}
-        console.log("All good :)");
+        }
 
-        /*bytes32 dummy = hex"000000000000000000000000000000000000005cfe5e6a0c8e6402fd5e010000";
-        NamespaceNode memory node = NamespaceNode(ns, ns, dummy);
-        NamespaceNode[] memory nodes = new NamespaceNode[](1);
-        nodes[0] = node;
-        NamespaceMerkleMultiproof memory nullproof = NamespaceMerkleMultiproof(0, 0, new NamespaceNode[](0));
-        NamespaceMerkleMultiproof memory populatedProof = NamespaceMerkleMultiproof(0, 1, nodes);
-        (NamespaceNode memory root,,,) = NamespaceMerkleTree._computeRoot(populatedProof, nodes, 0, 1, 0, 0);
-        console.log(_bytesToHexString(abi.encodePacked(node.digest)));
-        console.log(_bytesToHexString(abi.encodePacked(root.digest)));*/
-        //for (uint i = 0; i < vecs.length; i++) {
-        //}
     }
 }
