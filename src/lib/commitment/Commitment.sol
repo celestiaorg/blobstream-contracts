@@ -170,7 +170,7 @@ function _merkleMountainRangeSizes(uint256 totalSize, uint256 maxTreeSize) pure 
     return treeSizes;
 }
 
-function _createCommitment(bytes[] memory shares, Namespace memory namespace) view returns (bytes32 commitment) {
+function _createCommitment(bytes[] memory shares, Namespace memory namespace) returns (bytes32 commitment) {
     uint256 subtreeWidth = _subtreeWidth(shares.length, SUBTREE_ROOT_THRESHOLD);
     uint256[] memory treeSizes = _merkleMountainRangeSizes(shares.length, subtreeWidth);
     bytes[][] memory leafSets = new bytes[][](treeSizes.length);
@@ -184,14 +184,10 @@ function _createCommitment(bytes[] memory shares, Namespace memory namespace) vi
         for (uint256 j = 0; j < treeSizes[i]; j++) {
             //leafSets[i][j] = new bytes(512);
             // Try with 512 + 29, prefixing with the 29 byte namespace
-            leafSets[i][j] = new bytes(541);
-            // copy the namespace bytes
-            for (uint256 k = 0; k < 29; k++) {
-                leafSets[i][j][k] = namespace.toBytes()[k];
-            }
+            leafSets[i][j] = new bytes(512);
             // copy the share
-            for (uint256 k = 29; k < 541; k++) {
-                leafSets[i][j][k] = shares[cursor][k-29];
+            for (uint256 k = 0; k < 512; k++) {
+                leafSets[i][j][k] = shares[cursor][k];
             }
             cursor += treeSizes[i];
         }
@@ -209,10 +205,7 @@ function _createCommitment(bytes[] memory shares, Namespace memory namespace) vi
         //NamespaceMerkleMultiproof memory emptyProof = NamespaceMerkleMultiproof(0, leafSets[i].length, new NamespaceNode[](0));
         NamespaceMerkleMultiproof memory emptyProof = NamespaceMerkleMultiproof(0, leafSets[i].length, leafNamespaceNodes);
         (NamespaceNode memory root,,,) = NamespaceMerkleTree._computeRoot(emptyProof, leafNamespaceNodes, 0, leafNamespaceNodes.length, 0, 0);
-        console.log("root digest ", _bytesToHexString(abi.encodePacked(root.digest)));
-        console.log("root min ", _bytesToHexString(abi.encodePacked(root.min.toBytes())));
-        console.log("root max ", _bytesToHexString(abi.encodePacked(root.max.toBytes())));
-        subtreeRoots[i] = bLeafDigest(bytes(abi.encodePacked(root.digest)));
+        subtreeRoots[i] = bLeafDigest(bytes(abi.encodePacked(root.min.toBytes(), root.max.toBytes(), root.digest)));
     }
     //BinaryMerkleMultiproof memory nullBinaryProof = BinaryMerkleMultiproof(new bytes32[](0), 0, 0);
     BinaryMerkleMultiproof memory emptyBinaryProof = BinaryMerkleMultiproof(new bytes32[](0), 0, subtreeRoots.length);

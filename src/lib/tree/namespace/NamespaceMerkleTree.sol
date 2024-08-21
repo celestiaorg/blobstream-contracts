@@ -148,7 +148,7 @@ library NamespaceMerkleTree {
         NamespaceMerkleMultiproof memory proof,
         Namespace memory namespace,
         bytes[] memory data
-    ) internal pure returns (bool) {
+    ) internal returns (bool) {
         // Hash all the leaves to get leaf nodes.
         NamespaceNode[] memory nodes = new NamespaceNode[](data.length);
         for (uint256 i = 0; i < data.length; ++i) {
@@ -168,7 +168,7 @@ library NamespaceMerkleTree {
         NamespaceNode memory root,
         NamespaceMerkleMultiproof memory proof,
         NamespaceNode[] memory leafNodes
-    ) internal pure returns (bool) {
+    ) internal returns (bool) {
         uint256 leafIndex = 0;
         NamespaceNode[] memory leftSubtrees = new NamespaceNode[](proof.sideNodes.length);
 
@@ -212,7 +212,7 @@ library NamespaceMerkleTree {
         uint256 end,
         uint256 headProof,
         uint256 headLeaves
-    ) public pure returns (NamespaceNode memory, uint256, uint256, bool) {
+    ) public returns (NamespaceNode memory, uint256, uint256, bool) {
         // reached a leaf
         if (end - begin == 1) {
             // if current range overlaps with proof range, pop and return a leaf

@@ -21,5 +21,3 @@ function nodeDigest(bytes32 left, bytes32 right) pure returns (bytes32 digest) {
 function leafDigest(bytes memory data) pure returns (bytes32 digest) {
     digest = sha256(abi.encodePacked(Constants.LEAF_PREFIX, data));
 }
-
-// console.log("subtree root ", _bytesToHexString(abi.encodePacked(subtreeRoots[i])));
