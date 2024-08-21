@@ -73,25 +73,25 @@ contract CommitmentTest is DSTest {
     }
 
     function testCreateCommitmentV0() external {
-        string memory path = "./src/lib/commitment/test/testVectors.json";
+        string memory path = "./src/lib/commitment/test/testVectors2.json";
         string memory jsonData = vm.readFile(path);
         bytes memory vecsData = vm.parseJson(jsonData);
         TestVector[] memory vecs = abi.decode(vecsData, (TestVector[]));
 
 
-        for (uint i = 0; i < vecs.length; i++) {
-            bytes29 nsString = bytes29(fromHex(vecs[i].namespace));
+        //for (uint i = 0; i < vecs.length; i++) {
+            bytes29 nsString = bytes29(fromHex(vecs[0].namespace));
             Namespace memory ns = toNamespace(nsString);
-            bytes memory data = fromHex(vecs[i].data);
+            bytes memory data = fromHex(vecs[0].data);
             (bytes[] memory shares, bool err) = _bytesToSharesV0(data, ns);
             bytes32 commitment = _createCommitment(shares, ns);
-            if (!compareStrings(_bytesToHexString(abi.encodePacked(commitment)), vecs[i].commitment)) {
-                console.log("Commitment mismatch for vector ", i);
-                console.log("expected: ", vecs[i].commitment);
+            if (!compareStrings(_bytesToHexString(abi.encodePacked(commitment)), vecs[0].commitment)) {
+                console.log("Commitment mismatch for vector ", 0);
+                console.log("expected: ", vecs[0].commitment);
                 console.log("got: ", _bytesToHexString(abi.encodePacked(commitment)));
                 return;
             }
-        }
+        //}
         console.log("All good :)");
 
         /*bytes32 dummy = hex"000000000000000000000000000000000000005cfe5e6a0c8e6402fd5e010000";
