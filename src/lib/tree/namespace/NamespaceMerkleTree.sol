@@ -193,7 +193,6 @@ library NamespaceMerkleTree {
         return namespaceNodeEquals(rootHash, root);
     }
 
-
     /// @notice Computes the NMT root recursively.
     /// @param proof Namespace Merkle multiproof for the leaves.
     /// @param leafNodes Leaf nodes for which inclusion is proven.

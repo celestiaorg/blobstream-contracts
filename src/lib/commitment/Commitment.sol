@@ -43,14 +43,12 @@ function _writeSequenceLength(bytes memory share, uint32 sequenceLength) pure {
 }
 
 function _copyBytes(bytes memory buffer, uint32 cursor, bytes memory data, uint32 length) pure returns (uint32) {
-
     uint256 start = buffer.length - length;
     for (uint256 i = start; i < buffer.length; i++) {
         if (cursor < data.length) {
             buffer[i] = data[cursor];
             cursor++;
-        }
-        else {
+        } else {
             buffer[i] = 0;
         }
     }
@@ -58,7 +56,6 @@ function _copyBytes(bytes memory buffer, uint32 cursor, bytes memory data, uint3
 }
 
 function _bytesToHexString(bytes memory buffer) pure returns (string memory) {
-
     // Fixed buffer size for hexadecimal convertion
     bytes memory converted = new bytes(buffer.length * 2);
 
@@ -73,7 +70,10 @@ function _bytesToHexString(bytes memory buffer) pure returns (string memory) {
 }
 
 // Share Version 0
-function _bytesToSharesV0(bytes memory blobData, Namespace memory namespace) pure returns (bytes[] memory shares, bool err) {
+function _bytesToSharesV0(bytes memory blobData, Namespace memory namespace)
+    pure
+    returns (bytes[] memory shares, bool err)
+{
     if (namespace.version != 0) {
         return (new bytes[](0), true);
     }
@@ -81,7 +81,7 @@ function _bytesToSharesV0(bytes memory blobData, Namespace memory namespace) pur
         return (new bytes[](0), true);
     }
     // Allocate memory for the shares
-    uint256 numShares = _numShares(blobData.length); 
+    uint256 numShares = _numShares(blobData.length);
     bytes[] memory _shares = new bytes[](numShares);
     for (uint256 i = 0; i < _shares.length; i++) {
         _shares[i] = new bytes(512);
@@ -149,9 +149,8 @@ function _merkleMountainRangeSizes(uint256 totalSize, uint256 maxTreeSize) pure 
     uint256 numTrees;
     if (leftovers == 0) {
         numTrees = bigTrees;
-    }
-    else {
-        numTrees = bigTrees + MathUpgradeable.log2(leftovers) + (leftovers%2);
+    } else {
+        numTrees = bigTrees + MathUpgradeable.log2(leftovers) + (leftovers % 2);
     }
     uint256[] memory treeSizes = new uint256[](numTrees);
     uint256 count = 0;
@@ -159,8 +158,7 @@ function _merkleMountainRangeSizes(uint256 totalSize, uint256 maxTreeSize) pure 
         if (totalSize >= maxTreeSize) {
             treeSizes[count] = maxTreeSize;
             totalSize -= maxTreeSize;
-        }
-        else {
+        } else {
             uint256 treeSize = _roundDownPowerOfTwo(totalSize);
             treeSizes[count] = treeSize;
             totalSize -= treeSize;
@@ -203,12 +201,15 @@ function _createCommitment(bytes[] memory shares, Namespace memory namespace) re
             leafNamespaceNodes[j] = leafDigest(namespace, leafSets[i][j]);
         }
         //NamespaceMerkleMultiproof memory emptyProof = NamespaceMerkleMultiproof(0, leafSets[i].length, new NamespaceNode[](0));
-        NamespaceMerkleMultiproof memory emptyProof = NamespaceMerkleMultiproof(0, leafSets[i].length, leafNamespaceNodes);
-        (NamespaceNode memory root,,,) = NamespaceMerkleTree._computeRoot(emptyProof, leafNamespaceNodes, 0, leafNamespaceNodes.length, 0, 0);
+        NamespaceMerkleMultiproof memory emptyProof =
+            NamespaceMerkleMultiproof(0, leafSets[i].length, leafNamespaceNodes);
+        (NamespaceNode memory root,,,) =
+            NamespaceMerkleTree._computeRoot(emptyProof, leafNamespaceNodes, 0, leafNamespaceNodes.length, 0, 0);
         subtreeRoots[i] = bLeafDigest(bytes(abi.encodePacked(root.min.toBytes(), root.max.toBytes(), root.digest)));
     }
     //BinaryMerkleMultiproof memory nullBinaryProof = BinaryMerkleMultiproof(new bytes32[](0), 0, 0);
     BinaryMerkleMultiproof memory emptyBinaryProof = BinaryMerkleMultiproof(new bytes32[](0), 0, subtreeRoots.length);
-    (bytes32 binaryTreeRoot,,,) = BinaryMerkleTree._computeRootMulti(emptyBinaryProof, subtreeRoots, 0, subtreeRoots.length, 0, 0);
+    (bytes32 binaryTreeRoot,,,) =
+        BinaryMerkleTree._computeRootMulti(emptyBinaryProof, subtreeRoots, 0, subtreeRoots.length, 0, 0);
     commitment = binaryTreeRoot;
 }
