@@ -1,6 +1,7 @@
 module github.com/celestiaorg/blobstream-contracts/v4
 
-go 1.21.1
+go 1.22
+
 toolchain go1.22.5
 
 require github.com/ethereum/go-ethereum v1.14.9
