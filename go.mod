@@ -4,7 +4,7 @@ go 1.22
 
 toolchain go1.22.5
 
-require github.com/ethereum/go-ethereum v1.14.9
+require github.com/ethereum/go-ethereum v1.14.10
 
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
@@ -26,7 +26,7 @@ require (
 	github.com/holiman/uint256 v1.3.1 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
-	github.com/supranational/blst v0.3.11 // indirect
+	github.com/supranational/blst v0.3.13 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	golang.org/x/crypto v0.22.0 // indirect
