@@ -18,7 +18,7 @@ forge build -C lib/openzeppelin-contracts/contracts/proxy > /dev/null
 
 cd "$1"
 
-for file in "${@: 2}"; do
+for file in "${@:2}"; do
     mkdir -p ../wrappers/"${file}"
     contractName=$(basename "${file}" .sol)
 
