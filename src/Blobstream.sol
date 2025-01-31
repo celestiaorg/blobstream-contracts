@@ -54,7 +54,6 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
     uint256 public state_eventNonce;
     /// @notice Mapping of data root tuple root nonces to data root tuple roots.
     mapping(uint256 => bytes32) public state_dataRootTupleRoots;
-    mapping(uint256 => bytes32) public state_dataRootTupleRoots2;
 
     ////////////
     // Events //
