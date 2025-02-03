@@ -50,7 +50,7 @@ jobs:
       - name: Install Foundry
         uses: onbjerg/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
 
       - name: Install Go Ethereum devtools
         working-directory: ./
