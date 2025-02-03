@@ -20,7 +20,7 @@ jobs:
       - name: Install Foundry
         uses: onbjerg/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
 
       - name: Build project
         working-directory: ./
