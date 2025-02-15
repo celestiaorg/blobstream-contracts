@@ -3,7 +3,7 @@
 <!-- markdownlint-disable MD013 MD041 -->
 
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue?style=flat-square&logo=go)](https://godoc.org/github.com/celestiaorg/blobstream-contracts)
-[![Go Report Card](https://goreportcard.com/badge/github.com/celestiaorg/blobstream-contracts?style=flat-square)](https://goreportcard.com/report/github.com/celestiaorg/blobstream-contracts)
+[![Go Report A+](https://goreportcard.com/badge/github.com/celestiaorg/quantum-gravity-bridge?style=flat-square)](https://goreportcard.com/report/github.com/celestiaorg/quantum-gravity-bridge)
 [![Version](https://img.shields.io/github/tag/celestiaorg/blobstream-contracts.svg?style=flat-square)](https://github.com/celestiaorg/blobstream-contracts/releases/latest)
 [![License: Apache-2.0](https://img.shields.io/github/license/celestiaorg/blobstream-contracts.svg?style=flat-square)](https://github.com/celestiaorg/blobstream-contracts/blob/master/LICENSE)
 
