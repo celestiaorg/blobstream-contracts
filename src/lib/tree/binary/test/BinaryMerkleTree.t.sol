@@ -40,10 +40,24 @@ import "../BinaryMerkleMultiproof.sol";
  * 0xc1ad6548cb4c7663110df219ec8b36ca63b01158956f4be31a38a88d0c7f7071
  *
  */
+
+// Intermediate mock contract that calls the library function
+// and returns the result.
+// This is done because of the expectRevert v1 behaviour change:
+// https://github.com/foundry-rs/book/pull/922
+contract BinaryMerkleTreeLibMock {
+    function slice(bytes32[] memory _data, uint256 _begin, uint256 _end) external returns (bytes32[] memory) {
+        return BinaryMerkleTree.slice(_data, _begin, _end);
+    }
+}
+
 contract BinaryMerkleProofTest is DSTest {
     Vm private constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
+    BinaryMerkleTreeLibMock public binaryMerkleTreeMock;
 
-    function setUp() external {}
+    function setUp() external {
+        binaryMerkleTreeMock = new BinaryMerkleTreeLibMock();
+    }
 
     function testVerifyNone() external {
         bytes32 root = sha256("");
@@ -321,7 +335,7 @@ contract BinaryMerkleProofTest is DSTest {
         data[3] = "d";
 
         vm.expectRevert("Invalid range: _begin is greater than _end");
-        BinaryMerkleTree.slice(data, 2, 1);
+        binaryMerkleTreeMock.slice(data, 2, 1);
     }
 
     function testOutOfBoundsSlice() public {
@@ -332,7 +346,7 @@ contract BinaryMerkleProofTest is DSTest {
         data[3] = "d";
 
         vm.expectRevert("Invalid range: _begin or _end are out of bounds");
-        BinaryMerkleTree.slice(data, 2, 5);
+        binaryMerkleTreeMock.slice(data, 2, 5);
     }
 
     // header.dat, blob.dat, and proofs.json test vectors included in ../../test/ and serialized to hex bytes using Rust
