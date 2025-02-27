@@ -28,7 +28,7 @@ RUN curl -L https://foundry.paradigm.xyz | bash && . /root/.bashrc && foundryup
 RUN wget https://github.com/ethereum/solidity/releases/download/v0.8.22/solc-static-linux -O /usr/bin/solc && chmod +x /usr/bin/solc
 
 # install go
-RUN wget https://go.dev/dl/go1.21.1.linux-amd64.tar.gz && rm -rf /usr/local/go && tar -C /usr/local -xzf go1.21.1.linux-amd64.tar.gz && echo 'PATH=$PATH:/usr/local/go/bin:/root/go/bin' >> ~/.bashrc
+RUN wget https://go.dev/dl/go1.24.0.linux-arm64.tar.gz && rm -rf /usr/local/go && tar -C /usr/local -xzf go1.24.0.linux-arm64.tar.gz && echo 'PATH=$PATH:/usr/local/go/bin:/root/go/bin' >> ~/.bashrc
 
 # install abigen
 RUN git clone --depth 1 --branch v1.12.0 https://github.com/ethereum/go-ethereum.git && cd go-ethereum && PATH=$PATH:/usr/local/go/bin make devtools
