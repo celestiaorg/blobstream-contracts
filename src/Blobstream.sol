@@ -24,6 +24,9 @@ struct Signature {
 }
 
 /// @title Blobstream: Celestia -> EVM, Data Availability relay.
+/// @dev DEPRECATED: This Blobstream contract implementation is deprecated and not maintained.
+/// It may contain bugs and should not be used in production.
+/// For production use, please use maintained alternatives such as sp1-blobstream or blobstream0.
 /// @dev The relay relies on a set of signers to attest to some event on
 /// Celestia. These signers are the Celestia validator set, who sign over every
 /// Celestia block. Keeping track of the Celestia validator set is accomplished
