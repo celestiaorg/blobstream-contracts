@@ -8,7 +8,17 @@
 
 Blobstream is a Celestia -> EVM message relay.
 It is based on Umee's Gravity Bridge implementation, [Peggo](https://github.com/umee-network/peggo).
-**This project is under active development and should not be used in production**.
+
+## ⚠️ DEPRECATED
+
+**This Blobstream contract implementation is deprecated and not maintained. It may contain bugs and should not be used in production.**
+
+**For production use, please use one of the following maintained alternatives:**
+
+- **[sp1-blobstream](https://github.com/succinctlabs/sp1-blobstream/)** - The official implementation used in production deployments
+- **[blobstream0](https://github.com/risc0/blobstream0)** - Alternative implementation using RISC Zero
+
+Only the interface and verification libraries in this repository are still relevant for integration purposes.
 
 ## Table of Contents
 
