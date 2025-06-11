@@ -11,7 +11,7 @@ It is based on Umee's Gravity Bridge implementation, [Peggo](https://github.com/
 
 ## ⚠️ DEPRECATED
 
-**This Blobstream contract implementation is deprecated and not maintained. It may contain bugs and should not be used in production.**
+**The [Blobstream contract](https://github.com/celestiaorg/blobstream-contracts) is deprecated and not maintained. It may contain bugs and should not be used in production.**
 
 **For production use, please use one of the following maintained alternatives:**
 
