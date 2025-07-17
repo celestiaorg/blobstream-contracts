@@ -96,12 +96,12 @@ Relayed tuples are in the same order as Celestia block headers.
 ### Events and messages relayed
 
  **Validator sets**:
- The relayer informs the Blobstream contract who are the current validators and their power.
- This results in an execution of the `updateValidatorSet` function.
+ The relayer informs the Blobstream contract who the current validators are and their power.
+ This results in the execution of the `updateValidatorSet` function.
 
  **Batches**:
  The relayer informs the Blobstream contract of new data root tuple roots.
- This results in an execution of the `submitDataRootTupleRoot` function.
+ This results in the execution of the `submitDataRootTupleRoot` function.
 
 ## Audits
 
