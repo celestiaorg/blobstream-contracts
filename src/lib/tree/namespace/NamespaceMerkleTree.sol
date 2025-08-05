@@ -137,7 +137,7 @@ library NamespaceMerkleTree {
         return namespaceNodeEquals(root, node);
     }
 
-    /// @notice Verify if contiguous elements exists in Merkle tree, given leaves, mutliproof, and root.
+    /// @notice Verify if contiguous elements exists in Merkle tree, given leaves, multiproof, and root.
     /// @param root The root of the tree in which the given leaves are verified.
     /// @param proof Namespace Merkle multiproof for the leaves.
     /// @param namespace Namespace of the leaves. All leaves must have the same namespace.
