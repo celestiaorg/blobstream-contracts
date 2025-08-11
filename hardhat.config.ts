@@ -17,7 +17,7 @@ const config: HardhatUserConfig = {
   preprocess: {
     eachLine: (hre) => ({
       transform: (line: string) => {
-        if (line.match(/^\s*import /i)) {
+        if (line.match(/^\s*import /)) {
           for (const [from, to] of getRemappings()) {
             if (line.includes(from)) {
               line = line.replace(from, to);
