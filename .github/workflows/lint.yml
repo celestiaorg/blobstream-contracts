@@ -10,7 +10,7 @@ jobs:
   check-solidity-formatting:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
 
@@ -33,5 +33,5 @@ jobs:
   markdown-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: celestiaorg/.github/.github/actions/markdown-lint@v0.6.3
