@@ -2,3 +2,4 @@
 solc_version = "0.8.22"
 via_ir = true
 gas_reports = ["*"]
+fs_permissions = [{ access = "read", path = "./"}]
