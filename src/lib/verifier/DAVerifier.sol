@@ -172,11 +172,9 @@ library DAVerifier {
         AttestationProof memory _attestationProof
     ) internal view returns (bool, ErrorCodes) {
         // checking that the data root was committed to by the Blobstream smart contract
-        if (
-            !_bridge.verifyAttestation(
+        if (!_bridge.verifyAttestation(
                 _attestationProof.tupleRootNonce, _attestationProof.tuple, _attestationProof.proof
-            )
-        ) {
+            )) {
             return (false, ErrorCodes.InvalidDataRootTupleToDataRootTupleRootProof);
         }
 
@@ -220,11 +218,9 @@ library DAVerifier {
         AttestationProof memory _attestationProof
     ) internal view returns (bool, ErrorCodes) {
         // checking that the data root was committed to by the Blobstream smart contract
-        if (
-            !_bridge.verifyAttestation(
+        if (!_bridge.verifyAttestation(
                 _attestationProof.tupleRootNonce, _attestationProof.tuple, _attestationProof.proof
-            )
-        ) {
+            )) {
             return (false, ErrorCodes.InvalidDataRootTupleToDataRootTupleRootProof);
         }
 
