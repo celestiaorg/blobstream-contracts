@@ -95,8 +95,9 @@ contract Benchmark is DSTest {
         pure
         returns (bytes32)
     {
-        bytes32 c =
-            keccak256(abi.encode(VALIDATOR_SET_HASH_DOMAIN_SEPARATOR, _nonce, _powerThreshold, _validatorSetHash));
+        bytes32 c = keccak256(
+            abi.encode(VALIDATOR_SET_HASH_DOMAIN_SEPARATOR, _nonce, _powerThreshold, _validatorSetHash)
+        );
 
         return c;
     }

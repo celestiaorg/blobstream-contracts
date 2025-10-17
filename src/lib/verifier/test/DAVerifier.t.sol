@@ -239,8 +239,9 @@ contract DAVerifierTest is DSTest {
         pure
         returns (bytes32)
     {
-        bytes32 c =
-            keccak256(abi.encode(VALIDATOR_SET_HASH_DOMAIN_SEPARATOR, _nonce, _powerThreshold, _validatorSetHash));
+        bytes32 c = keccak256(
+            abi.encode(VALIDATOR_SET_HASH_DOMAIN_SEPARATOR, _nonce, _powerThreshold, _validatorSetHash)
+        );
 
         return c;
     }
@@ -319,13 +320,11 @@ contract TestFixture {
     ];
 
     /// @notice shares to data root proof side nodes.
-    NamespaceNode[] public shareToDataRootProofSideNodes = [
-        NamespaceNode(
+    NamespaceNode[] public shareToDataRootProofSideNodes = [NamespaceNode(
             Namespace(0xff, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
             Namespace(0xff, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffff),
             0x0ec8148c743a4a4db384f40f487cae2fd1ca0d18442d1f162916bdf1cc61b679
-        )
-    ];
+        )];
 
     /// @notice row root to data root proof side nodes.
     bytes32[] public rowRootToDataRootProofSideNodes = [
