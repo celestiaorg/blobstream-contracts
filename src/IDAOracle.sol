@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.22;
 
 import "./DataRootTuple.sol";
 import "./lib/tree/binary/BinaryMerkleProof.sol";
