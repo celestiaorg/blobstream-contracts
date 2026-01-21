@@ -16,7 +16,7 @@ struct NamespaceNode {
 /// @notice Compares two `NamespaceNode`s.
 /// @param first First node.
 /// @param second Second node.
-/// @return `true` is equal, `false otherwise.
+/// @return `true` if equal, `false` otherwise.
 // solhint-disable-next-line func-visibility
 function namespaceNodeEquals(NamespaceNode memory first, NamespaceNode memory second) pure returns (bool) {
     return first.min.equalTo(second.min) && first.max.equalTo(second.max) && (first.digest == second.digest);

@@ -55,7 +55,7 @@ library DAVerifier {
         InvalidRowsToDataRootProof,
         /// @notice The row to the data root proof is invalid.
         InvalidRowToDataRootProof,
-        /// @notice The data root tuple to the data root tuple roof proof is invalid.
+        /// @notice The data root tuple to the data root tuple root proof is invalid.
         InvalidDataRootTupleToDataRootTupleRootProof,
         /// @notice The number of share proofs isn't equal to the number of rows roots.
         UnequalShareProofsAndRowRootsNumber,
@@ -107,7 +107,7 @@ library DAVerifier {
 
     /// @notice Verifies the shares to data root tuple root proof.
     /// NOTE: This doesn't authenticate the proof to Blobstream. It only verifies if the proof is valid.
-    /// @param _data The data that needs to proven.
+    /// @param _data The data that needs to be proven.
     /// @param _shareProofs The share to the row roots proof.
     /// @param _namespace The namespace of the shares.
     /// @param _rowRoots The row roots where the shares belong.
@@ -287,13 +287,13 @@ library DAVerifier {
     /// Note: the provided proof is not authenticated to the Blobstream smart contract. It is the user's responsibility
     /// to verify that the proof is valid and that the shares were successfully committed to using
     /// the `DAVerifier.verifySharesToDataRootTupleRoot()` method.
-    /// Note: the minimum square size is 1. Thus, we don't expect the proof not to contain any side node.
+    /// Note: the minimum square size is 1. Thus, we expect the proof to contain at least one side node.
     /// @param _proof The proof of the shares to the row/column root.
     /// @return The square size of the corresponding block.
     function computeSquareSizeFromShareProof(NamespaceMerkleMultiproof memory _proof) internal pure returns (uint256) {
         uint256 extendedSquareRowSize = 2 ** _proof.sideNodes.length;
         // we divide the extended square row size by 2 because the square size is the
-        // the size of the row of the original square size.
+        // size of the row of the original square.
         return extendedSquareRowSize / 2;
     }
 
