@@ -77,7 +77,7 @@ type WrappersTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
-// WrappersFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
+// WrappersFilterer is an auto generated log filtering Go binding around Ethereum contract events.
 type WrappersFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
