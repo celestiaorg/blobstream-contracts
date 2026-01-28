@@ -211,7 +211,7 @@ library NamespaceMerkleTree {
         uint256 end,
         uint256 headProof,
         uint256 headLeaves
-    ) private pure returns (NamespaceNode memory, uint256, uint256, bool) {
+    ) public pure returns (NamespaceNode memory, uint256, uint256, bool) {
         // reached a leaf
         if (end - begin == 1) {
             // if current range overlaps with proof range, pop and return a leaf

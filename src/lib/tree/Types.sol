@@ -28,6 +28,12 @@ function toBytes(Namespace memory n) pure returns (bytes29) {
     return bytes29(abi.encodePacked(n.version, n.id));
 }
 
+function isReservedNamespace(Namespace memory n) pure returns (bool) {
+    bytes29 upper = hex"00000000000000000000000000000000000000000000000000000000FF";
+    bytes29 lower = hex"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00";
+    return n.toBytes() < upper || n.toBytes() > lower;
+}
+
 function toNamespace(bytes29 n) pure returns (Namespace memory) {
     bytes memory id = new bytes(28);
     for (uint256 i = 1; i < 29; i++) {
