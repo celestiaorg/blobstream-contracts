@@ -107,6 +107,7 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
     /// @param _validatorSetCheckpoint Initial checkpoint of the validator set. This does not need
     /// to be the genesis validator set of the bridged chain, only the initial
     /// validator set of the bridge.
+    /// @dev Upgradeable initializer (OZ pattern). Called once via proxy deployment.
     /// @dev DO NOT REMOVE THE INITIALIZER! It is mandatory for upgradability.
     function initialize(uint256 _nonce, uint256 _powerThreshold, bytes32 _validatorSetCheckpoint) public initializer {
         // EFFECTS
