@@ -157,7 +157,7 @@ library BinaryMerkleTree {
             _computeRootMulti(proof, leafNodes, begin + k, end, newHeadProofLeft, newHeadLeavesLeft);
 
         // only right leaf/subtree can be non-existent
-        if (rightIsNil == true) {
+        if (rightIsNil) {
             return (left, newHeadProof, newHeadLeaves, false);
         }
         bytes32 hash = nodeDigest(left, right);
@@ -188,8 +188,7 @@ library BinaryMerkleTree {
         returns (bytes32, uint256, bool)
     {
         if (nodes.length == 0 || head >= nodes.length || head >= end) {
-            bytes32 node;
-            return (node, head, true);
+            return (bytes32(0), head, true);
         }
         return (nodes[head], head + 1, false);
     }
