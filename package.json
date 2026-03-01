@@ -24,8 +24,8 @@
   },
   "homepage": "https://github.com/celestiaorg/blobstream-contracts#readme",
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
-    "hardhat": "^2.22.17",
+    "@nomicfoundation/hardhat-toolbox": "^7.0.0",
+    "hardhat": "^3.1.10",
     "hardhat-preprocessor": "^0.1.5"
   }
 }
