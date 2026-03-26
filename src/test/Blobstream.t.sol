@@ -173,6 +173,40 @@ contract RelayerTest is DSTest {
         assertTrue(committedTo);
     }
 
+    function testVerifyAttestationNumLeavesOverflow() public {
+        uint256 initialValsetNonce = 1;
+        uint256 nonce = 2;
+        bytes32 newTupleRoot = 0x82dc1607d84557d3579ce602a45f5872e821c36dbda7ec926dfa17ebc8d5c013;
+        bytes32 newTuple = 0x0101010101010101010101010101010101010101010101010101010101010101;
+        uint256 height = 1;
+
+        bytes32 newDataRootTupleRoot = domainSeparateDataRootTupleRoot(nonce, newTupleRoot);
+
+        Signature[] memory sigs = new Signature[](1);
+        bytes32 digest_eip191 = ECDSA.toEthSignedMessageHash(newDataRootTupleRoot);
+        (uint8 v, bytes32 r, bytes32 s) = cheats.sign(testPriv1, digest_eip191);
+        sigs[0] = Signature(v, r, s);
+
+        Validator[] memory valSet = new Validator[](1);
+        valSet[0] = Validator(cheats.addr(testPriv1), votingPower);
+
+        bridge.submitDataRootTupleRoot(nonce, initialValsetNonce, newTupleRoot, valSet, sigs);
+
+        DataRootTuple memory t;
+        t.height = height;
+        t.dataRoot = newTuple;
+
+        // Craft a proof with numLeaves > 2^255 which previously caused an infinite loop
+        BinaryMerkleProof memory maliciousProof;
+        maliciousProof.sideNodes = new bytes32[](0);
+        maliciousProof.key = 0;
+        maliciousProof.numLeaves = (1 << 255) + 1;
+
+        // Should return false, not revert
+        bool result = bridge.verifyAttestation(nonce, t, maliciousProof);
+        assertTrue(!result);
+    }
+
     function computeValidatorSetHash(Validator[] memory _validators) private pure returns (bytes32) {
         return keccak256(abi.encode(_validators));
     }

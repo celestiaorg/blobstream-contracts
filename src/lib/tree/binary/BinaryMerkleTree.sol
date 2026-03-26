@@ -42,6 +42,13 @@ library BinaryMerkleTree {
         pure
         returns (bool, ErrorCodes)
     {
+        // Reject numLeaves that would cause an infinite loop in getStartingBit.
+        // The EVM SHL opcode returns 0 for shifts >= 256, so numLeaves > 2^255
+        // makes the while loop in getStartingBit never terminate.
+        if (proof.numLeaves > (1 << 255)) {
+            return (false, ErrorCodes.InvalidNumberOfLeavesInProof);
+        }
+
         // Check proof is correct length for the key it is proving
         if (proof.numLeaves <= 1) {
             if (proof.sideNodes.length != 0) {
