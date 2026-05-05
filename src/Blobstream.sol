@@ -355,7 +355,7 @@ contract Blobstream is IDAOracle, Initializable, UUPSUpgradeable, OwnableUpgrade
         returns (bool)
     {
         // Tuple must have been committed before.
-        if (_tupleRootNonce > state_eventNonce) {
+        if (_tupleRootNonce == 0 || _tupleRootNonce > state_eventNonce) {
             return false;
         }
 
