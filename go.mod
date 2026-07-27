@@ -2,7 +2,7 @@ module github.com/celestiaorg/blobstream-contracts/v4
 
 go 1.26.1
 
-require github.com/ethereum/go-ethereum v1.17.4
+require github.com/ethereum/go-ethereum v1.17.5
 
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
@@ -14,7 +14,7 @@ require (
 	github.com/crate-crypto/go-eth-kzg v1.5.0 // indirect
 	github.com/deckarep/golang-set/v2 v2.6.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
-	github.com/ethereum/c-kzg-4844/v2 v2.1.6 // indirect
+	github.com/ethereum/c-kzg-4844/v2 v2.1.8 // indirect
 	github.com/fjl/jsonw v0.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
