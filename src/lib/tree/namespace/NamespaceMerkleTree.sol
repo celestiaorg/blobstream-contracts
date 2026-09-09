@@ -169,6 +169,16 @@ library NamespaceMerkleTree {
         NamespaceMerkleMultiproof memory proof,
         NamespaceNode[] memory leafNodes
     ) internal pure returns (bool) {
+        // A proof range that covers no leaf would let the loop below consume nothing from
+        // `leafNodes`, so the root would be rebuilt from the side nodes alone and any data the
+        // caller passed in would verify. Require the range to cover exactly the supplied leaves.
+        if (proof.beginKey >= proof.endKey) {
+            return false;
+        }
+        if (leafNodes.length != proof.endKey - proof.beginKey) {
+            return false;
+        }
+
         uint256 leafIndex = 0;
         NamespaceNode[] memory leftSubtrees = new NamespaceNode[](proof.sideNodes.length);
 

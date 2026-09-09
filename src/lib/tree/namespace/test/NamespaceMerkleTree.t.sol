@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.22;
 
-import "ds-test/test.sol";
+import "forge-std/Test.sol";
 
 import "../NamespaceNode.sol";
 import "../NamespaceMerkleProof.sol";
@@ -46,7 +46,7 @@ import "../../Constants.sol";
  * 0x0000000000000000000000000000000000000000000000000000000010 0x0000000000000000000000000000000000000000000000000000000040 0x34e6541306dc4e57a5a2a9ef57a46d5705ed09efb8c6a02580d3a972922b6862
  *
  */
-contract NamespaceMerkleTreeTest is DSTest {
+contract NamespaceMerkleTreeTest is Test {
     function setUp() external {}
 
     function assertEqNamespaceNode(NamespaceNode memory first, NamespaceNode memory second) internal {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.22;
 
-import "ds-test/test.sol";
+import "forge-std/Test.sol";
 
 import "../../Types.sol";
 import "../NamespaceNode.sol";
@@ -45,7 +45,7 @@ import "../NamespaceMerkleTree.sol";
  * 0x0000000000000000000000000000000000000000000000000000000010 0x0000000000000000000000000000000000000000000000000000000010 0x5b3328b03a538d627db78668034089cb395f63d05b24fdf99558d36fe991d268
  *
  */
-contract NamespaceMerkleMultiproofTest is DSTest {
+contract NamespaceMerkleMultiproofTest is Test {
     function setUp() external {}
 
     function assertEqNamespaceNode(NamespaceNode memory first, NamespaceNode memory second) internal {
@@ -87,6 +87,18 @@ contract NamespaceMerkleMultiproofTest is DSTest {
         data[1] = hex"03";
         bool isValid = NamespaceMerkleTree.verifyMulti(root, proof, nid, data);
         assertTrue(isValid);
+
+        // The proof range has to cover exactly the leaves that were passed in, otherwise an
+        // extra leaf is silently ignored and still verifies.
+        bytes[] memory extraData = new bytes[](3);
+        extraData[0] = data[0];
+        extraData[1] = data[1];
+        extraData[2] = hex"04";
+        assertTrue(!NamespaceMerkleTree.verifyMulti(root, proof, nid, extraData));
+
+        // An empty proof range consumes no leaf at all.
+        NamespaceMerkleMultiproof memory emptyRange = NamespaceMerkleMultiproof(2, 2, sideNodes);
+        assertTrue(!NamespaceMerkleTree.verifyMulti(root, emptyRange, nid, data));
     }
 
     function testLoadFromBytes() external {

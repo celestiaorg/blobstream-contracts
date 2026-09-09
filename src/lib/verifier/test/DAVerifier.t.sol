@@ -11,7 +11,7 @@ import "../../tree/binary/BinaryMerkleProof.sol";
 import "../../tree/namespace/NamespaceMerkleMultiproof.sol";
 import "../../tree/Types.sol";
 
-import "ds-test/test.sol";
+import "forge-std/Test.sol";
 
 interface CheatCodes {
     function addr(uint256 privateKey) external returns (address);
@@ -54,7 +54,7 @@ The nonce: 2
 The data root tuple root: 0xf89859a09c0f2b1bbb039618d0fe60432b8c247f7ccde97814655f2acffb3434
 */
 
-contract DAVerifierTest is DSTest {
+contract DAVerifierTest is Test {
     // Private keys used for test signatures.
     uint256 constant testPriv1 = 0x64a1d6f0e760a8d62b4afdde4096f16f51b401eaaecc915740f71770ea76a8ad;
 
@@ -65,7 +65,7 @@ contract DAVerifierTest is DSTest {
     uint256 private votingPower = 5000;
 
     // Set up Foundry cheatcodes.
-    CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
+    CheatCodes cheats = CheatCodes(VM_ADDRESS);
 
     // deploy a Blobstream contract and submit the following:
     // - initial valset.

@@ -8,7 +8,7 @@ import "../DataRootTuple.sol";
 import "../Blobstream.sol";
 import "../lib/tree/binary/BinaryMerkleProof.sol";
 
-import "ds-test/test.sol";
+import "forge-std/Test.sol";
 
 interface CheatCodes {
     function addr(uint256 privateKey) external returns (address);
@@ -28,7 +28,7 @@ interface CheatCodes {
 /// https://github.com/foundry-rs/foundry/issues/3475#issuecomment-1469940917
 /// To have accurate results, make sure to add the following costs:
 /// A byte of calldata costs either 4 gas (if it is zero) or 16 gas (if it is any other value).
-contract Benchmark is DSTest {
+contract Benchmark is Test {
     uint256 private constant numberOfValidators = 100;
     uint256 private constant numberOfSigners = 30;
 
@@ -42,7 +42,7 @@ contract Benchmark is DSTest {
     uint256 private dataTupleRootNonce = 0;
 
     // Set up Foundry cheatcodes.
-    CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
+    CheatCodes cheats = CheatCodes(VM_ADDRESS);
 
     function setUp() public {
         uint256 initialValsetNonce = 0;
