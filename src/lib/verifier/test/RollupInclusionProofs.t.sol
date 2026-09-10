@@ -11,7 +11,7 @@ import "../../tree/binary/BinaryMerkleProof.sol";
 import "../../tree/namespace/NamespaceMerkleMultiproof.sol";
 import "../../tree/Types.sol";
 
-import "ds-test/test.sol";
+import "forge-std/Test.sol";
 
 interface CheatCodes {
     function addr(uint256 privateKey) external returns (address);
@@ -190,7 +190,7 @@ Note: We will not be generating the rollup state root for this test to test agai
 to be defined by rollups depending on how they handle their state.
 */
 
-contract RollupInclusionProofTest is DSTest {
+contract RollupInclusionProofTest is Test {
     // Private keys used for test signatures.
     uint256 constant testPriv1 = 0x64a1d6f0e760a8d62b4afdde4096f16f51b401eaaecc915740f71770ea76a8ad;
 
@@ -201,7 +201,7 @@ contract RollupInclusionProofTest is DSTest {
     uint256 private votingPower = 5000;
 
     // Set up Foundry cheatcodes.
-    CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
+    CheatCodes cheats = CheatCodes(VM_ADDRESS);
 
     // deploy a Blobstream contract and submit the following:
     // - initial valset.

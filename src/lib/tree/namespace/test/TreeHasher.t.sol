@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.22;
 
-import "ds-test/test.sol";
+import "forge-std/Test.sol";
 
 import "../../Constants.sol";
 import "../../Types.sol";
 import "../NamespaceNode.sol";
 import "../TreeHasher.sol";
 
-contract TreeHasherTest is DSTest {
+contract TreeHasherTest is Test {
     function setUp() external {}
 
     function assertEqNamespaceNode(NamespaceNode memory first, NamespaceNode memory second) internal {

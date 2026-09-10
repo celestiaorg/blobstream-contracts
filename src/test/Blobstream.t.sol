@@ -8,7 +8,7 @@ import "../DataRootTuple.sol";
 import "../Blobstream.sol";
 import "../lib/tree/binary/BinaryMerkleProof.sol";
 
-import "ds-test/test.sol";
+import "forge-std/Test.sol";
 
 interface CheatCodes {
     function addr(uint256 privateKey) external returns (address);
@@ -16,7 +16,7 @@ interface CheatCodes {
     function sign(uint256 privateKey, bytes32 digest) external returns (uint8 v, bytes32 r, bytes32 s);
 }
 
-contract RelayerTest is DSTest {
+contract RelayerTest is Test {
     // Private keys used for test signatures.
     uint256 constant testPriv1 = 0x64a1d6f0e760a8d62b4afdde4096f16f51b401eaaecc915740f71770ea76a8ad;
     uint256 constant testPriv2 = 0x6e8bdfa979ab645b41c4d17cb1329b2a44684c82b61b1b060ea9b6e1c927a4f4;
@@ -27,7 +27,7 @@ contract RelayerTest is DSTest {
     uint256 private votingPower = 5000;
 
     // Set up Foundry cheatcodes.
-    CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
+    CheatCodes cheats = CheatCodes(VM_ADDRESS);
 
     function setUp() public {
         uint256 initialValsetNonce = 1;

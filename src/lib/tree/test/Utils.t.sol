@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.22;
 
-import "ds-test/test.sol";
+import "forge-std/Test.sol";
 
 import "../Utils.sol";
 
-contract UtilsTest is DSTest {
+contract UtilsTest is Test {
     function testPathLengthFromKey0_2() external {
         assertEq(pathLengthFromKey(0, 2), 1);
     }
