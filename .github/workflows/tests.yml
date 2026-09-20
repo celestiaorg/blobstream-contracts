@@ -17,6 +17,9 @@ jobs:
 
   forge-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v7
         with:
@@ -31,9 +34,17 @@ jobs:
         working-directory: ./
         run: forge fmt --check
 
-      - name: Run forge test
+      - name: Run forge tests with coverage
         working-directory: ./
-        run: forge test
+        run: forge coverage --report lcov
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@0b35c9ecc4f0529d0eb674914510c22f85b196b4 # v7.1.0
+        with:
+          disable_search: true
+          fail_ci_if_error: true
+          files: ./lcov.info
+          use_oidc: true
 
   go-wrapper-check:
     runs-on: ubuntu-latest
